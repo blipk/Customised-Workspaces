@@ -14,7 +14,7 @@ please let me know if you are having issues on your specific version.
 ### Installation
 
 **Option 1:** Install the extension via the Gnome Extensions website:   
-<https://extensions.gnome.org/extension/>
+<https://extensions.gnome.org/extension/1583/worksets/>
 
 **Option 2:** Requires **git** to be installed.    
 
