@@ -1,0 +1,58 @@
+.feedback-label {
+    font-size: 36px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: rgba(10,10,10,0.7);
+    border-radius: 5px;
+    padding: .5em;
+}
+
+.ci-notification-label {
+    font-weight: bold;
+    color: #ffffff;
+    background-color: rgba(10,10,10,0.7);
+    border-radius: 6px;
+    font-size:2em;
+    padding:.5em;
+    width:400px;
+}
+
+.popup-menu-item .ci-action-btn StIcon {
+    icon-size:16px;
+}
+
+.ci-history-menu-section {
+    max-height:450px;
+}
+
+entry:indeterminate {
+    background-color: #20395a;
+}
+
+.object-dialog {
+    border-radius: 9px;
+    color: #eeeeec;
+    background-color: rgba(23, 25, 26, 0.95);
+    border: 3px solid rgba(238, 238, 236, 0.5); 
+}
+
+.object-dialog .object-dialog-content-box {
+    padding: 24px; 
+}
+  .object-dialog .object-dialog-entry {
+    width: 20em;
+    margin-bottom: 6px; 
+}
+  .object-dialog .object-dialog-error-box {
+    padding-top: 16px;
+    spacing: 6px; 
+}
+  .object-dialog .object-dialog-button-box {
+    padding-top: 1em; 
+}
+  .object-dialog .object-dialog-label {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #d6d6d1;
+    padding-bottom: .4em; 
+}
