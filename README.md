@@ -4,35 +4,18 @@ Create isolated and customised workspaces each with different favourite applicat
 
 ### Supported Gnome-Shell versions
 
-* 3.10
-* 3.12
-* 3.14
-* 3.16
-* 3.18
-* 3.20
-* 3.22
-
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+This should work on any version from 3.00 to 3.30,
+however it has only been thoroughly tested on 3.22 and 3.30,
+please let me know if you are having issues on your specific version.
 
 ### Installation
 
-lorem ipsum
+**Option 1:** Install the extension via the Gnome Extensions website:   
+<https://extensions.gnome.org/extension/>
+
+**Option 2:** Requires **git** to be installed.    
+
+``` bash
+cd ~/.local/share/gnome-shell/extensions
+git clone https://github.com/blipk/worksets.git worksets@blipk.xyz
+```
