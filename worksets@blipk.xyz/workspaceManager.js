@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright 2019 Anthony D - blipk.xyz
+ * Copyright (C) 2019 Anthony D - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,6 @@ const WorkspaceManager = new Lang.Class({
  	activeWorkspaceIndex: null,
 	workspaceChangeHandler: null,
 
-	
 	_init: function() {
 		try {
 		Me.workspaceManager = this;
@@ -66,9 +65,11 @@ const WorkspaceManager = new Lang.Class({
 		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	destroy: function() {
+		try {
 		this.switchToWorkspace(0);
 		this._cleanWorkspaces(true);
 		global.window_manager.disconnect(workspaceChangeHandler);
+	} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
 	_activeWorkspaceChanged: function() {
 		try {
@@ -102,27 +103,29 @@ const WorkspaceManager = new Lang.Class({
 		for (let i = 0; i < this.NumGlobalWorkspaces; i++) {
 			workspacesArray.push(Me.gWorkspaceManager.get_workspace_by_index(i));
 		}
-
 		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	loadDefaultWorksets: function(){
 		try {
-			Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-				if (worksetsbuffer.DefaultWorkspaceIndex === this.activeWorkspaceIndex) {
-					Me.session.displayWorkset(Me.session.collections[Me.session.activeCollectionIndex].Worksets[worksetIndex]);
-				}
-			}, this);
+		Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetsbuffer, worksetIndex) {
+			if (worksetsbuffer.DefaultWorkspaceIndex === this.activeWorkspaceIndex) {
+				Me.session.displayWorkset(Me.session.collections[Me.session.activeCollectionIndex].Worksets[worksetIndex]);
+			}
+		}, this);
 		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	getWorkspaceWindows: function(workspaceIndex) {
+		try {
 		if (workspaceIndex === undefined) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
 		let workspace = Me.gWorkspaceManager.get_workspace_by_index(workspaceIndex);
 		let windows = workspace.list_windows();
 		windows = windows.filter(function(w) { return !w.is_skip_taskbar() && !w.is_on_all_workspaces(); });
 		return windows;
+		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	getWorkspaceAppIds: function(workspaceIndex, excludeFavorites=true) {
+		try {
 		if (workspaceIndex === undefined) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
 		let windowTracker = Shell.WindowTracker.get_default();
@@ -156,13 +159,16 @@ const WorkspaceManager = new Lang.Class({
 		}
 
 		return appIDs;
+		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	getWorkspaceIndex: function(workspace){
+		try {
 		let index;
 		workspacesArray.forEach(function (workspacebuffer, i) {
 			if (workspace === workspacebuffer) { index = i; }
 		}, this);
 		return index;
+		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	},
 	switchToWorkspace: function(index=0) {
 		try {
@@ -176,6 +182,7 @@ const WorkspaceManager = new Lang.Class({
 		//TO DO		
 	},
 	_cleanWorkspaces: function(destroyClean=false) {
+		try {
 		//minimum workspaces should equal the amount of active worksets
 		let min_workspaces = 0;
 		if (!destroyClean) {
@@ -209,5 +216,6 @@ const WorkspaceManager = new Lang.Class({
 		
         //update the workspace view
 		Main.wm._workspaceTracker._checkWorkspaces();
+		} catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
 	}
 });

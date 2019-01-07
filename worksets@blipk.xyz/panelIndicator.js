@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright 2019 Anthony D - blipk.xyz
+ * Copyright (C) 2019 Anthony D - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -192,12 +192,11 @@ var WorksetsIndicator = Lang.Class({
         //Add to correct list (favorite/not) and decorate with indicator if active
         menuItem.favoriteState ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
         menuItem.workset.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex ? menuItem.setOrnament(PopupMenu.Ornament.DOT) : menuItem.setOrnament(PopupMenu.Ornament.NONE);
-
         } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemsRefreshAll: function () {
         try {     
-        //Remove all and re-add with any changes, if ready   
+        //Remove all and re-add with any changes
         if (Me.session.collections !== (undefined && null)) {
             this._worksetMenuItemsRemoveAll();
             Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer) {
@@ -224,6 +223,7 @@ var WorksetsIndicator = Lang.Class({
         this._worksetMenuItemsGetAll().forEach(function (mItem) { mItem.destroy(); });
     },
     _worksetMenuItemRemoveEntry: function (menuItem, event) {
+        try {
         if(event === 'delete') {
             let backupFilename = Me.session.saveWorkset(menuItem.workset, true);
             Me.session.collections[Me.session.activeCollectionIndex].Worksets = Me.session.collections[Me.session.activeCollectionIndex].Worksets.filter(item => item !== menuItem.workset)
@@ -231,8 +231,10 @@ var WorksetsIndicator = Lang.Class({
             menuItem.destroy();
             uiUtils.showUserFeedbackMessage("Workset removed from session and backup saved to "+backupFilename, true);
         }
+        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemMoveToTop: function (menuItem) {
+        try {
         this._worksetMenuItemRemoveEntry(menuItem);
         Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer) {
             if (worksetBuffer === menuItem.workspace) {
@@ -240,8 +242,10 @@ var WorksetsIndicator = Lang.Class({
             }
         }, this);
         this._worksetMenuItemsRefreshAll();
+        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemToggleFavorite: function (menuItem) {
+        try {
         menuItem.favoriteState = menuItem.favoriteState ? false : true;
 
         Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer, i) {
@@ -251,8 +255,10 @@ var WorksetsIndicator = Lang.Class({
         }, this);
 
         this._worksetMenuItemMoveToTop(menuItem);
+        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemsOnMenuSelected: function (menuItem, close=false) {
+        try {
         //Turn off all others
         this._worksetMenuItemsGetAll().forEach(function (mItem) {
             mItem.currentlyActive = false; mItem.setOrnament(PopupMenu.Ornament.NONE);
@@ -267,6 +273,7 @@ var WorksetsIndicator = Lang.Class({
         this._worksetMenuItemsRefreshAll();
 
         if (close) {this.menu.close();}
+        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _onIsolateSwitch: function(init=false) {
         try {

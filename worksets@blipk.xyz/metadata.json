@@ -7,7 +7,7 @@
 "extension-id": "worksets",
 "gettext-domain": "worksets",
 "shell-version": [
-    "3.0", 
+    "3.00", 
     "3.10", 
     "3.12", 
     "3.14", 
