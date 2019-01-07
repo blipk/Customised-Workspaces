@@ -16,6 +16,6 @@ please let me know if you are having issues on your specific version.
 **Option 2:** Requires **git** to be installed.    
 
 ``` bash
-cd ~/.local/share/gnome-shell/extensions
-git clone https://github.com/blipk/worksets.git worksets@blipk.xyz
+cd ~/.local/share/gnome-shell
+git clone https://github.com/blipk/worksets.git extensions
 ```
