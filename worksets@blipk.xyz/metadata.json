@@ -3,7 +3,7 @@
 "original-author": "bip777@protonmail.com", 
 "description": "Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.",
 "settings-schema": "org.gnome.shell.extensions.worksets", 
-"url": "www.blipk.xyz",
+"url": "http://blipk.xyz",
 "extension-id": "worksets",
 "gettext-domain": "worksets",
 "shell-version": [
