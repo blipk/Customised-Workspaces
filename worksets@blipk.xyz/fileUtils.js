@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ const Gettext = imports.gettext;
 //Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const utils = Me.imports.utils;
-const debug = Me.imports.devUtils;
+const dev = Me.imports.devUtils;
 const scopeName = "fileUtils";
 
 const CONF_DIR = GLib.get_user_config_dir() + '/' + Me.uuid;
@@ -90,7 +90,7 @@ function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, return
             }
         }
     }
-    } catch(e) {debug.log(scopeName+'.'+arguments.callee.name, e)}
+    } catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
 
     return childrenFilePropertiesArray;
 }
@@ -121,7 +121,7 @@ function saveRawToFile (rawobject, filename, directory=CONF_DIR, append=false, a
         }
     }
     //Debug logger uses this to save to disk so can end up with nasty recursion if theres an error here
-    //} catch(e) {debug.log(scopeName+'.'+arguments.callee.name, e)}
+    //} catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
 }
 function saveJSObjectToFile (jsobject, filename, directory=CONF_DIR, append=false, async=false) {
     let savePath = directory + '/' + filename;
@@ -150,7 +150,7 @@ function saveJSObjectToFile (jsobject, filename, directory=CONF_DIR, append=fals
             outstream.close(null);
         }
     }
-    } catch(e) {debug.log(scopeName+'.'+arguments.callee.name, e)}
+    } catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
 }
 function aSyncSaveCallback(obj, res, contents) {
     let stream = obj.replace_finish(res);

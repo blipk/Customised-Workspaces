@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,8 +32,16 @@
 
 //Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const debug = Me.imports.devUtils;
+const dev = Me.imports.devUtils;
+const Gettext = imports.gettext;
+const _ = Gettext.domain('worksets').gettext;
 const scopeName = "utils";
+
+function textFormatter(text, options={/*length: 50*/}) {
+    if (isEmpty(text)) return text;
+    if (options.length) text = truncateString(text, options.length);
+    return _(text);
+}
 
 //General
 function truncateString(instring, length) {
@@ -43,32 +51,22 @@ function truncateString(instring, length) {
     return shortened;
 }
 
-var hasMethods = function(obj /*, method list as strings */){
-    var i = 1, methodName;
-    while((methodName = arguments[i++])){
-        if(typeof obj[methodName] !== 'function') {
-            return false;
-        }
-    }
-    return true;
-}
-
-var hasProperty = function(obj /*, method list as strings */){
-    var i = 1, methodName;
-    while((methodName = arguments[i++])){
-        if(obj[methodName] !== undefined) {
-            return false;
-        }
-    }
-    return true;
+var isEmpty = function(v){
+    return typeof v === 'undefined' ? true 
+                : v === null ? true
+                : v === [] ? true
+                : typeof v === 'object' ? (Object.getOwnPropertyNames(v).length > 0 ? false : true)
+                : typeof v === 'string' ? (v.length > 0 ? false : true)
+                : Boolean(v);
 }
 
 Object.defineProperty(Object.prototype, 'forEachEntry', {
     value: function (callback, thisArg, recursive=false, recursiveIndex=0) {
         if (this === null) throw new TypeError('Not an object'); 
-        thisArg = thisArg || window;
+        thisArg = thisArg || this;
+        
         Object.keys(this).forEach(function(key, entryIndex){
-            retIndex = entryIndex + recursiveIndex;
+            let retIndex = entryIndex + recursiveIndex;
             callback.call(thisArg, key, this[key], retIndex, this);
             if (typeof this[key] === 'object' && this[key] !== null && recursive===true) {
                 if (Array.isArray(this[key]) === true) {
@@ -87,14 +85,47 @@ Object.defineProperty(Object.prototype, 'forEachEntry', {
     }
 });
 
-Object.defineProperty(Object.prototype, 'forEachKey', {
-    value: function (callback, thisArg) {
-        if (this === null) throw new TypeError('Not an object');
-        thisArg = thisArg || window;
-        for (var key in this) {
-            if (this.hasOwnProperty(key)) {
-                callback.call(thisArg, this[key], key, this);
-            }
-        }
+
+var handler = {
+    get: function(obj, prop) {
+        return prop in obj ?
+            obj[prop] :
+            37;
     }
-});
+};
+
+var DisplayWrapper = {
+    get: function(obj, prop, value) {
+        if (prop === 'screen') {
+        return prop in obj ?
+            obj[prop] :
+            global.display;
+        }
+        if (prop === 'workspace_manager') {
+            return prop in obj ?
+                obj[prop] :
+                global.screen || global.display;
+        }
+        if (prop === 'MonitorManager') {
+            return prop in obj ?
+                obj[prop] :
+                global.screen || global.display;
+        }
+    },
+
+    /*
+    getScreen: function() {
+        return global.screen || global.display;
+    },
+
+    getWorkspaceManager: function() {
+        return global.screen || global.workspace_manager;
+    },
+
+    getMonitorManager: function() {
+        return global.screen || Meta.MonitorManager.get();
+    }
+    */
+};
+
+Me.gsCompat = new Proxy(global, DisplayWrapper);

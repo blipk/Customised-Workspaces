@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,70 +35,18 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const fileUtils = Me.imports.fileUtils;
 const utils = Me.imports.utils;
+const _debug_ = true;
 const scopeName = "devUtils";
-
-// Print objects
-function prettyPrint (name, obj, recurse, _indent) {
-    let out = "";
-    let prefix = '';
-    let indent = typeof _indent === 'number' ? _indent : 0;
-    for (let i = 0; i < indent; i++) {
-        prefix += '  ';
-    }
-
-    recurse = typeof recurse === 'boolean' ? recurse : true;
-    if (typeof name !== 'string') {
-        obj = arguments[0];
-        recurse = arguments[1];
-        _indent = arguments[2];
-        name = obj.toString();
-    }
-
-    out += '--------------';
-    out += prefix + name;
-    out += prefix + '--------------';
-    for (let k in obj) {
-        if (typeof obj[k] === 'object' && recurse) {
-            out += '\r\n' + prettyPrint(name + '::' + k, obj[k], true, indent + 1);
-        }
-        else {
-            out += prefix + k + " = "  +(typeof obj[k] === 'function' ? '[Func]' : obj[k]);
-        }
-    }
-    return out;
-}
-
-function getFunctionName( func ) {
-    // Match:
-    // - ^          the beginning of the string
-    // - function   the word 'function'
-    // - \s+        at least some white space
-    // - ([\w\$]+)  capture one or more valid JavaScript identifier characters
-    // - \s*        optionally followed by white space (in theory there won't be any here,
-    //              so if performance is an issue this can be omitted[1]
-    // - \(         followed by an opening brace
-    //
-    //var result = /^function\s+([\w\$]+)\s*\(/.exec( func.toString() )
-    //return  result  ?  result[ 1 ]  :  '' // for an anonymous function there won't be a match
-
-    //var p = new func.constructor(); //recursion
-    //return p ? (p.constructor.name ? func.constructor.name : '') : p.toSource();
-    //return p.toSource();
-    let out = func.constructor.toString();
-    if (out.toLowerCase().search("class") === -1) {
-        out="";
-    }
-    return out;
-}
 
 function printJSON(object) {
     return JSON.stringify(object, null, 2);
 }
-function log(context, message) {  
-    if (message === undefined) {message = context; context = "Unknown";}
-    if (message === undefined) {message = "UNDEFINED object"}
-    if (message === null) {message = "NULL object"}
+function log(context, message) {
+    if (!_debug_) return;
 
+    if (message === undefined) {message = context; context = "()=>";}
+    if (message === undefined) {message = "UNDEFINED object"}
+    if (message === null) {message = "NULL value"}
 
     let timestamp = new Date().toLocaleString();
     let prefix = timestamp + '  -  ' + Me.uuid.toString() + " | ";

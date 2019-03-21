@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,13 +34,13 @@
 const ExtensionSystem = imports.ui.extensionSystem;
 const ExtensionUtils = imports.misc.extensionUtils;
 const FileUtils = imports.misc.fileUtils;
+const Gio = imports.gi.Gio;
+const GioSSS = Gio.SettingsSchemaSource;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
-const _ = Gettext.domain('worksets').gettext;
-
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 //Internal imports
+const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const utils = Me.imports.utils;
 const fileUtils = Me.imports.fileUtils;
@@ -48,23 +48,22 @@ const uiUtils = Me.imports.uiUtils;
 const panelIndicator = Me.imports.panelIndicator;
 const workspaceManager = Me.imports.workspaceManager;
 const sessionManager = Me.imports.sessionManager;
-const debug = Me.imports.devUtils;
-const scopeName = "worksetsalphaextension";
+const dev = Me.imports.devUtils;
 
-const Gio = imports.gi.Gio;
-const GioSSS = Gio.SettingsSchemaSource;
+const _ = Gettext.domain('worksets').gettext;
+const scopeName = "worksetsalphaextension";
 
 let extensionChangedHandler;
 function init() {
-    debug.log(scopeName+'.'+arguments.callee.name, "Initialization point.........");
     Convenience.initTranslations();
+    dev.log(scopeName+'.'+arguments.callee.name, "@```````````````````````````````````|");
 }
 
 function enable() {
     try {
+    dev.log(scopeName+'.'+arguments.callee.name, "@---------------------------------|");
     if (Me.session) return; //already initialized
-    debug.log(scopeName+'.'+arguments.callee.name, "Enable point.........");
-
+    
     // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
     Me.gScreen = global.screen || global.display;
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
@@ -73,20 +72,25 @@ function enable() {
     extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
     Me.settings = Convenience.getSettings('org.gnome.shell.extensions.worksets');
 
-    //Spawn session
+    // Spawn session
     Me.session = new sessionManager.sessionManager();
-    } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+
+    dev.log(scopeName+'.'+arguments.callee.name, "@~................................|");
+    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
 }
 function disable() {
-    debug.log(scopeName+'.'+arguments.callee.name, "Shutting down extension...");
     try {
-    if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator']; //This role wasn't being removed when the above is destroyed/deleted causing the extension to only be enabled once per gnome-shell session and would cause endless loops and hangs if enabled on shell startup 
+    dev.log(scopeName+'.'+arguments.callee.name, "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|");
+
+    if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator;
     if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
     if (Me.session) Me.session.destroy(); delete Me.session;
     if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
-    if (extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler); delete extensionChangedHandler;
-    } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
-    debug.log(scopeName+'.'+arguments.callee.name, "Extension destroyed!"+'\r\n');
+    if (extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
+
+    dev.log(scopeName+'.'+arguments.callee.name, "!^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|"+'\r\n');
+    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
+    
 }
 
 // 3.0 API backward compatibility

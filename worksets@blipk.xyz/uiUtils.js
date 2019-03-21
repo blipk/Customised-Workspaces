@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,14 +42,14 @@ const ModalDialog = imports.ui.modalDialog;
 const ShellEntry = imports.ui.shellEntry;
 const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
-const _ = Gettext.domain('worksets').gettext;
 
 //Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const utils = Me.imports.utils;
+const _ = utils.textFormatter;
 const fileUtils = Me.imports.fileUtils;
-const debug = Me.imports.devUtils;
+const dev = Me.imports.devUtils;
 const scopeName = "uiUtils";
 
 
@@ -75,7 +75,7 @@ function hideUserFeedbackMessage(index) {
     Main.uiGroup.remove_actor(text[index]); text[index] = null;
 }
 function showUserFeedbackMessage(input, overviewMessage=false) {
-    debug.log('User Feedback', input);
+    dev.log('User Feedback', input);
 
     if (overviewMessage) {
         Main.overview.setMessage(_(input), { forFeedback: true });
@@ -99,6 +99,7 @@ const ObjectInterfaceDialog = new Lang.Class ({
 
     _objectsSetBoxes: [],
     DIALOG_GROW_TIME: 0.1,
+    _callback: null,
 
     _init: function(dialogText=null, callback=null, 
         showTextInput=true, disableTextInput=false, 
@@ -107,11 +108,10 @@ const ObjectInterfaceDialog = new Lang.Class ({
     {
         if (typeof dialogText === 'object') {
             this.parent(dialogText);
-            return; 
+            return;
         }
-
-        if (typeof callback !== 'function')
-            throw TypeError('ObjectInterfaceDialog._init error: callback must be a function');
+        if (typeof callback !== 'function') throw TypeError('ObjectInterfaceDialog._init error: callback must be a function');
+        this._callback = callback;
 
         try{
         this.parent({ styleClass: 'object-dialog', destroyOnClose: false });
@@ -120,7 +120,6 @@ const ObjectInterfaceDialog = new Lang.Class ({
         this.contentLayout.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
         //Text field for user input
         let stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '' });
-        this._stEntryUTextClutterText = stEntryUText.clutter_text;
         ShellEntry.addContextMenu(stEntryUText);
         stEntryUText.label_actor = stLabelUText;
         //Customisation
@@ -128,11 +127,11 @@ const ObjectInterfaceDialog = new Lang.Class ({
         if (typeof dialogText !== 'string') {stLabelUText.hide();}
         if (showTextInput !== true) {stEntryUText.hide()};
         if (disableTextInput !== true) {
-            this.setInitialKeyFocus(this._stEntryUTextClutterText);
-            this._stEntryUTextClutterText.set_selection(0, 0);
+            this.setInitialKeyFocus(stEntryUText.clutter_text);
+            stEntryUText.clutter_text.set_selection(0, 0);
         } else {
-            this._stEntryUTextClutterText.set_editable(false);
-            this._stEntryUTextClutterText.set_selectable(false);
+            stEntryUText.clutter_text.set_editable(false);
+            stEntryUText.clutter_text.set_selectable(false);
         }
         this.contentLayout.add(stEntryUText, { y_align: St.Align.START });
 
@@ -162,7 +161,7 @@ const ObjectInterfaceDialog = new Lang.Class ({
         }
 
         //Build objects in jsobjectSets from .json files in directory (or multiple - one objectSet of objects per directory)
-        if (jsobjectsSearchDirectories !== null && jsobjectsSearchDirectories !== undefined && jsobjectsSearchDirectories !== [] && jsobjectsSearchDirectories.length>0) {
+        if (!utils.isEmpty(jsobjectsSearchDirectories)) {
             jsobjectsSets=[];
             jsobjectsSearchDirectories.forEach(function(directory, i){
                 let childrenFilePropertiesArray = fileUtils.enumarateDirectoryChildren(directory);
@@ -219,10 +218,7 @@ const ObjectInterfaceDialog = new Lang.Class ({
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_expand(false); 
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_y_expand(false);
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.connect('button-press-event', ()=>{
-                            this.popModal();
-                            this.close();
-                            callback(object);
-                            return object;
+                            this.popModal(); this.close(object); return object;
                     });
                     this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton, { y_align: St.Align.MIDDLE });
                     
@@ -244,24 +240,28 @@ const ObjectInterfaceDialog = new Lang.Class ({
         }
 
         //Handler for text input actions
-        this._stEntryUTextClutterText.connect('activate', (o) => {
+        stEntryUText.clutter_text.connect('activate', (o) => {
             this.popModal();
             this._checkInput(o.get_text());
             if (!this._inputError || !this.pushModal()) {
-                callback(o.get_text());
-                this.close();
-                return o.get_text();
+                this.close(o.get_text()); return o.get_text();
             }
             return o.get_text();
         });
 
         this.open();
-    } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     open: function() {
         this._errorBox.hide();
         this._inputError = false;
         this.parent(global.get_current_time(), true);
+    },
+    close: function(callbackObject) {
+        try {
+        if (!utils.isEmpty(callbackObject)) this._callback(callbackObject);
+        this.parent();
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _checkInput: function(text) {
         this._inputError = false;
@@ -286,7 +286,7 @@ const ObjectInterfaceDialog = new Lang.Class ({
                                }
                              });
         }
-        } catch (e) {logError(e); debug.log(e);}
+        } catch (e) {logError(e); dev.log(e);}
     }
 });
 
@@ -297,16 +297,14 @@ const ObjectEditorDialog = new Lang.Class ({
     Extends: ObjectInterfaceDialog,
 
     _propertyBoxes: [],
-    _callback: null,
 
     _init: function(dialogText=null, callback=null, 
         jsobject=null, /*object to edit in the editor */
-        propertyMasks=[{propertyName: 'Property Display Name', disabled: false, hidden: false}])
+        propertyMasks=[/*{propertyName: 'Property Display Name', disabled: false, hidden: false, subObjectPropertyMasks: propertyMasks}*/])
     {
-        if (typeof callback !== 'function')
-            throw TypeError('ObjectEditorDialog._init error: callback must be a function');
-
+        if (typeof callback !== 'function') throw TypeError('ObjectEditorDialog._init error: callback must be a function');
         this._callback = callback;
+
         try{
         this.parent({ styleClass: 'object-dialog', destroyOnClose: false });
 
@@ -332,11 +330,11 @@ const ObjectEditorDialog = new Lang.Class ({
         if (jsobject[0]) {jsobject=jsobject[0];}
         
         if (jsobject) {
-            //this._originalObject = JSON.parse(JSON.stringify(jsobject));
+            //this._unreferencedObjectCopy = JSON.parse(JSON.stringify(jsobject));
             //Create an area for each property of our object
             this._propertyBoxes = [];
             jsobject.forEachEntry(function(key, value, i){
-                //debug.log("key: "+key+" | value:"+value+" | value type:"+ (typeof value) +" | entry index "+i);
+                //dev.log("key: "+key+" | value:"+value+" | value type:"+ (typeof value) +" | entry index "+i);
 
                 let propertyDisplayName = key;
                 let propertyDisabled = true;
@@ -352,14 +350,16 @@ const ObjectEditorDialog = new Lang.Class ({
 
                 //A box area for each property
                 this._propertyBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box' });
-                this._propertyBoxes[i].propertyBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 18, style_class: 'object-dialog-error-icon' });
-                this._propertyBoxes[i].add(this._propertyBoxes[i].propertyBoxStIcon, { y_align: St.Align.MIDDLE });
+                this._propertyBoxes[i].propertyBoxStNameIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 18, style_class: 'object-dialog-error-icon' });
+                this._propertyBoxes[i].add(this._propertyBoxes[i].propertyBoxStNameIcon, { y_align: St.Align.MIDDLE });
                 this.contentLayout.add(this._propertyBoxes[i], { expand: true });
+                
 
                 this._propertyBoxes[i]._propertyBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._propertyBoxes[i]._propertyBoxMessage.clutter_text.line_wrap = true;
                 this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
                 this._propertyBoxes[i]._propertyBoxMessage.set_text(propertyDisplayName);
+                
 
                 //Property value editor element
                 //if (value === undefined) {value = 'empty'};
@@ -403,37 +403,58 @@ const ObjectEditorDialog = new Lang.Class ({
                 //TO DO
                 if (Array.isArray(value)) {
                     if (typeof value === 'object') {
-                        //Labelled button to select the object to open it in another editor
+                        //Button to select the object to open it in another editor
                         this._propertyBoxes[i]._propertyBoxEditorElement = new St.Button({
                             style_class: 'ci-action-btn', x_fill: true, can_focus: true
                         });
+                        this._propertyBoxes[i]._propertyBoxEditorElement.showIcon = true;    
                         this._propertyBoxes[i]._propertyBoxEditorElement.set_x_align(Clutter.ActorAlign.END); 
                         this._propertyBoxes[i]._propertyBoxEditorElement.set_x_expand(false); 
                         this._propertyBoxes[i]._propertyBoxEditorElement.set_y_expand(false);
                         this._propertyBoxes[i]._propertyBoxEditorElement.connect('button-press-event', ()=>{
-                                this.popModal();
-                                callback(object);
-                                this.close();
-                                return object;
+                                //spawn another ObjectEditorDialog 
+                                //- propertyMasks[key].subObjectPropertyMasks
+                                //- will need to set propertyDisabled/Hidden default to false for show all devmode if there are no subObjectPropertyMasks for the object
+
+                                //Save changes / Leave Open ????
+                                //this.popModal(); this.close(object); return object;
                         });
                         this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement, { y_align: St.Align.END });
-                        this._propertyBoxes[i]._propertyBoxEditorElement.set_label(value.toString());
+                        this._propertyBoxes[i]._propertyBoxEditorElement.set_label("Edit object - " + utils.truncateString(value.toString(), 40));
                     } else {
-                        //String array list editor
-                        //Other array subtype editors
+                        //Array editor
+                        this._propertyBoxes[i]._propertyBoxEditorElement = new St.Button({
+                            style_class: 'ci-action-btn', x_fill: true, can_focus: true
+                        });
+                        this._propertyBoxes[i]._propertyBoxEditorElement.showIcon = true;    
+                        this._propertyBoxes[i]._propertyBoxEditorElement.set_x_align(Clutter.ActorAlign.END); 
+                        this._propertyBoxes[i]._propertyBoxEditorElement.set_x_expand(false); 
+                        this._propertyBoxes[i]._propertyBoxEditorElement.set_y_expand(false);
+                        this._propertyBoxes[i]._propertyBoxEditorElement.connect('button-press-event', ()=>{
+                                //   Convert array items to object with invisible keys, convert back to array on changes to commit to original reference
+                                // - Pass the array as an object to another ObjectEditorDialog - removing the property name section
+                                
+                                //Save changes / Leave Open ????
+                                //this.popModal();
+                                //this.popModal(); this.close(object); return object;
+ 
+                        });
+                        this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement, { y_align: St.Align.END });
+                        this._propertyBoxes[i]._propertyBoxEditorElement.set_label("Edit array - " + utils.truncateString(value.toString(), 40));
+                        
                     }
+                }
+
+                if (this._propertyBoxes[i]._propertyBoxEditorElement.showIcon) {
+                    this._propertyBoxes[i]._propertyBoxEditorElement.propertyBoxStElementIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 14, style_class: 'object-dialog-error-icon' });
+                    this._propertyBoxes[i]._propertyBoxEditorElement.add(this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: St.Align.MIDDLE });
                 }
             }, this);
 
         }
 
+        //TO DO: Consider having this called from dialog instance origin to ease object reference workflow
         this.open();
-    } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    close: function() {
-        try {
-        this._callback();
-        this.parent();
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     }
 });

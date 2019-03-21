@@ -1,9 +1,9 @@
 {"uuid": "worksets@blipk.xyz",
 "name": "Worksets",
-"original-author": "bip777@protonmail.com", 
+"original-author": "adpl@blipk.xyz", 
 "description": "Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.",
 "settings-schema": "org.gnome.shell.extensions.worksets", 
-"url": "http://blipk.xyz",
+"url": "http://worksets.blipk.xyz",
 "extension-id": "worksets",
 "gettext-domain": "worksets",
 "shell-version": [

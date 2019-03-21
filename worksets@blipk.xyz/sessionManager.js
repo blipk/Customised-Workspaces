@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ const uiUtils = Me.imports.uiUtils;
 const panelIndicator = Me.imports.panelIndicator;
 const workspaceManager = Me.imports.workspaceManager;
 const workspaceIsolater = Me.imports.workspaceIsolater;
-const debug = Me.imports.devUtils;
+const dev = Me.imports.devUtils;
 const scopeName = "sessionmanager";
 
 const sessionManager = new Lang.Class({
@@ -66,15 +66,15 @@ const sessionManager = new Lang.Class({
             this.newSession(true);
             this._setup(this.collections);
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _setup: function(sessionObject) {
         try {
-        if (sessionObject !== (undefined && null)) {
+        if (!utils.isEmpty(sessionObject)) {
             this.collections = sessionObject;
             this._cleanWorksets();
 
-            favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, this._favoritesChanged))
+            this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, this._favoritesChanged))
             Me.workspaceManager = new workspaceManager.WorkspaceManager();
 
             Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
@@ -82,41 +82,62 @@ const sessionManager = new Lang.Class({
 
             this.saveSession();
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _cleanWorksets: function() {
         try {
-        this.collections.forEach(function(collectionsbuffer, i) {
-            //Remove bunk entries
-            let filteredWorksets = this.collections[i].Worksets.filter(item => (Array.isArray(item.FavApps)));
-            //Remove name duplicates as we use the name as the identifier
-            this.collections[i].Worksets.forEach(function (collectionBuffer, ii) {
-                filteredWorksets = filteredWorksets.filter(function(item) {
-                    if (item.WorksetName === collectionBuffer.WorksetName && item !== collectionBuffer) {
-                        return false;
-                    }
+        
+        this.collections.forEach(function(collectionBuffer, i) {
+            if (typeof collectionBuffer.CollectionName !== 'string') collectionBuffer.CollectionName = "Collection " + i;
+            if (typeof collectionBuffer.Favorite !== 'boolean') collectionBuffer.Favorite = false;
+
+            // Remove invalid entries
+            let filteredWorksets;
+            //filteredWorksets = this.collections[i].Worksets.filter(item => (Array.isArray(item.FavApps)));
+            //filteredWorksets = filteredWorksets.filter(item => (!isNaN(item.DefaultWorkspaceIndex)));
+            //filteredWorksets = filteredWorksets.filter(item => (!isNaN(item.activeWorkspaceIndex)));
+            //filteredWorksets = filteredWorksets.filter(item => ((typeof item.Favorite === 'boolean')));
+            //filteredWorksets = filteredWorksets.filter(item => ((typeof item.active === 'boolean')));
+            //this.collections[i].Worksets = filteredWorksets;
+
+            this.collections[i].Worksets.forEach(function (worksetBuffer, ii) {
+                //Fix entries
+                worksetBuffer.active = false;
+                worksetBuffer.activeWorkspaceIndex = null;
+                if (!Array.isArray(worksetBuffer.FavApps)) worksetBuffer.FavApps = [];
+                if (isNaN(worksetBuffer.DefaultWorkspaceIndex)) worksetBuffer.DefaultWorkspaceIndex = -1;
+                if (typeof worksetBuffer.WorksetName !== 'string') worksetBuffer.WorksetName = "Workset " + ii;
+                if (typeof worksetBuffer.Favorite !== 'boolean') worksetBuffer.Favorite = false;
+
+                // Remove duplicate entries
+                filteredWorksets = collectionBuffer.Worksets.filter(function(item) {                    
+                    if (item !== worksetBuffer &&
+                        (JSON.stringify(item) === JSON.stringify(worksetBuffer)))
+                        { return false; }
                     return true;
                 }, this);
             }, this);
+
+            // Apply
             this.collections[i].Worksets = filteredWorksets;
         }, this);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     destroy: function() {
         try {
         this.saveSession();
-        if (favoritesChangeHandler) {AppFavorites.getAppFavorites().disconnect(favoritesChangeHandler)};
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        if (this.favoritesChangeHandler) {AppFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler)};
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     setFavorites: function(favArray) {
         try {
         global.settings.set_strv("favorite-apps", favArray);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     getFavorites: function(favArray) {
         try {
         return global.settings.get_strv("favorite-apps");
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _favoritesChanged: function() {
         try {
@@ -127,7 +148,7 @@ const sessionManager = new Lang.Class({
                 }
             }, this);
         }, this);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     displayWorkset: function(workset, loadInNewWorkspace=false) {
         try {
@@ -160,25 +181,25 @@ const sessionManager = new Lang.Class({
 
             uiUtils.showUserFeedbackMessage("Loaded workset " + workset.WorksetName, true);
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
 
     //Collection Navigation
     activateCollection: function(index) {
         try {
         this.activeCollectionIndex = index;
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     }, 
     nextCollection: function() {
-        if(this.collections[(this.activeCollectionIndex+1)] !== undefined) {
+        if(!utils.isEmpty(this.collections[(this.activeCollectionIndex+1)])) {
             this.activateCollection(this.activeCollectionIndex+1);
             uiUtils.showUserFeedbackMessage("Next collection...");
         }
     },
     prevCollection: function() {
-        if(this.collections[(this.activeCollectionIndex-1)] !== undefined) {
+        if(!utils.isEmpty(this.collections[(this.activeCollectionIndex-1)])) {
             this.activateCollection(this.activeCollectionIndex-1);
-            uiUtils.showUserFeedbackMessage("Next collection...");
+            uiUtils.showUserFeedbackMessage("Previous collection...");
         }
     },
 
@@ -207,7 +228,7 @@ const sessionManager = new Lang.Class({
         }
         //Load the session
         this.loadSession(sessionObject);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     newObject: function(){
         try {
@@ -217,16 +238,13 @@ const sessionManager = new Lang.Class({
 
         let getNewOptionDialog = new uiUtils.ObjectInterfaceDialog("What would you like to create?", (returnOption) => {
                 switch(returnOption.value) {
-                    case 0:
-                        this.newWorkset(); break;
-                    case 1:
-                        this.newCollection(); break;
-                    case 2:
-                        this.newSession(true, true); break;
+                    case 0: this.newWorkset(); break;
+                    case 1: this.newCollection(); break;
+                    case 2: this.newSession(true, true); break;
                     default:
                 }
         }, false, true, options, [{option: ' '}]);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     newCollection: function(name) {
         try { 
@@ -246,7 +264,7 @@ const sessionManager = new Lang.Class({
         //Push it to into this.collections and set it to current
         this.collections.push(collectionObject);
         this.activeCollectionIndex = this.collections.length-1;
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     newWorkset: function(name, targetCollectionIndex, fromEnvironment=true, newCollection=false) {
         try {
@@ -279,13 +297,15 @@ const sessionManager = new Lang.Class({
         //Push it to current/target collection
         (targetCollectionIndex === undefined) ? targetCollectionIndex = this.activeCollectionIndex : targetCollectionIndex = targetCollectionIndex;
         this.collections[targetCollectionIndex].Worksets.push(worksetObject);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     
     //Storage management
     showObjectManager: function() {
         try {
-        let worksetObjects = new Array();
+        if (utils.isEmpty(this.collections)) return;
+
+        let worksetObjects = [];
         this.collections.forEach(function (collectionBuffer, collectionIndex) {
             collectionBuffer.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 worksetObjects.push(this.collections[collectionIndex].Worksets[worksetIndex]);
@@ -298,31 +318,31 @@ const sessionManager = new Lang.Class({
             }, returnObject, [{WorksetName: 'Workset Name'}, {DefaultWorkspaceIndex: 'Load on workspace X by default'}, {Favorite: 'Favorite'}, {CollectionName: 'Collection Name'}]);
 
         }, false, true, [this.collections, worksetObjects], [{CollectionName: 'Collections'},{WorksetName: 'Worksets'}]);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     loadObject: function() {
         try {
         let collectionsDirectory = fileUtils.CONF_DIR + '/collections';
         let worksetsDirectory = fileUtils.CONF_DIR + '/worksets';
         let loadObjectDialog = new uiUtils.ObjectInterfaceDialog("Please select a previously saved collection or workset to load from disk.", (returnObject) => {
-            if (returnObject.CollectionName !== (undefined && null)) {
+            if (returnObject.CollectionName) {
                 this.collections.push(returnObject);
                 this.activeCollectionIndex = (this.collections.length-1);
                 uiUtils.showUserFeedbackMessage("Collection loaded from file and added to current session.");
-            } else if (returnObject.WorksetName !== (undefined && null)) {
+            } else if (returnObject.WorksetName) {
                 this.collections[this.activeCollectionIndex].Worksets.push(returnObject);
                 uiUtils.showUserFeedbackMessage("Workset loaded from file and added to active collection.");  
             }
             
         }, false, true, [collectionsDirectory, worksetsDirectory], [{CollectionName: 'Collections'},{WorksetName: 'Worksets'}]);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     loadSession: function(sessionsObject, restore=false) {
         try {
         if (!sessionsObject) {
             let filename = (restore ? 'session-backup.json' : 'session.json');
             sessionObject = fileUtils.loadJSObjectFromFile(filename, fileUtils.CONF_DIR);
-            if (sessionObject !== (undefined && null) && this.collections === (undefined && null)) {
+            if (!utils.isEmpty(sessionObject) /*&& utils.isEmpty(this.collections)*/) {
                 this.activeCollectionIndex = 0;
                 this.collections = sessionsObject;
             }
@@ -330,11 +350,11 @@ const sessionManager = new Lang.Class({
             this.activeCollectionIndex = 0;
             this.collections = sessionsObject;
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     saveSession: function(backup=false) {
         try {
-        if (this.collections === (undefined && null)) return;
+        if (utils.isEmpty(this.collections)) return;
 
         let sessionCopy = JSON.parse(JSON.stringify(this.collections));
         sessionCopy.forEach(function (collectionBuffer, collectionIndex) {
@@ -347,7 +367,7 @@ const sessionManager = new Lang.Class({
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
         let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
         fileUtils.saveJSObjectToFile(sessionCopy, filename, fileUtils.CONF_DIR);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     saveCollection: function(collectionIndex) {
         try {
@@ -358,14 +378,14 @@ const sessionManager = new Lang.Class({
         let filename = 'collection-'+this.collections[collectionIndex].CollectionName+'.json'
         fileUtils.saveJSObjectToFile(this.collections[collectionIndex], filename, fileUtils.CONF_DIR+'/collections');
         uiUtils.showUserFeedbackMessage("Collection saved as "+filename);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     saveActiveCollection: function() {
         this.saveCollection(this.activeCollectionIndex);
     },
     saveWorkset: function(workset, backup=false) {
         try {
-        if (workset === (undefined && null)) return;
+        if (utils.isEmpty(workset)) return;
 
         workset.active = false;
         workset.activeWorkspaceIndex = null;
@@ -377,6 +397,6 @@ const sessionManager = new Lang.Class({
         if (!backup) uiUtils.showUserFeedbackMessage("Workset saved to "+filename);
 
         return filename;
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     }
 });

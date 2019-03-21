@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 Anthony D - http://blipk.xyz
+ * Copyright (C) 2019 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ const ExtensionSystem = imports.ui.extensionSystem;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Gettext = imports.gettext;
 const Lang = imports.lang;
+const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
 const St = imports.gi.St;
@@ -49,8 +50,7 @@ const workspaceManager = Me.imports.workspaceManager;
 const workspaceIsolater = Me.imports.workspaceIsolater;
 const fileUtils = Me.imports.fileUtils;
 const uiUtils = Me.imports.uiUtils;
-const debug = Me.imports.devUtils;
-const handlers = Me.imports.handlers;
+const dev = Me.imports.devUtils;
 const scopeName = "panelIndicator";
 
 const INDICATOR_ICON = 'tab-new-symbolic';
@@ -71,7 +71,8 @@ var WorksetsIndicator = Lang.Class({
         }
         this.disconnectAll();
         this.parent();
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        delete Main.panel.statusArea['WorksetsIndicator'];
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _init: function() {
         try {
@@ -88,7 +89,7 @@ var WorksetsIndicator = Lang.Class({
         //Build our menu
         this._buildMenu();
         this._worksetMenuItemsRefreshAll()
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }    
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }    
     },
     _onEvent: function(actor, event) {/*Override from parent class to handle menuitem refresh*/
         this._worksetMenuItemsRefreshAll();
@@ -154,7 +155,7 @@ var WorksetsIndicator = Lang.Class({
         
         // Add separator
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     //This is run periodically via _worksetMenuItemsRefreshAll()
     _addWorksetMenuItemEntry: function (workSetsArrayBuffer) {
@@ -183,7 +184,7 @@ var WorksetsIndicator = Lang.Class({
 
         uiUtils.createIconButton(menuItem, 'document-properties-symbolic', () => {
             let editObjectChooseDialog = new uiUtils.ObjectEditorDialog("Properties of Workset: "+menuItem.nameText, () => {
-                uiUtils.showUserFeedbackMessage("Changes have been saved.");
+                uiUtils.showUserFeedbackMessage("Changes saved.");
             }, menuItem.workset, [{WorksetName: 'Workset Name'}, {DefaultWorkspaceIndex: 'Load on workspace X by default'}, {Favorite: 'Favorite'}]);
         });
 
@@ -192,12 +193,12 @@ var WorksetsIndicator = Lang.Class({
         //Add to correct list (favorite/not) and decorate with indicator if active
         menuItem.favoriteState ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
         menuItem.workset.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex ? menuItem.setOrnament(PopupMenu.Ornament.DOT) : menuItem.setOrnament(PopupMenu.Ornament.NONE);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemsRefreshAll: function () {
         try {     
         //Remove all and re-add with any changes
-        if (Me.session.collections !== (undefined && null)) {
+        if (!utils.isEmpty(Me.session.collections)) {
             this._worksetMenuItemsRemoveAll();
             Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
@@ -207,7 +208,7 @@ var WorksetsIndicator = Lang.Class({
 
             Me.session.saveSession();
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _findRawWorksetByMenuItem: function (menuItem) {
         let tmpWorkset = Me.session.collections[Me.session.activeCollectionIndex].Worksets.filter(item => item === menuItem.workset)[0];
@@ -231,7 +232,7 @@ var WorksetsIndicator = Lang.Class({
             menuItem.destroy();
             uiUtils.showUserFeedbackMessage("Workset removed from session and backup saved to "+backupFilename, true);
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemMoveToTop: function (menuItem) {
         try {
@@ -242,7 +243,7 @@ var WorksetsIndicator = Lang.Class({
             }
         }, this);
         this._worksetMenuItemsRefreshAll();
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemToggleFavorite: function (menuItem) {
         try {
@@ -255,7 +256,7 @@ var WorksetsIndicator = Lang.Class({
         }, this);
 
         this._worksetMenuItemMoveToTop(menuItem);
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _worksetMenuItemsOnMenuSelected: function (menuItem, close=false) {
         try {
@@ -273,7 +274,7 @@ var WorksetsIndicator = Lang.Class({
         this._worksetMenuItemsRefreshAll();
 
         if (close) {this.menu.close();}
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _onIsolateSwitch: function(init=false) {
         try {
@@ -303,7 +304,7 @@ var WorksetsIndicator = Lang.Class({
                 delete Me.workspaceIsolater;
             }
         }
-        } catch(e) { debug.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
     },
     _toggleMenu: function(){
         this.menu.toggle();
