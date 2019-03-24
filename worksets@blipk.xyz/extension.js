@@ -38,6 +38,7 @@ const Gio = imports.gi.Gio;
 const GioSSS = Gio.SettingsSchemaSource;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
+const Meta = imports.gi.Meta;
 
 //Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
