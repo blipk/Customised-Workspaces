@@ -118,7 +118,7 @@ const WorkspaceIsolator = new Lang.Class({
 
 // Check if an application is on the active workspace
 WorkspaceIsolator.isActiveApp = function(app) {
-    return app.is_on_workspace(Me.gScreen.get_active_workspace());
+    return app.is_on_workspace(Me.gWorkspaceManager.get_active_workspace());
 };
 // Refresh dash
 WorkspaceIsolator.refresh = function() {
