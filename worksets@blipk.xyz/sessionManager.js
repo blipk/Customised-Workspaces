@@ -47,7 +47,7 @@ const workspaceIsolater = Me.imports.workspaceIsolater;
 const dev = Me.imports.devUtils;
 const scopeName = "sessionmanager";
 
-const sessionManager = new Lang.Class({
+var sessionManager = new Lang.Class({
     Name: 'Worksets.sessionManager',
     
     collections: null,

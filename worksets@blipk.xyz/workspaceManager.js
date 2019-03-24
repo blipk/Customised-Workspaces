@@ -45,7 +45,7 @@ const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
 const scopeName = "workspaceManager";
 
-const WorkspaceManager = new Lang.Class({
+var WorkspaceManager = new Lang.Class({
     Name: 'Worksets.WorkspaceManager',
 
     activeWorkspace: null,

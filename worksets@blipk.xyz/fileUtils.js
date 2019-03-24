@@ -46,7 +46,7 @@ const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
 const scopeName = "fileUtils";
 
-const CONF_DIR = GLib.get_user_config_dir() + '/' + Me.uuid;
+var CONF_DIR = GLib.get_user_config_dir() + '/' + Me.uuid;
 const SESSION_FILE = 'session.json';
 
 function checkExists(path) {
