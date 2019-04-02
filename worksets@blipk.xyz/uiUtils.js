@@ -93,7 +93,7 @@ function showUserFeedbackMessage(input, overviewMessage=false) {
 
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
-const ObjectInterfaceDialog = new Lang.Class ({
+var ObjectInterfaceDialog = new Lang.Class ({
     Name: 'Worksets.ObjectInterfaceDialog',
     Extends: ModalDialog.ModalDialog,
 

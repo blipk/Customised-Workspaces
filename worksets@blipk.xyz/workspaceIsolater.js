@@ -47,7 +47,7 @@ const scopeName = "workspaceIsolater";
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()
 
 //Complete credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
-const WorkspaceIsolator = new Lang.Class({
+var WorkspaceIsolator = new Lang.Class({
     Name: 'WorkspaceIsolator',
 
     _init: function() {
@@ -118,7 +118,7 @@ const WorkspaceIsolator = new Lang.Class({
 
 // Check if an application is on the active workspace
 WorkspaceIsolator.isActiveApp = function(app) {
-    return app.is_on_workspace(Me.gScreen.get_active_workspace());
+    return app.is_on_workspace(Me.gWorkspaceManager.get_active_workspace());
 };
 // Refresh dash
 WorkspaceIsolator.refresh = function() {
