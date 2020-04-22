@@ -3,7 +3,7 @@
 Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.
 
 ### Usage
-![User Interface Guide](WorksetsUserInterfaceGuide.png?raw=true "Worksets User Interface Guide")
+![User Interface Guide](doc/WorksetsUserInterfaceGuide.png?raw=true "Worksets User Interface Guide")
 
 ### Supported Gnome-Shell versions
 
