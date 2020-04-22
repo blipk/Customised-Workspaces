@@ -1,7 +1,7 @@
 /*
- * Worksets extension for Gnome 3
- * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * Bowser extension for Gnome 3
+ * This file is part of the Worksets Extension for Gnome 3
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,28 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  * 
- * Credits:
- * This extension was created by using the following gnome-shell extensions
- * as a source for code and/or a learning resource
- * - dash-to-panel@jderose9.github.com.v16.shell-extension
- * - clipboard-indicator@tudmotu.com
- * - workspaces-to-dock@passingthru67.gmail.com
- * - workspace-isolated-dash@n-yuki.v14.shell-extension
- * - historymanager-prefix-search@sustmidown.centrum.cz
- * - minimum-workspaces@philbot9.github.com.v9.shell-extension
- * 
- * Many thanks to those great extensions.
  */
 
-
-//Internal imports
+// Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const fileUtils = Me.imports.fileUtils;
-const utils = Me.imports.utils;
+const { utils, fileUtils } = Me.imports;
 const _debug_ = true;
-const scopeName = "devUtils";
 
 function printJSON(object) {
     return JSON.stringify(object, null, 2);

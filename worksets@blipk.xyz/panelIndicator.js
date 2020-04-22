@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * Copyright (C) 2020 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,16 +31,11 @@
  */
 
 //External imports
-const Clutter = imports.gi.Clutter;
-const ExtensionSystem = imports.ui.extensionSystem;
-const ExtensionUtils = imports.misc.extensionUtils;
+const { extensionUtils, util } = imports.misc;
+const { extensionSystem, popupMenu, panelMenu } = imports.ui;
+const { GObject, St } = imports.gi;
 const Gettext = imports.gettext;
-const Lang = imports.lang;
 const Main = imports.ui.main;
-const PopupMenu = imports.ui.popupMenu;
-const PanelMenu = imports.ui.panelMenu;
-const St = imports.gi.St;
-const Util = imports.misc.util;
 const _ = Gettext.domain('worksets').gettext;
 
 //Internal imports
@@ -58,63 +53,61 @@ let ISOLATE_RUNNING      = false;
 let MAX_ENTRY_LENGTH     = 50;
 
 //TO DO implement the workspace isolater
-var WorksetsIndicator = Lang.Class({
-    Name: 'WorksetsIndicator',
-    Extends: PanelMenu.Button,
-   
-    destroy: function () {
+var WorksetsIndicator = GObject.registerClass({
+    GTypeName: 'WorksetsIndicator'
+}, class WorksetsIndicator extends panelMenu.Button {
+    destroy() {
         try {
         if (Me.workspaceIsolater) {
             Me.workspaceIsolater.destroy();
             workspaceIsolater.WorkspaceIsolator.refresh();
             delete Me.workspaceIsolater;
         }
-        this.disconnectAll();
-        this.parent();
+        super._onDestroy();
         delete Main.panel.statusArea['WorksetsIndicator'];
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _init: function() {
+        } catch(e) { dev.log(e) }
+    }
+    _init() {
         try {
-        this.parent(0.0, "WorksetsIndicator");
+        super._init(0.0, "WorksetsIndicator");
 
         //set up menu box to build into
         let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
         this.icon = new St.Icon({ icon_name: INDICATOR_ICON, style_class: 'system-status-icon worksets-indicator-icon' });
         hbox.add_child(this.icon);
-        let buttonText = new St.Label(    {text: ('Worksets'), y_align: Clutter.ActorAlign.CENTER }   );
+        let buttonText = new St.Label(    {text: ('Worksets'), y_align: uiUtils.Clutter.ActorAlign.CENTER }   );
         hbox.add_child(buttonText);
         this.actor.add_child(hbox);
 
         //Build our menu
         this._buildMenu();
-        this._worksetMenuItemsRefreshAll()
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }    
-    },
-    _onEvent: function(actor, event) {/*Override from parent class to handle menuitem refresh*/
-        this._worksetMenuItemsRefreshAll();
-        this.parent(actor, event);
-    },
+        this._refreshMenu()
+        } catch(e) { dev.log(e) }    
+    }
+    _onOpenStateChanged(menu, open) {/*Override from parent class to handle menuitem refresh*/
+        this._refreshMenu();
+        super._onOpenStateChanged(menu, open);
+    }
     //main UI builder
-    _buildMenu: function () {
+    _buildMenu() {
         try {
         // Isolate running apps switch
-        let isolateRunningAppsMenuItem = new PopupMenu.PopupSwitchMenuItem(_("Isolate running applications"), ISOLATE_RUNNING, { reactive: true });
+        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), ISOLATE_RUNNING, { reactive: true });
         isolateRunningAppsMenuItem.connect('toggled', this._onIsolateSwitch);
         this.menu.addMenuItem(isolateRunningAppsMenuItem);
 
         // Add 'Settings' menu item to open settings
-        //let settingsMenuItem = new PopupMenu.PopupMenuItem(('Settings'));
+        //let settingsMenuItem = new popupMenu.PopupMenuItem(('Settings'));
         //this.menu.addMenuItem(settingsMenuItem);
         //settingsMenuItem.connect('activate', Lang.bind(this, this._openSettings));
 
         // Add separator
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
 
         // Menu sections for workset items
         // Favorites
-        this.favoritesSection = new PopupMenu.PopupMenuSection();
-        this.scrollViewFavoritesMenuSection = new PopupMenu.PopupMenuSection();
+        this.favoritesSection = new popupMenu.PopupMenuSection();
+        this.scrollViewFavoritesMenuSection = new popupMenu.PopupMenuSection();
         let favoritesScrollView = new St.ScrollView({
             style_class: 'ci-history-menu-section', overlay_scrollbars: true
         });
@@ -123,8 +116,8 @@ var WorksetsIndicator = Lang.Class({
         this.menu.addMenuItem(this.scrollViewFavoritesMenuSection);
 
         // History
-        this.historySection = new PopupMenu.PopupMenuSection();
-        this.scrollViewHistoryMenuSection = new PopupMenu.PopupMenuSection();
+        this.historySection = new popupMenu.PopupMenuSection();
+        this.scrollViewHistoryMenuSection = new popupMenu.PopupMenuSection();
         let historyScrollView = new St.ScrollView({
             style_class: 'ci-history-menu-section', overlay_scrollbars: true
         });
@@ -133,35 +126,30 @@ var WorksetsIndicator = Lang.Class({
         this.menu.addMenuItem(this.scrollViewHistoryMenuSection);
 
         // Add separator
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
         
-        // Collections menu button menu
-        let collectionsMenuItem = new PopupMenu.PopupMenuItem((''));
-        collectionsMenuItem.iconButtons = [];
-        collectionsMenuItem.iconsButtonsPressIds = [];
-        collectionsMenuItem.nameText = "Collections";
-        this.menu.collectionsMenuItem = collectionsMenuItem;
-        this.menu.addMenuItem(collectionsMenuItem);
+        // Management menu button menu
+        let sessionMenuItem = new popupMenu.PopupSubMenuMenuItem((''));
+        sessionMenuItem.nameText = "Manage";
+        this.menu.sessionMenuItem = sessionMenuItem;
+        this.menu.addMenuItem(sessionMenuItem);
         
-        this._worksetMenuItemSetEntryLabel(collectionsMenuItem);
-        collectionsMenuItem.connect('activate', Lang.bind(this, Me.session.showObjectManager));
+        this._worksetMenuItemSetEntryLabel(sessionMenuItem);
+        sessionMenuItem.connect('activate', ()=>{Me.session.showObjectManager()});
 
-        uiUtils.createIconButton(collectionsMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(collectionsMenuItem, 'document-properties-symbolic', () => {Me.session.showObjectManager(); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(collectionsMenuItem, 'go-next-symbolic', () => {Me.session.nextCollection(); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(collectionsMenuItem, 'tab-new-symbolic', () => {Me.session.newObject(); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(collectionsMenuItem, 'go-previous-symbolic', () => {Me.session.prevCollection(); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(collectionsMenuItem, 'document-save-symbolic', () => {Me.session.saveActiveCollection(); this._worksetMenuItemsRefreshAll();});
+        uiUtils.createIconButton(sessionMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._refreshMenu();});
+        uiUtils.createIconButton(sessionMenuItem, 'document-properties-symbolic', () => {Me.session.showObjectManager(); this._refreshMenu();});
+        uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newObject(); this._refreshMenu();});
+
         
         // Add separator
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    //This is run periodically via _worksetMenuItemsRefreshAll()
-    _addWorksetMenuItemEntry: function (workSetsArrayBuffer) {
+        this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+        } catch(e) { dev.log(e) }
+    }
+    //This is run periodically via _refreshMenu()
+    _addWorksetMenuItemEntry(workSetsArrayBuffer) {
         try {
-        let menuItem = new PopupMenu.PopupMenuItem('');
-        menuItem.menu = this.menu;
+        let menuItem = new popupMenu.PopupSubMenuMenuItem('', true);
 
         // Connect menu items to worksets array
         menuItem.workset = workSetsArrayBuffer;
@@ -170,17 +158,18 @@ var WorksetsIndicator = Lang.Class({
         menuItem.nameText = menuItem.workset.WorksetName;
 
         // Connect menuitem and its iconbuttons
+        // TO DO
         menuItem.buttonPressId = menuItem.connect('activate', () => {this._worksetMenuItemsOnMenuSelected(menuItem);} );
-        menuItem.iconButtons = []; menuItem.iconsButtonsPressIds = [];
+        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
 
         this._worksetMenuItemSetEntryLabel(menuItem);
 
         // Create iconbuttons on MenuItem
         let iconfav_nameuri = menuItem.favoriteState ? 'starred-symbolic' : 'non-starred-symbolic';
         let iconOpenNew_nameuri = menuItem.workset.active ? 'go-last-symbolic' : 'list-add-symbolic';
-        uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._worksetMenuItemsRefreshAll();}, true);
-        uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._worksetMenuItemsRefreshAll();});
-        uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._worksetMenuItemsRefreshAll();});
+        uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
+        uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
+        uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
 
         uiUtils.createIconButton(menuItem, 'document-properties-symbolic', () => {
             let editObjectChooseDialog = new uiUtils.ObjectEditorDialog("Properties of Workset: "+menuItem.nameText, () => {
@@ -188,108 +177,151 @@ var WorksetsIndicator = Lang.Class({
             }, menuItem.workset, [{WorksetName: 'Workset Name'}, {DefaultWorkspaceIndex: 'Load on workspace X by default'}, {Favorite: 'Favorite'}]);
         });
 
-        uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {this._worksetMenuItemRemoveEntry(menuItem, 'delete'); this._worksetMenuItemsRefreshAll();});
+        uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {this._worksetMenuItemRemoveEntry(menuItem, 'delete'); this._refreshMenu();});
+
+        // Set up sub menu items
+        menuItem.favAppsMenuItems = [];
+        this._worksetSubMenuRefreh(menuItem);
 
         //Add to correct list (favorite/not) and decorate with indicator if active
         menuItem.favoriteState ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
-        menuItem.workset.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex ? menuItem.setOrnament(PopupMenu.Ornament.DOT) : menuItem.setOrnament(PopupMenu.Ornament.NONE);
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _worksetMenuItemsRefreshAll: function () {
+        menuItem.workset.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex ? menuItem.setOrnament(popupMenu.Ornament.DOT) : menuItem.setOrnament(popupMenu.Ornament.NONE);
+        } catch(e) { dev.log(e) }
+    }
+    _worksetSubMenuRefreh(menuItem) {
+        // Change name and icon to current default
+        //menuItem.icon.icon_name = menuItem.workset.FavApps.icon ? menuItem.workset.FavApps.icon : 'web-browser-symbolic';
+
+        // Remove all and re-add
+        menuItem.favAppsMenuItems.forEach(function (mItem) { mItem.destroy(); });
+        if (menuItem.infoMenuButton) menuItem.infoMenuButton.destroy();
+        if (menuItem.bgMenuButton) menuItem.bgMenuButton.destroy();
+        menuItem.favAppsMenuItems = [];
+        
+        menuItem.workset.FavApps.forEach(function(favApp, i){
+            let {name, displayName, exec, icon} = favApp;
+            icon = icon || 'web-browser-sybmolic';
+            menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
+            menuItem.favAppsMenuItems[i].connect('activate', () => {
+                this._worksetSubMenuRefreh(menuItem)
+                menuItem.setSubmenuShown(false);
+                menuItem.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+            });
+            menuItem.menu.addMenuItem(menuItem.favAppsMenuItems[i]);
+        }, this);
+
+        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Opens on workspace "+menuItem.workset.DefaultWorkspaceIndex), "bowser");
+        menuItem.infoMenuButton.connect('activate', () => {
+            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+        });
+        menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
+        //uiUtils.createIconButton(menuItem.infoMenuButton, 'web-browser-sybmolic', () => {});
+        menuItem.menu.addMenuItem(menuItem.infoMenuButton);
+
+        menuItem.bgMenuButton = new popupMenu.PopupImageMenuItem(_("Change the background for this workset"), "bowser");
+        menuItem.bgMenuButton.connect('activate', () => {
+            Me.session.getBackground();
+            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+        });
+        menuItem.bgMenuButton.setOrnament(popupMenu.Ornament.DOT)
+        //uiUtils.createIconButton(menuItem.bgMenuButton, 'web-browser-sybmolic', () => {});
+        menuItem.menu.addMenuItem(menuItem.bgMenuButton);
+    }
+    _refreshMenu() {
         try {     
         //Remove all and re-add with any changes
-        if (!utils.isEmpty(Me.session.collections)) {
+        if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
-            Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer) {
+            Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }, this);
-            this.menu.collectionsMenuItem.nameText = Me.session.collections[Me.session.activeCollectionIndex].CollectionName;
-            this._worksetMenuItemSetEntryLabel(this.menu.collectionsMenuItem);
+            this.menu.sessionMenuItem.nameText = Me.session.activeSession.SessionName + "Session";
+            this._worksetMenuItemSetEntryLabel(this.menu.sessionMenuItem);
 
             Me.session.saveSession();
         }
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _findRawWorksetByMenuItem: function (menuItem) {
-        let tmpWorkset = Me.session.collections[Me.session.activeCollectionIndex].Worksets.filter(item => item === menuItem.workset)[0];
+        } catch(e) { dev.log(e) }
+    }
+    _findRawWorksetByMenuItem(menuItem) {
+        let tmpWorkset = Me.session.activeSession.Worksets.filter(item => item === menuItem.workset)[0];
         return tmpWorkset;
-    },
-    _worksetMenuItemSetEntryLabel: function (menuItem) {
+    }
+    _worksetMenuItemSetEntryLabel(menuItem) {
         menuItem.label.set_text(utils.truncateString(menuItem.nameText, MAX_ENTRY_LENGTH));
-    },
-    _worksetMenuItemsGetAll: function (text) {
+    }
+    _worksetMenuItemsGetAll(text) {
         return this.historySection._getMenuItems().concat(this.favoritesSection._getMenuItems());
-    },
-    _worksetMenuItemsRemoveAll: function () {
+    }
+    _worksetMenuItemsRemoveAll() {
         this._worksetMenuItemsGetAll().forEach(function (mItem) { mItem.destroy(); });
-    },
-    _worksetMenuItemRemoveEntry: function (menuItem, event) {
+    }
+    _worksetMenuItemRemoveEntry(menuItem, event) {
         try {
         if(event === 'delete') {
             let backupFilename = Me.session.saveWorkset(menuItem.workset, true);
-            Me.session.collections[Me.session.activeCollectionIndex].Worksets = Me.session.collections[Me.session.activeCollectionIndex].Worksets.filter(item => item !== menuItem.workset)
-            this._worksetMenuItemsRefreshAll();
+            Me.session.activeSession.Worksets = Me.session.activeSession.Worksets.filter(item => item !== menuItem.workset)
+            this._refreshMenu();
             menuItem.destroy();
             uiUtils.showUserFeedbackMessage("Workset removed from session and backup saved to "+backupFilename, true);
         }
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _worksetMenuItemMoveToTop: function (menuItem) {
+        } catch(e) { dev.log(e) }
+    }
+    _worksetMenuItemMoveToTop(menuItem) {
         try {
         this._worksetMenuItemRemoveEntry(menuItem);
-        Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer) {
+        Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
             if (worksetBuffer === menuItem.workspace) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }
         }, this);
-        this._worksetMenuItemsRefreshAll();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _worksetMenuItemToggleFavorite: function (menuItem) {
+        this._refreshMenu();
+        } catch(e) { dev.log(e) }
+    }
+    _worksetMenuItemToggleFavorite(menuItem) {
         try {
         menuItem.favoriteState = menuItem.favoriteState ? false : true;
 
-        Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetBuffer, i) {
+        Me.session.activeSession.Worksets.forEach(function (worksetBuffer, i) {
             if (worksetBuffer === menuItem.workset) {
-                Me.session.collections[Me.session.activeCollectionIndex].Worksets[i].Favorite = menuItem.favoriteState;
+                Me.session.activeSession.Worksets[i].Favorite = menuItem.favoriteState;
             }
         }, this);
 
         this._worksetMenuItemMoveToTop(menuItem);
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _worksetMenuItemsOnMenuSelected: function (menuItem, close=false) {
+        } catch(e) { dev.log(e) }
+    }
+    _worksetMenuItemsOnMenuSelected(menuItem, close=false) {
         try {
         //Turn off all others
         this._worksetMenuItemsGetAll().forEach(function (mItem) {
-            mItem.currentlyActive = false; mItem.setOrnament(PopupMenu.Ornament.NONE);
+            mItem.currentlyActive = false; mItem.setOrnament(popupMenu.Ornament.NONE);
         }, this);
 
         //Toggle current in UI
-        menuItem.currentlyActive ? menuItem.setOrnament(PopupMenu.Ornament.NONE) : menuItem.setOrnament(PopupMenu.Ornament.DOT);
+        menuItem.currentlyActive ? menuItem.setOrnament(popupMenu.Ornament.NONE) : menuItem.setOrnament(popupMenu.Ornament.DOT);
         menuItem.currentlyActive = menuItem.currentlyActive ? false : true;
 
         //Activate selected workset
         Me.session.displayWorkset(menuItem.workset);
-        this._worksetMenuItemsRefreshAll();
+        this._refreshMenu();
 
         if (close) {this.menu.close();}
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _onIsolateSwitch: function(init=false) {
+        } catch(e) { dev.log(e) }
+    }
+    _onIsolateSwitch(init=false) {
         try {
         ISOLATE_RUNNING = ISOLATE_RUNNING ? false: true;
 
-        let dash2panel = ExtensionUtils.extensions['dash-to-panel@jderose9.github.com'];
-        let dash2dock = ExtensionUtils.extensions['dash-to-dock@micxgx.gmail.com'];
+        let dash2panel = extensionUtils.extensions['dash-to-panel@jderose9.github.com'];
+        let dash2dock = extensionUtils.extensions['dash-to-dock@micxgx.gmail.com'];
         let dash2panelSettings, dash2dockSettings;
         if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings;
         if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings;
 
         if (ISOLATE_RUNNING) {
-            if (dash2panel && dash2panelSettings && dash2panel.state === ExtensionSystem.ExtensionState.ENABLED) {
+            if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
                 dash2panelSettings.set_boolean('isolate-workspaces', true);
-            } else if (dash2dock && dash2dockSettings && dash2dock.state === ExtensionSystem.ExtensionState.ENABLED) {
+            } else if (dash2dock && dash2dockSettings && dash2dock.state === extensionSystem.ExtensionState.ENABLED) {
                 dash2dockSettings.set_boolean('isolate-workspaces', true);
             } else {
                 Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
@@ -304,12 +336,12 @@ var WorksetsIndicator = Lang.Class({
                 delete Me.workspaceIsolater;
             }
         }
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _toggleMenu: function(){
+        } catch(e) { dev.log(e) }
+    }
+    _toggleMenu(){
         this.menu.toggle();
-    },
-    _openSettings: function () {
-        Util.spawn(["gnome-shell-extension-prefs", Me.uuid]);
+    }
+    _openSettings() {
+        util.spawn(["gnome-shell-extension-prefs", Me.uuid]);
     }
 });

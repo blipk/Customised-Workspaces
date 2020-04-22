@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,80 +30,68 @@
  * Many thanks to those great extensions.
  */
 
-//External imports
-const Lang = imports.lang;
+// External imports
 const Main = imports.ui.main;
-const Shell = imports.gi.Shell;
 const Gettext = imports.gettext;
-const Wnck = imports.gi.Wnck;
-const Meta = imports.gi.Meta;
 const Workspace = imports.ui.workspace;
+const { GObject, Meta, Wnck, Shell } = imports.gi;
 
-//Internal imports
+// Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
-const scopeName = "workspaceManager";
 
-var WorkspaceManager = new Lang.Class({
-    Name: 'Worksets.WorkspaceManager',
-
-    activeWorkspace: null,
-    NumGlobalWorkspaces: null,
-    activeWorkspaceIndex: null,
-    workspaceChangeHandler: null,
-
-    _init: function() {
+class WorkspaceManager { 
+    constructor() {
         try {
+        this.workspaceChangeHandler = null;
         Me.workspaceManager = this;
-        this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', Lang.bind(this, this._activeWorkspaceChanged))
+        this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
         this.workspaceUpdate();
         this.loadDefaultWorksets();
         this.workspaceUpdate();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    destroy: function() {
+        } catch(e) { dev.log(e) }
+    }
+    destroy() {
         try {
         this.switchToWorkspace(0);
         this._cleanWorkspaces(true);
         global.window_manager.disconnect(this.workspaceChangeHandler);
-    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _activeWorkspaceChanged: function() {
+    } catch(e) { dev.log(e) }
+    }
+    _activeWorkspaceChanged() {
         try {
         this.workspaceUpdate();
         let foundActive = false;
-        //Loop through worksets of all collections and load the one which is set to current
-        Me.session.collections.forEach(function (collectionsbuffer, collectionIndex) {
-            Me.session.collections[collectionIndex].Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-                if (worksetsbuffer.activeWorkspaceIndex === this.activeWorkspaceIndex) {
-                    foundActive = true;
-                    Me.session.displayWorkset(Me.session.collections[collectionIndex].Worksets[worksetIndex]);
-                }
-            }, this);
+        //Loop through worksets and load the one which is set to current
+        Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
+            if (worksetsbuffer.activeWorkspaceIndex === this.activeWorkspaceIndex) {
+                foundActive = true;
+                Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
+            }
         }, this);
 
         //If there's not any active on the workspace, load any that are set to default here
         if (foundActive === false) this.loadDefaultWorksets();
         this.workspaceUpdate();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    workspaceUpdate: function() {
+        } catch(e) { dev.log(e) }
+    }
+    workspaceUpdate() {
         try {    
         this._cleanWorkspaces();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    loadDefaultWorksets: function(){
+        } catch(e) { dev.log(e) }
+    }
+    loadDefaultWorksets(){
         try {
-        Me.session.collections[Me.session.activeCollectionIndex].Worksets.forEach(function (worksetsbuffer, worksetIndex) {
+        Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
             if (worksetsbuffer.DefaultWorkspaceIndex === this.activeWorkspaceIndex) {
-                Me.session.displayWorkset(Me.session.collections[Me.session.activeCollectionIndex].Worksets[worksetIndex]);
+                Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
             }
         }, this);
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    getWorkspaceWindows: function(workspaceIndex) {
+        } catch(e) { dev.log(e) }
+    }
+    getWorkspaceWindows(workspaceIndex) {
         try {
         if (utils.isEmpty(workspaceIndex)) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
@@ -111,22 +99,22 @@ var WorkspaceManager = new Lang.Class({
         let windows = workspace.list_windows();
         windows = windows.filter(function(w) { return !w.is_skip_taskbar() && !w.is_on_all_workspaces(); });
         return windows;
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
+        } catch(e) { dev.log(e) }
+    }
     get activeWorkspace() {
         this.workspaceUpdate();
         return Me.gWorkspaceManager.get_active_workspace();
-    },
+    }
     get activeWorkspaceIndex() {
         this.workspaceUpdate();
         return Me.gWorkspaceManager.get_active_workspace_index();
-    },
+    }
     get NumGlobalWorkspaces() {
         this.workspaceUpdate();
         return Me.gWorkspaceManager.n_workspaces;
-    },
+    }
 
-    getWorkspaceAppIds: function(workspaceIndex, excludeFavorites=true) {
+    getWorkspaceAppIds(workspaceIndex, excludeFavorites=true) {
         try {
         if (utils.isEmpty(workspaceIndex)) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
@@ -161,30 +149,28 @@ var WorkspaceManager = new Lang.Class({
         }
 
         return appIDs;
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    switchToWorkspace: function(index=0) {
+        } catch(e) { dev.log(e) }
+    }
+    switchToWorkspace(index=0) {
         try {
         index = parseInt(index, 10);   
         this.workspaceUpdate();
         Me.gWorkspaceManager.get_workspace_by_index(index).activate(0);
         this.workspaceUpdate();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    },
-    _moveWindowsToWorkspace: function() {
+        } catch(e) { dev.log(e) }
+    }
+    _moveWindowsToWorkspace() {
         //TO DO        
-    },
-    _cleanWorkspaces: function(destroyClean=false) {
+    }
+    _cleanWorkspaces(destroyClean=false) {
         try {
         //minimum workspaces should equal the amount of active worksets
         let min_workspaces = 0;
         if (!destroyClean) {
-            Me.session.collections.forEach(function (collectionsbuffer, collectionIndex) {
-                Me.session.collections[collectionIndex].Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-                    if (worksetsbuffer.active === true) {
-                        min_workspaces++;
-                    }
-                }, this);
+            Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
+                if (worksetsbuffer.active === true) {
+                    min_workspaces++;
+                }
             }, this);
         }
 
@@ -209,6 +195,6 @@ var WorkspaceManager = new Lang.Class({
         
         //update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
-        } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
+        } catch(e) { dev.log(e) }
     }
-});
+};

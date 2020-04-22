@@ -16,38 +16,18 @@
       <summary>test</summary>
       <description>test</description>
     </key>
-     <key name="favorites-example" type="s">
-      <default>"['org.gnome.Terminal.desktop', 'nemo.desktop', 'hexchat.desktop', 'steam.desktop', 'palemoon.desktop', 'firefox.desktop', 'com.visualstudio.code.oss.desktop']"</default>
+     <key name="favorites-prototype" type="s">
+      <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
       <summary>Multidimensional array containing info on each workset, first value is its name</summary>
       <description>Contains the naming and app data for each favorite.</description>
     </key>
     <key name="workset-prototype-json" type="s">
-      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}"</default>
-      <summary>JSObject containing info on each workset</summary>
-      <description>Contains the information on each set.</description>
-    </key>
-    <key name="workset-example-json" type="s">
-      <default>"{\"WorksetName\":\"Primary Workset\", \"Favorite\":true, \"DefaultWorkspaceIndex\":0, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"org.gnome.Terminal.desktop\",\"nemo.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null}"</default>
-      <summary>JSObject containing info on each workset</summary>
-      <description>Contains the information on each set.</description>
-    </key>
-    <key name="collection-prototype-json" type="s">
-      <default>"{\"CollectionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}]}"</default>
-      <summary>JSObject containing info on each workset</summary>
-      <description>Contains the information on each set.</description>
-    </key>
-    <key name="collection-example-json" type="s">
-      <default>"{\"CollectionName\":\"Primary Session\",\"Favorite\":true,\"Worksets\":[{\"WorksetName\":\"Primary Workset\", \"Favorite\":true, \"DefaultWorkspaceIndex\":0, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"nemo.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null},{\"WorksetName\":\"Projects\", \"Favorite\":false, \"DefaultWorkspaceIndex\":1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"org.gnome.Terminal.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null}]}"</default>
+      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"BackgroundImage\":\"\", \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}"</default>
       <summary>JSObject containing info on each workset</summary>
       <description>Contains the information on each set.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"[{\"CollectionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}]}]"</default>
-      <summary>JSObject containing info on each workset</summary>
-      <description>Contains the information on each set.</description>
-    </key>
-    <key name="session-example-json" type="s">
-      <default>"[{\"CollectionName\":\"Primary Session\",\"Favorite\":true,\"Worksets\":[{\"WorksetName\":\"Primary Workset\", \"Favorite\":true, \"DefaultWorkspaceIndex\":0, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"nemo.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null},{\"WorksetName\":\"Projects\", \"Favorite\":false, \"DefaultWorkspaceIndex\":1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"org.gnome.Terminal.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null}]},{\"CollectionName\":\"Storage\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"Primary Workset\", \"Favorite\":true, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"nemo.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null},{\"WorksetName\":\"Projects\", \"Favorite\":false, \"DefaultWorkspaceIndex\":1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"org.gnome.Terminal.desktop\"], \"active\":false, \"activeWorkspaceIndex\":null}]}]"</default>
+      <default>"{\"SessionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}]}"</default>
       <summary>JSObject containing info on each workset</summary>
       <description>Contains the information on each set.</description>
     </key>

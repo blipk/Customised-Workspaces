@@ -1,6 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,28 +30,23 @@
  * Many thanks to those great extensions.
  */
 
-//External imports
+// External imports
 const AppIcon = imports.ui.appDisplay.AppIcon;
-const Lang = imports.lang;
-const Shell = imports.gi.Shell;
 const Main = imports.ui.main;
 const Gettext = imports.gettext;
+const { GObject, Meta, Shell } = imports.gi;
 const AppSystem = Shell.AppSystem.get_default();
-const Meta = imports.gi.Meta;
 
-//Internal imports
+// Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const dev = Me.imports.devUtils;
-const scopeName = "workspaceIsolater";
- 
+
 //This removes running apps from workspaces they don't have any windows on when using standard gnome-shell dash
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()
 
 //Complete credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
-var WorkspaceIsolator = new Lang.Class({
-    Name: 'WorkspaceIsolator',
-
-    _init: function() {
+class WorkspaceIsolator { 
+    constructor() {
         // Extend AppSystem to only return applications running on the active workspace
         AppSystem._workspace_isolated_dash_nyuki_get_running = AppSystem.get_running;
         AppSystem.get_running = function() {
@@ -85,9 +81,9 @@ var WorkspaceIsolator = new Lang.Class({
         // - window created
         // - window closed
         this._onRestackedId = Me.gScreen.connect('restacked', WorkspaceIsolator.refresh);
-    },
+    }
 
-    destroy: function() {
+    destroy() {
         // Revert the AppSystem function
         if (AppSystem._workspace_isolated_dash_nyuki_get_running) {
             AppSystem.get_running = AppSystem._workspace_isolated_dash_nyuki_get_running;
@@ -114,11 +110,11 @@ var WorkspaceIsolator = new Lang.Class({
             this._onSwitchWorkspaceId = 0;
         }
     }
-});
+};
 
 // Check if an application is on the active workspace
 WorkspaceIsolator.isActiveApp = function(app) {
-    return app.is_on_workspace(Me.gWorkspaceManager.get_active_workspace());
+    return app.is_on_workspace(Me.gScreen.get_active_workspace());
 };
 // Refresh dash
 WorkspaceIsolator.refresh = function() {

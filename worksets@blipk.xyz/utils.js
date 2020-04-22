@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
- * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * This file is part of the Worksets Extension for Gnome 3
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,117 +15,146 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  * 
- * Credits:
- * This extension was created by using the following gnome-shell extensions
- * as a source for code and/or a learning resource
- * - dash-to-panel@jderose9.github.com.v16.shell-extension
- * - clipboard-indicator@tudmotu.com
- * - workspaces-to-dock@passingthru67.gmail.com
- * - workspace-isolated-dash@n-yuki.v14.shell-extension
- * - historymanager-prefix-search@sustmidown.centrum.cz
- * - minimum-workspaces@philbot9.github.com.v9.shell-extension
- * 
- * Many thanks to those great extensions.
  */
 
-//Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const dev = Me.imports.devUtils;
+// External imports
+const { GLib, Gio } = imports.gi;
 const Gettext = imports.gettext;
 const _ = Gettext.domain('worksets').gettext;
-const scopeName = "utils";
 
-function textFormatter(text, options={/*length: 50*/}) {
+// Internal imports
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const dev = Me.imports.devUtils;
+
+function textFormatter(text, options = {/*length: 50*/ }) {
+    text = _(text);
     if (isEmpty(text)) return text;
     if (options.length) text = truncateString(text, options.length);
-    return _(text);
+    return text;
 }
 
 //General
 function truncateString(instring, length) {
     let shortened = instring.replace(/\s+/g, ' ');
     if (shortened.length > length)
-        shortened = shortened.substring(0,length-1) + '...';
+        shortened = shortened.substring(0, length - 1) + '...';
     return shortened;
 }
 
-var isEmpty = function(v){
-    return typeof v === 'undefined' ? true 
-                : v === null ? true
-                : v === [] ? true
+var isEmpty = function (v) {
+    return typeof v === 'undefined' ? true
+        : v === null ? true
+            : v === [] ? true
                 : typeof v === 'object' ? (Object.getOwnPropertyNames(v).length > 0 ? false : true)
-                : typeof v === 'string' ? (v.length > 0 ? false : true)
-                : Boolean(v);
+                    : typeof v === 'string' ? (v.length > 0 ? false : true)
+                        : Boolean(v);
 }
 
+if (!Object.prototype.hasOwnProperty('forEachEntry')) {
 Object.defineProperty(Object.prototype, 'forEachEntry', {
-    value: function (callback, thisArg, recursive=false, recursiveIndex=0) {
-        if (this === null) throw new TypeError('Not an object'); 
+    value: function (callback, thisArg, recursive = false, recursiveIndex = 0) {
+        if (this === null) throw new TypeError('Not an object');
         thisArg = thisArg || this;
-        
-        Object.keys(this).forEach(function(key, entryIndex){
+
+        Object.entries(this).forEach(function (entryArray, entryIndex) {
+            let [key, value] = entryArray;
+            let entryObj = { [key]: this[key] };
             let retIndex = entryIndex + recursiveIndex;
-            callback.call(thisArg, key, this[key], retIndex, this);
-            if (typeof this[key] === 'object' && this[key] !== null && recursive===true) {
+            callback.call(thisArg, key, this[key], retIndex, entryObj, entryArray, this);
+            if (typeof this[key] === 'object' && this[key] !== null && recursive === true) {
                 if (Array.isArray(this[key]) === true) {
-                    this[key].forEach(function(prop, index){
-                        if (Array.isArray(this[key][index]) === false && typeof this[key][index] === 'object' && this[key][index] !== null ) {
+                    this[key].forEach(function (prop, index) {
+                        if (Array.isArray(this[key][index]) === false && typeof this[key][index] === 'object' && this[key][index] !== null) {
                             recursiveIndex += Object.keys(this).length - 1;
                             this[key][index].forEachEntry(callback, thisArg, recursive, recursiveIndex);
                         }
                     }, this);
                 } else {
                     recursiveIndex += Object.keys(this).length - 1;
-                    this[key].forEachEntry(callback, thisArg, recursive, recursiveIndex); 
+                    this[key].forEachEntry(callback, thisArg, recursive, recursiveIndex);
                 }
             }
         }, this);
     }
 });
+}
 
-
-var handler = {
-    get: function(obj, prop) {
-        return prop in obj ?
-            obj[prop] :
-            37;
+if (!Object.prototype.hasOwnProperty('filter')) {
+Object.defineProperty(Object.prototype, 'filter', {
+    value: function (predicate) {
+        return Object.fromEntries(Object.entries(this).filter(predicate));
     }
-};
+});
+}
 
-var DisplayWrapper = {
-    get: function(obj, prop, value) {
-        if (prop === 'screen') {
-        return prop in obj ?
-            obj[prop] :
-            global.display;
+function splitURI(inURI) {
+    try {
+    let regexPattern = /^(([^:/\?#]+):)?(\/\/([^/\?#]*))?([^\?#]*)(\?([^#]*))?(#(.*))?/;
+    
+    let re = RegExp(regexPattern)
+    let output = re.exec(inURI);
+
+    if (output[3] == undefined)
+        inURI = 'foo://' + inURI;
+        output = re.exec(inURI);
+    
+    // Named capture groups not working on gjs :(
+    let splitURI = {'scheme': output[1], 'schemeTrim': output[2], 
+                'authority': output[3], 'authorityTrim': output[4], 
+                'path': output[5], 
+                'query': output[6], 'queryTrim': output[7], 
+                'fragment': output[8], 'fragmentTrim': output[9]}
+
+    if (splitURI['scheme'] == 'foo:')
+        splitURI['scheme'] = '';
+        inURI = inURI.substring(6);
+
+    return splitURI;
+    } catch(e) { dev.log(e); }
+}
+
+// Combines the benefits of spawn_sync (easy retrieval of output)
+// with those of spawn_async (non-blocking execution).
+// Based on https://github.com/optimisme/gjs-examples/blob/master/assets/spawn.js.
+// https://github.com/p-e-w/argos/blob/master/argos%40pew.worldwidemann.com/utilities.js
+function spawnWithCallback(workingDirectory, argv, envp, flags, childSetup, callback) {
+    let [success, pid, stdinFile, stdoutFile, stderrFile] = GLib.spawn_async_with_pipes(
+        workingDirectory, argv, envp, flags, childSetup);
+
+    if (!success)
+        return;
+
+    GLib.close(stdinFile);
+    GLib.close(stderrFile);
+
+    let standardOutput = "";
+
+    let stdoutStream = new Gio.DataInputStream({
+        base_stream: new Gio.UnixInputStream({
+            fd: stdoutFile
+        })
+    });
+
+    readStream(stdoutStream, function (output) {
+        if (output === null) {
+            stdoutStream.close(null);
+            callback(standardOutput);
+        } else {
+            standardOutput += output;
         }
-        if (prop === 'workspace_manager') {
-            return prop in obj ?
-                obj[prop] :
-                global.screen || global.display;
+    });
+}
+
+function readStream(stream, callback) {
+    stream.read_line_async(GLib.PRIORITY_LOW, null, function (source, result) {
+        let [line] = source.read_line_finish(result);
+
+        if (line === null) {
+            callback(null);
+        } else {
+            callback(imports.byteArray.toString(line) + "\n");
+            readStream(source, callback);
         }
-        if (prop === 'MonitorManager') {
-            return prop in obj ?
-                obj[prop] :
-                global.screen || global.display;
-        }
-    },
-
-    /*
-    getScreen: function() {
-        return global.screen || global.display;
-    },
-
-    getWorkspaceManager: function() {
-        return global.screen || global.workspace_manager;
-    },
-
-    getMonitorManager: function() {
-        return global.screen || Meta.MonitorManager.get();
-    }
-    */
-};
-
-Me.gsCompat = new Proxy(global, DisplayWrapper);
+    });
+}

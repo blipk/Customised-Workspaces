@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
- * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * This file is part of the Worksets Gnome Extension for Gnome 3
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,54 +15,50 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  * 
- * Credits:
- * This extension was created by using the following gnome-shell extensions
- * as a source for code and/or a learning resource
- * - dash-to-panel@jderose9.github.com.v16.shell-extension
- * - clipboard-indicator@tudmotu.com
- * - workspaces-to-dock@passingthru67.gmail.com
- * - workspace-isolated-dash@n-yuki.v14.shell-extension
- * - historymanager-prefix-search@sustmidown.centrum.cz
- * - minimum-workspaces@philbot9.github.com.v9.shell-extension
- * 
- * Many thanks to those great extensions.
  */
 
-//External imports
+// External imports
 const ByteArray = imports.byteArray;
-const GLib = imports.gi.GLib;
-const Gio = imports.gi.Gio;
-const Shell = imports.gi.Shell;
-const Lang = imports.lang;
-const FileQueryInfoFlags = imports.gi.Gio.FileQueryInfoFlags;
-const FileCopyFlags = imports.gi.Gio.FileCopyFlags;
-const FileTest = GLib.FileTest;
+const { GLib, Gio, Shell } = imports.gi;
 const Gettext = imports.gettext;
+const _ = Gettext.domain('worksets').gettext;
 
-//Internal imports
+// Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
-const scopeName = "fileUtils";
 
-var CONF_DIR = GLib.get_user_config_dir() + '/' + Me.uuid;
-const SESSION_FILE = 'session.json';
+// Directory and file paths for resources
+const USER_CONF_DIR = GLib.get_user_config_dir();
+const USER_CACHE_DIR = GLib.get_user_cache_dir();
+const USER_DATA_DIR = GLib.get_user_data_dir();
+const INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
+const RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
+const CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
 
 function checkExists(path) {
-    let directoryFile = Gio.file_new_for_path(path);
-    return directoryFile.query_exists(null);
+    let result = false;
+    if (typeof path == 'string') {
+        let directoryFile = Gio.file_new_for_path(path);
+        result = directoryFile.query_exists(null);
+    } else if (typeof path == 'object') {
+        result = true;
+        path.forEach(function(path) {
+            if (!checkExists(path)) result = false;
+        }, this)
+    }
+    return result;
 }
 // Disk I/O handlers
 function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, returnDirectories=false, searchSubDirectories=false, searchLevel=1/*-1 for infinite*/){
     let childrenFileProperties = {parentDirectory: directory, fullname: null, name: null, extension: null, type: null};
     let childrenFilePropertiesArray = [];
-    try {
+
     let directoryFile = Gio.file_new_for_path(directory);
     if (!directoryFile.query_exists(null)) throw Error(directory+' not found');
     let children = directoryFile.enumerate_children('standard::name,standard::type', Gio.FileQueryInfoFlags.NONE, null);
-
+    
     let fileIterator;
     while ((fileIterator = children.next_file(null)) != null) {
         let type = fileIterator.get_file_type();
@@ -73,31 +69,24 @@ function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, return
         let nameWithoutExtension = tmpExtension.join('.');
 
         if (type == Gio.FileType.REGULAR) {
-            if (returnFiles) {
+            if (returnFiles) 
                 childrenFilePropertiesArray.push({parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type});
-            }
         } else if (type == Gio.FileType.DIRECTORY) {
-            if (searchSubDirectories) {
-                let childDirectory = directoryFile.get_child(fileIterator.get_name());
-                if (searchLevel > 0) {
-                    childrenFilePropertiesArray.push(enumarateDirectoryChildren(childDirectory, returnDirectories, searchSubDirectories, searchLevel));
-                    searchLevel--;
-                } else if (searchLevel === -1) {
-                    childrenFilePropertiesArray.push(enumarateDirectoryChildren(childDirectory, returnDirectories, searchSubDirectories, searchLevel));
-                }
-            }
-            if (returnDirectories) {
+            if (returnDirectories) 
                 childrenFilePropertiesArray.push({parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type});
+            if (!searchSubDirectories) continue;
+            let childDirectory = directoryFile.get_child(fileIterator.get_name());
+            if (searchLevel > 0 || searchLevel <= -1) {
+                childrenFilePropertiesArray.push(enumarateDirectoryChildren(childDirectory, returnDirectories, searchSubDirectories, searchLevel));
+                searchLevel--;
             }
         }
     }
-    } catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
 
     return childrenFilePropertiesArray;
 }
 function saveRawToFile (rawobject, filename, directory=CONF_DIR, append=false, async=false) {
-    //try {
-    let savePath = directory + '/' + filename;
+    let savePath = GLib.build_filenamev([directory, filename]);
     let contentsString = rawobject.toString();
     let contents = new GLib.Bytes(rawobject);
 
@@ -121,11 +110,9 @@ function saveRawToFile (rawobject, filename, directory=CONF_DIR, append=false, a
             outstream.close(null);
         }
     }
-    //Debug logger uses this to save to disk so can end up with nasty recursion if theres an error here
-    //} catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
 }
 function saveJSObjectToFile (jsobject, filename, directory=CONF_DIR, append=false, async=false) {
-    let savePath = directory + '/' + filename;
+    let savePath = GLib.build_filenamev([directory, filename]);
     let jsonString = JSON.stringify(jsobject, null, 1);
     let contents = new GLib.Bytes(jsonString);
 
@@ -151,7 +138,7 @@ function saveJSObjectToFile (jsobject, filename, directory=CONF_DIR, append=fals
             outstream.close(null);
         }
     }
-    } catch(e) {dev.log(scopeName+'.'+arguments.callee.name, e)}
+    } catch(e) {dev.log(e)}
 }
 function aSyncSaveCallback(obj, res, contents) {
     let stream = obj.replace_finish(res);
@@ -161,17 +148,17 @@ function aSyncSaveCallback(obj, res, contents) {
     });
 }
 
-function loadJSObjectFromFile(filename=SESSION_FILE, directory=CONF_DIR, callback=null, async=false) {
-    let loadPath = directory + '/' + filename;
+function loadJSObjectFromFile(filename=CONF_FILE, directory=CONF_DIR, callback=null, async=false) {
+    let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;
 
     let file = Gio.file_new_for_path(loadPath);
 
-    if (!GLib.file_test(loadPath, FileTest.EXISTS)) { throw Error("File does not exist: "+loadPath); }
+    if (!GLib.file_test(loadPath, GLib.FileTest.EXISTS)) { throw Error("File does not exist: "+loadPath); }
     if (async === true) {
         if (typeof callback !== 'function') {throw TypeError('loadJSObjectFromFile callback must be a function');}
         
-        file.query_info_async('*', FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (src, res) {
+        file.query_info_async('*', Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (src, res) {
             let file_info = src.query_info_finish(res);    
             file.load_contents_async(null, function (obj, res) {
                 let [success, contents] = obj.load_contents_finish(res);
@@ -183,7 +170,8 @@ function loadJSObjectFromFile(filename=SESSION_FILE, directory=CONF_DIR, callbac
             });
         });           
     } else {
-        let buffer = file.load_contents(null, null, null);
+        //let buffer = file.load_contents(null, null, null);
+        let buffer = file.load_contents(null);
         let contents = buffer[1];
         jsobject = JSON.parse(ByteArray.toString(contents));
         if(jsobject === undefined) {throw SyntaxError('Error parseing file contents to JS Object. Syntax Error.');}

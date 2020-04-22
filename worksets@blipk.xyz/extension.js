@@ -1,7 +1,7 @@
 /*
  * Worksets extension for Gnome 3
  * This file is part of the worksets extension for Gnome 3
- * Copyright (C) 2019 A.D. - http://blipk.xyz
+ * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,33 +30,24 @@
  * Many thanks to those great extensions.
  */
 
-//External imports
-const ExtensionSystem = imports.ui.extensionSystem;
-const ExtensionUtils = imports.misc.extensionUtils;
-const FileUtils = imports.misc.fileUtils;
-const Gio = imports.gi.Gio;
-const GioSSS = Gio.SettingsSchemaSource;
+// External imports
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
-
-//Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
-const utils = Me.imports.utils;
-const fileUtils = Me.imports.fileUtils;
-const uiUtils = Me.imports.uiUtils;
-const panelIndicator = Me.imports.panelIndicator;
-const workspaceManager = Me.imports.workspaceManager;
-const sessionManager = Me.imports.sessionManager;
-const dev = Me.imports.devUtils;
-
+const ExtensionSystem = imports.ui.extensionSystem;
+const { extensionUtils } = imports.misc;
+const { Meta, GLib, Gio } = imports.gi;
 const _ = Gettext.domain('worksets').gettext;
+
+// Internal imports
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const { utils, uiUtils } = Me.imports;
+const { panelIndicator, workspaceManager, sessionManager } = Me.imports;
+const dev = Me.imports.devUtils;
 const scopeName = "worksetsalphaextension";
 
-let extensionChangedHandler;
+
 function init() {
-    Convenience.initTranslations();
+    extensionUtils.initTranslations();
     dev.log(scopeName+'.'+arguments.callee.name, "@```````````````````````````````````|");
 }
 
@@ -70,11 +61,11 @@ function enable() {
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
     Me.gMonitorManager = global.screen || Meta.MonitorManager.get();
 
-    extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
-    Me.settings = Convenience.getSettings('org.gnome.shell.extensions.worksets');
+    if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
+    Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
 
     // Spawn session
-    Me.session = new sessionManager.sessionManager();
+    Me.session = new sessionManager.SessionManager();
 
     dev.log(scopeName+'.'+arguments.callee.name, "@~................................|");
     } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
@@ -87,7 +78,7 @@ function disable() {
     if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
     if (Me.session) Me.session.destroy(); delete Me.session;
     if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
-    if (extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
+    if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
 
     dev.log(scopeName+'.'+arguments.callee.name, "!^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|"+'\r\n');
     } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
