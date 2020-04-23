@@ -45,9 +45,10 @@ function truncateString(instring, length) {
 var special = ['zeroth','first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
 var deca = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
 function stringifyNumber(n) {
-  if (n < 20) return special[n];
-  if (n%10 === 0) return deca[Math.floor(n/10)-2] + 'ieth';
-  return deca[Math.floor(n/10)-2] + 'y-' + special[n%10];
+    n = parseInt(n);
+    if (n < 20) return special[n];
+    if (n%10 === 0) return deca[Math.floor(n/10)-2] + 'ieth';
+    return deca[Math.floor(n/10)-2] + 'y-' + special[n%10];
 }
 
 var isEmpty = function (v) {
@@ -88,8 +89,8 @@ Object.defineProperty(Object.prototype, 'forEachEntry', {
 });
 }
 
-if (!Object.prototype.hasOwnProperty('filter')) {
-Object.defineProperty(Object.prototype, 'filter', {
+if (!Object.prototype.hasOwnProperty('filterObj')) {
+Object.defineProperty(Object.prototype, 'filterObj', {
     value: function (predicate) {
         return Object.fromEntries(Object.entries(this).filter(predicate));
     }

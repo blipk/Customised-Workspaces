@@ -135,6 +135,7 @@ class SessionManager {
         try {
         this.scanInstalledApps();
         let currentFavorites = global.settings.get_strv("favorite-apps");
+        if (appList) currentFavorites = appList;
         let newFavorites = [];
 
         currentFavorites.forEach(function(favorite, i) {
@@ -142,6 +143,19 @@ class SessionManager {
         }, this);
 
         return newFavorites;
+        } catch(e) { dev.log(e) }
+    }
+    removeFavorite(workset, appid) {
+        try {
+        Me.session.activeSession.Worksets.forEach(function (worksetBuffer, i) {
+            if (worksetBuffer.WorksetName == workset.WorksetName) {
+                Me.session.activeSession.Worksets[i].FavApps = worksetBuffer.FavApps.filter(favApps => favApps.name != appid)
+                if (Me.workspaceManager.activeWorksetName == workset.WorksetName)
+                    this.setFavorites(Me.session.activeSession.Worksets[i].FavApps);
+                return;
+            }
+        }, this);
+        Me.session.saveSession();
         } catch(e) { dev.log(e) }
     }
     _favoritesChanged() {
@@ -176,20 +190,31 @@ class SessionManager {
     }
     displayWorkset(workset, loadInNewWorkspace=false) {
         try {
-        if (Me.workspaceManager.activeWorksetName == workset.WorksetName) { //switch to it if already active
-            Me.workspaceManager.switchToWorkspace(workset.activeWorkspaceIndex);
+        let isActive = -1;
+        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            if (workspaceMapValues.currentWorkset == workset.WorksetName) {
+                isActive = i;
+                return;
+            }
+        }, this);
+
+        if (isActive > -1) { //switch to it if already active
+            if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
             uiUtils.showUserFeedbackMessage("Switched to active workset " + workset.WorksetName, true);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 Me.workspaceManager.workspaceUpdate();
-                Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1); 
+                Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             uiUtils.showUserFeedbackMessage("Loaded workset " + workset.WorksetName, true);
         }
         //Apply workset changes to workspace
         Me.workspaceManager.activeWorksetName = workset.WorksetName;
+
         this.setFavorites(workset.FavApps);
         this.setBackground(workset.BackgroundImage);
+
+        Me.session.saveSession();
         } catch(e) { dev.log(e) }
     }
 
@@ -247,20 +272,6 @@ class SessionManager {
         this.loadSession(sessionObject);
         } catch(e) { dev.log(e) }
     }
-    newObject(){
-        try {
-        let options =  [[{option: "New workset in current session", value: 0}],
-                        [{option: "New session", value: 2}]];
-
-        let getNewOptionDialog = new uiUtils.ObjectInterfaceDialog("What would you like to create?", (returnOption) => {
-                switch(returnOption.value) {
-                    case 0: this.newWorkset(); break;
-                    case 2: this.newSession(true, true); break;
-                    default:
-                }
-        }, false, true, options, [{option: ' '}]);
-        } catch(e) { dev.log(e) }
-    }
     newWorkset(name, fromEnvironment=true) {
         try {
         //Create new workset object from protoype in gschema
@@ -268,29 +279,44 @@ class SessionManager {
         let currentFavoriteApplications = this.getFavorites();
         let currentRunningApplications = this.getFavorites(Me.workspaceManager.getWorkspaceAppIds());
 
+        // Remove duplicates
+        let newFavs = currentFavoriteApplications.concat(currentRunningApplications);
+        newFavs = newFavs.filter((item, index, self) => index === self.findIndex( (t) => ( t.name === item.name ) ));
+        
         if (fromEnvironment) {
             //Build on prototype from current environment, add all current FavApps+RunningApps to it
-            worksetObject.FavApps = currentFavoriteApplications.concat(currentRunningApplications);
+            worksetObject.FavApps = newFavs;
             worksetObject.Favorite = true;
-            sessionObject.Worksets[0].BackgroundImage = this.getBackground();
         } else {
             //Blank prototype with no FavApps
             worksetObject.FavApps = [];
             worksetObject.Favorite = false;
-            sessionObject.Worksets[0].BackgroundImage = this.getBackground();
         }
 
+        worksetObject.BackgroundImage = this.getBackground();
+
         if (!name) {
+            let buttonStyles = [ { label: "Cancel", key: uiUtils.Clutter.KEY_Escape, action: function(){this.close(' ')} }, { label: "Done", default: true }];
             let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog("Please enter name for new workset.", (returnText) => {
+                if (!returnText) return;
+                returnText = returnText.trim();
+                if (returnText == '') return;
                 worksetObject.WorksetName = returnText;
+                
+                //Push it to the session
+                this.activeSession.Worksets.push(worksetObject);
+                Me.session.saveSession();
+
                 uiUtils.showUserFeedbackMessage("Workset "+returnText+" created.");
-            });
+            }, true, false, [], [], buttonStyles);
         } else {
             worksetObject.WorksetName = name;
+            //Push it to the session
+            this.activeSession.Worksets.push(worksetObject);
+            Me.session.saveSession();
         }
         
-        //Push it to the session
-        this.activeSession.Worksets.push(worksetObject);
+        
         } catch(e) { dev.log(e) }
     }
     

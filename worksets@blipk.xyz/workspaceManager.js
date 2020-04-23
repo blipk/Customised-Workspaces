@@ -63,7 +63,7 @@ class WorkspaceManager {
         this.switchToWorkspace(0);
         this._cleanWorkspaces(true);
         global.window_manager.disconnect(this.workspaceChangeHandler);
-    } catch(e) { dev.log(e) }
+        } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
         try {
@@ -71,8 +71,8 @@ class WorkspaceManager {
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                if (workspaceMapValues.currentWorkset == workset.WorksetName) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, mapIndex) {
+                if (workspaceMapValues.currentWorkset == workset.WorksetName && Me.workspaceManager.activeWorkspaceIndex == mapIndex) {
                     foundActive = true;
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                 }
@@ -93,7 +93,7 @@ class WorkspaceManager {
         try {
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
             Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                if (workspaceMapValues.defaultWorkset == workset.WorksetName) {
+                if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '') {
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                     Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
                 }
@@ -124,14 +124,29 @@ class WorkspaceManager {
         return Me.gWorkspaceManager.n_workspaces;
     }
     get activeWorksetName() {
+        try {
         this.workspaceUpdate();
+        if (Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex] == undefined) {
+            let obj = {['Workspace'+Me.workspaceManager.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": ''}}
+            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Me.session.saveSession();
+        }
         return Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset;
+        } catch(e) { dev.log(e) }
     }
     set activeWorksetName(workset) {
+        try {
         let name = workset.WorksetName || workset;
         this.workspaceUpdate();
-        Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset = name;
+        if (Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex] == undefined) {
+            let obj = {['Workspace'+Me.workspaceManager.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": name}}
+            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Me.session.saveSession();
+        } else {
+            Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset = name;
+        }
         Me.session.saveSession();
+        } catch(e) { dev.log(e) }
     }
 
     getWorkspaceAppIds(workspaceIndex, excludeFavorites=true) {
@@ -158,8 +173,8 @@ class WorkspaceManager {
         }, this);
 
         if (excludeFavorites) {
-            let favApps = Me.session.getFavorites();
-            appIDs = appIDs.filter(function(item, pos) {
+            let favApps = global.settings.get_strv("favorite-apps");
+            appIDs = appIDs.filter((item, pos) => {
                 let ret = true;
                 favApps.forEach(function(favItem){
                     if (item.match(favItem)) ret = false;
@@ -184,6 +199,17 @@ class WorkspaceManager {
     }
     _cleanWorkspaces(destroyClean=false) {
         try {
+        // Remove any worksets that are set to current on more than one workspace
+        let currents = [];
+        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            if (workspaceMapValues.currentWorkset != '') {
+                if (currents.indexOf(workspaceMapValues.currentWorkset) > -1)
+                    Me.session.activeSession.workspaceMaps[i].currentWorkset = '';
+
+                currents.push(workspaceMapValues.currentWorkset)
+            }
+        }, this);
+
         //minimum workspaces should equal the amount of active worksets
         let min_workspaces = 0;
         if (!destroyClean) {

@@ -27,7 +27,7 @@
       <description>Contains the information on each set.</description>
     </key>
     <key name="workspace-maps-prototype-json" type="s">
-      <default>"{\"Workspace0\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}}"</default>
+      <default>"{ \"Workspace0\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace1\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace2\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace3\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace4\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace5\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace6\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}, \"Workspace7\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"} }"</default>
       <summary>JSObject containing info on each workset</summary>
       <description>Contains the information on each set.</description>
     </key>

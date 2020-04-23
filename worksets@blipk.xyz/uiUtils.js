@@ -106,8 +106,9 @@ var ObjectInterfaceDialog = GObject.registerClass({
     _init(dialogText=null, callback=null, 
         showTextInput=true, disableTextInput=false, 
         jsobjectsSets=[], /*array of js objects or of strings to valid directories with .json files*/
-        objectSetMasks=[{objectNameIdentifier: 'Object Set Display Name'}])
-        {
+        objectSetMasks=[{objectNameIdentifier: 'Object Set Display Name'}],
+        buttons=null ) {
+
         if (typeof dialogText === 'object') {
             super._init(dialogText);
             return;
@@ -126,21 +127,21 @@ var ObjectInterfaceDialog = GObject.registerClass({
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
         this.contentLayout.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
         //Text field for user input
-        let stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '' });
-        shellEntry.addContextMenu(stEntryUText);
-        stEntryUText.label_actor = stLabelUText;
+        this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '' });
+        shellEntry.addContextMenu(this.stEntryUText);
+        this.stEntryUText.label_actor = stLabelUText;
         //Customisation
-        stEntryUText.set_hint_text ("");
+        this.stEntryUText.set_hint_text ("");
         if (typeof dialogText !== 'string') {stLabelUText.hide();}
-        if (showTextInput !== true) {stEntryUText.hide()};
+        if (showTextInput !== true) {this.stEntryUText.hide()};
         if (disableTextInput !== true) {
-            this.setInitialKeyFocus(stEntryUText.clutter_text);
-            stEntryUText.clutter_text.set_selection(0, 0);
+            this.setInitialKeyFocus(this.stEntryUText.clutter_text);
+            this.stEntryUText.clutter_text.set_selection(0, 0);
         } else {
-            stEntryUText.clutter_text.set_editable(false);
-            stEntryUText.clutter_text.set_selectable(false);
+            this.stEntryUText.clutter_text.set_editable(false);
+            this.stEntryUText.clutter_text.set_selectable(false);
         }
-        this.contentLayout.add(stEntryUText, { y_align: St.Align.START });
+        this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
 
         //Error box that will appear to prompt for user validation of input
         this._errorBox = new St.BoxLayout({ style_class: 'object-dialog-error-box' });
@@ -153,9 +154,21 @@ var ObjectInterfaceDialog = GObject.registerClass({
         this._inputError = false;
         this._errorBox.hide();
 
-        //Close button
-        this.setButtons([{ action: this.close.bind(this), label: ("Close"), key: Clutter.Escape }]);
-        
+        //Action buttons
+        this.buttons = Array();
+        buttons = (buttons == null) ? 'Done' : buttons;
+        let defaults = [{ label: (buttons), default: true}];       //key: Clutter.KEY_Escape 
+        buttons = (typeof buttons == 'string') ? defaults : buttons;
+        buttons.forEach(function (button, i) {
+            if (button.action) button.action = button.action.bind(this);
+            else button.action = ()=>{this.close()};
+            
+            this.buttons[i] = this.addButton(button);
+            this.buttons[i].set_reactive(true);
+            if (button.style_class) this.buttons[i].add_style_class_name(button.style_class);
+        }, this);
+
+        // Directories
         let jsobjectsSearchDirectories = null;
         if (typeof jsobjectsSets[0] === 'string') {
             let directoryFile = Gio.file_new_for_path(jsobjectsSets[0]);
@@ -247,26 +260,29 @@ var ObjectInterfaceDialog = GObject.registerClass({
         }
 
         //Handler for text input actions
-        stEntryUText.clutter_text.connect('activate', (o) => {
+        this.stEntryUText.clutter_text.connect('activate', (o) => {
             this.popModal();
             this._checkInput(o.get_text());
             if (!this._inputError || !this.pushModal()) {
-                this.close(o.get_text()); return o.get_text();
+                this.popModal();
+                this.close(o.get_text()); 
+                return o.get_text();
             }
             return o.get_text();
         });
 
         this.open();
-    } catch(e) { dev.log(e); }
+        } catch(e) { dev.log(e); }
     }
     open() {
         this._errorBox.hide();
         this._inputError = false;
         super.open(global.get_current_time(), true);
     }
-    close(callbackObject) {
+    close(returnObject) {
         try {
-        if (!utils.isEmpty(callbackObject)) this._callback(callbackObject);
+        if (!returnObject) returnObject = this.stEntryUText.clutter_text.get_text();
+        this._callback(returnObject);
         super.close();
         } catch(e) { dev.log(e); }
     }
@@ -356,7 +372,7 @@ var ObjectEditorDialog = GObject.registerClass({
             this.buttons[i].set_reactive(true);
             if (button.style_class) this.buttons[i].add_style_class_name(button.style_class);
         }, this)
-        //dev.log(this.dialogLayout)
+
         //Create an area for each property of our object
         this._propertyBoxes = [];
         this.propertyKeys = Array();
@@ -565,7 +581,7 @@ var ObjectEditorDialog = GObject.registerClass({
         super.open(global.get_current_time(), true);
         if (this._focusElement) this._focusElement.grab_key_focus();
     }
-    close(cancel = false, parent = null) {
+    close() {
         try {
         this._callback(this.returnObject);
         super.close();
