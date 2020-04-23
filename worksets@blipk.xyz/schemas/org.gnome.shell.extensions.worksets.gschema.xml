@@ -18,17 +18,22 @@
     </key>
      <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
-      <summary>Multidimensional array containing info on each workset, first value is its name</summary>
+      <summary>Object represting the current favorite apps on the panel</summary>
       <description>Contains the naming and app data for each favorite.</description>
     </key>
     <key name="workset-prototype-json" type="s">
-      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"BackgroundImage\":\"\", \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}"</default>
+      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"BackgroundImage\":\"\", \"FavApps\":[\"\"]}"</default>
+      <summary>JSObject containing info on each workset</summary>
+      <description>Contains the information on each set.</description>
+    </key>
+    <key name="workspace-maps-prototype-json" type="s">
+      <default>"{\"Workspace0\": {\"defaultWorkset\":\"\", \"currentWorkset\":\"\"}}"</default>
       <summary>JSObject containing info on each workset</summary>
       <description>Contains the information on each set.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{\"SessionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"DefaultWorkspaceIndex\":-1, \"WindowData\":null, \"Type\":1, \"FavApps\":[\"\"], \"active\":false, \"activeWorkspaceIndex\":null}]}"</default>
-      <summary>JSObject containing info on each workset</summary>
+      <default>"{ \"SessionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on each set.</description>
     </key>
   </schema>

@@ -33,6 +33,7 @@
 // External imports
 const AppFavorites = imports.ui.appFavorites;
 const Main = imports.ui.main;
+const extensionUtils = imports.misc.extensionUtils;
 const { GObject } = imports.gi;
 
 // Internal imports
@@ -81,21 +82,11 @@ class SessionManager {
         if (typeof this.activeSession.SessionName !== 'string') this.activeSession.SessionName = "Session " + i;
         if (typeof this.activeSession.Favorite !== 'boolean') this.activeSession.Favorite = false;
 
-        // Remove invalid entries
         let filteredWorksets;
-        //filteredWorksets = this.activeSession.Worksets.filter(item => (Array.isArray(item.FavApps)));
-        //filteredWorksets = filteredWorksets.filter(item => (!isNaN(item.DefaultWorkspaceIndex)));
-        //filteredWorksets = filteredWorksets.filter(item => (!isNaN(item.activeWorkspaceIndex)));
-        //filteredWorksets = filteredWorksets.filter(item => ((typeof item.Favorite === 'boolean')));
-        //filteredWorksets = filteredWorksets.filter(item => ((typeof item.active === 'boolean')));
-        //this.activeSession.Worksets = filteredWorksets;
 
         this.activeSession.Worksets.forEach(function (worksetBuffer, ii) {
             //Fix entries
-            worksetBuffer.active = false;
-            worksetBuffer.activeWorkspaceIndex = null;
             if (!Array.isArray(worksetBuffer.FavApps)) worksetBuffer.FavApps = [];
-            if (isNaN(worksetBuffer.DefaultWorkspaceIndex)) worksetBuffer.DefaultWorkspaceIndex = -1;
             if (typeof worksetBuffer.WorksetName !== 'string') worksetBuffer.WorksetName = "Workset " + ii;
             if (typeof worksetBuffer.Favorite !== 'boolean') worksetBuffer.Favorite = false;
 
@@ -123,10 +114,11 @@ class SessionManager {
         try{
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         let bgURI = dSettings.get_string('picture-uri');
-        return bgURI;
+        return bgURI.replace("file://", "");
         } catch(e) { dev.log(e) }
     }
     setBackground(bgPath) {
+        bgPath = bgPath.replace("file://", "");
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
     }
@@ -155,7 +147,7 @@ class SessionManager {
     _favoritesChanged() {
         try {
         this.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-            if(worksetBuffer.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex) {
+            if(worksetBuffer.WorksetName == Me.workspaceManager.activeWorksetName) {
                 this.activeSession.Worksets[worksetIndex].FavApps = this.getFavorites(); 
             }
         }, this);
@@ -184,56 +176,72 @@ class SessionManager {
     }
     displayWorkset(workset, loadInNewWorkspace=false) {
         try {
-        if (workset.active) { //switch to it if already active
+        if (Me.workspaceManager.activeWorksetName == workset.WorksetName) { //switch to it if already active
             Me.workspaceManager.switchToWorkspace(workset.activeWorkspaceIndex);
-            this.setFavorites(workset.FavApps);
-
             uiUtils.showUserFeedbackMessage("Switched to active workset " + workset.WorksetName, true);
         } else {
-            //Set up our new workset
-            workset.active = true;
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 Me.workspaceManager.workspaceUpdate();
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1); 
             }
-            workset.activeWorkspaceIndex = Me.workspaceManager.activeWorkspaceIndex;
-
-            //Remove active flag from any worksets that where previously here
-            this.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-                if((worksetBuffer !== workset) && (worksetBuffer.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex)) {
-                    this.activeSession.Worksets[worksetIndex].active = false; 
-                    this.activeSession.Worksets[worksetIndex].activeWorkspaceIndex = null;
-                }
-            }, this);
-    
-            //Apply workset changes to workspace
-            this.setFavorites(workset.FavApps);
             uiUtils.showUserFeedbackMessage("Loaded workset " + workset.WorksetName, true);
         }
+        //Apply workset changes to workspace
+        Me.workspaceManager.activeWorksetName = workset.WorksetName;
+        this.setFavorites(workset.FavApps);
+        this.setBackground(workset.BackgroundImage);
         } catch(e) { dev.log(e) }
     }
 
     // Workset Management
+    setWorksetBackgroundImage(workset) {
+        try {
+        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose New Background for Workset'],  fileUtils.GLib.get_environ(), 0, null,
+        (resource) => {
+            try {
+            if (!resource) return;
+            resource = resource.trim();
+            let filePath = fileUtils.GLib.path_get_dirname(resource);
+            let fileName = fileUtils.GLib.path_get_basename(resource);
+
+            // Find the workset and update the background image path property
+            Me.session.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                if (worksetBuffer.WorksetName != workset.WorksetName) return;
+                Me.session.activeSession.Worksets[worksetIndex].BackgroundImage = resource;
+                Me.session.saveSession();
+            }, this);
+
+            uiUtils.showUserFeedbackMessage("Background Image Changed", true)
+            if (Me.workspaceManager.activeWorksetName == workset.WorksetName) this.setBackground(resource);
+            } catch(e) { dev.log(e) }
+        });
+        } catch(e) { dev.log(e) }
+    }
     newSession(fromEnvironment=false, backup=false) {
         try {
         if (backup) this.saveSession(true);
 
         //Create new session object from protoype in gschema
         let sessionObject = JSON.parse(Me.settings.get_string("session-prototype-json"));
+        let workspaceMaps = JSON.parse(Me.settings.get_string("workspace-maps-prototype-json"));
         
         if (fromEnvironment) {
             //Build on prototype from current environment, blank prototype workset add all current FavApps to Primary workset 
             sessionObject.SessionName = "Default";
             sessionObject.Favorite = true;
-            sessionObject.Worksets[0].DefaultWorkspaceIndex = 0;
             sessionObject.Worksets[0].FavApps = this.getFavorites();
             sessionObject.Worksets[0].WorksetName = "Primary Workset";
             sessionObject.Worksets[0].Favorite = true;
-            sessionObject.Worksets[0].active = true;
-            sessionObject.Worksets[0].activeWorkspaceIndex = 0;
+            sessionObject.Worksets[0].BackgroundImage = this.getBackground();
+            sessionObject.workspaceMaps = workspaceMaps; // TO DO - set up 
+            sessionObject.workspaceMaps['Workspace0'].defaultWorkset = "Primary Workset";
+            sessionObject.workspaceMaps['Workspace0'].currentWorkset = "Primary Workset";
         } else {
             sessionObject.SessionName = "Default";
             sessionObject.Worksets[0].WorksetName = "New Workset";
+            sessionObject.workspaceMaps = workspaceMaps;
+            sessionObject.workspaceMaps['Workspace0'].defaultWorkset = "New Workset";
+            sessionObject.workspaceMaps['Workspace0'].currentWorkset = "New Workset";
         }
         //Load the session
         this.loadSession(sessionObject);
@@ -264,10 +272,12 @@ class SessionManager {
             //Build on prototype from current environment, add all current FavApps+RunningApps to it
             worksetObject.FavApps = currentFavoriteApplications.concat(currentRunningApplications);
             worksetObject.Favorite = true;
+            sessionObject.Worksets[0].BackgroundImage = this.getBackground();
         } else {
             //Blank prototype with no FavApps
             worksetObject.FavApps = [];
             worksetObject.Favorite = false;
+            sessionObject.Worksets[0].BackgroundImage = this.getBackground();
         }
 
         if (!name) {
@@ -316,14 +326,14 @@ class SessionManager {
     }
     loadSession(sessionsObject, restore=false) {
         try {
-        this.activeSession = sessionsObject || this.activeSession;
-        if (sessionsObject) return;
-
-        let filename = (restore ? 'session-backup.json' : 'session.json');
-        sessionObject = fileUtils.loadJSObjectFromFile(filename, fileUtils.CONF_DIR);
-        if (!utils.isEmpty(sessionObject)) /*&& utils.isEmpty(this.activeSession)*/ 
+        if (sessionsObject) {
             this.activeSession = sessionsObject;
-
+        } else {
+            let filename = (restore ? 'session-backup.json' : 'session.json');
+            let sessionObj = fileUtils.loadJSObjectFromFile(filename, fileUtils.CONF_DIR);
+            if (!utils.isEmpty(sessionObj)) /*&& utils.isEmpty(this.activeSession)*/ 
+                this.activeSession = sessionObj;
+        }
         } catch(e) { dev.log(e) }
     }
     saveSession(backup=false) {
@@ -331,10 +341,6 @@ class SessionManager {
         if (utils.isEmpty(this.activeSession)) return;
 
         let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
-        sessionCopy.Worksets.forEach(function (worksetBuffer, i) {
-            sessionCopy.Worksets[i].active = false;
-            sessionCopy.Worksets[i].activeWorkspaceIndex = null;
-        }, this);
 
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
         let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
@@ -344,9 +350,6 @@ class SessionManager {
     saveWorkset(workset, backup=false) {
         try {
         if (utils.isEmpty(workset)) return;
-
-        workset.active = false;
-        workset.activeWorkspaceIndex = null;
 
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
         let filename = (backup ? 'workset-'+workset.WorksetName+'-'+timestamp+'.json' : 'workset-'+workset.WorksetName+'.json');

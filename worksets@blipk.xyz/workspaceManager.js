@@ -48,6 +48,11 @@ class WorkspaceManager {
         Me.workspaceManager = this;
         this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
+        // Clean active worksets from previous session
+        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
+        }, this);
+
         this.workspaceUpdate();
         this.loadDefaultWorksets();
         this.workspaceUpdate();
@@ -65,11 +70,13 @@ class WorkspaceManager {
         this.workspaceUpdate();
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
-        Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-            if (worksetsbuffer.activeWorkspaceIndex === this.activeWorkspaceIndex) {
-                foundActive = true;
-                Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
-            }
+        Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+                if (workspaceMapValues.currentWorkset == workset.WorksetName) {
+                    foundActive = true;
+                    Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
+                }
+            }, this);
         }, this);
 
         //If there's not any active on the workspace, load any that are set to default here
@@ -84,10 +91,13 @@ class WorkspaceManager {
     }
     loadDefaultWorksets(){
         try {
-        Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-            if (worksetsbuffer.DefaultWorkspaceIndex === this.activeWorkspaceIndex) {
-                Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
-            }
+        Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+                if (workspaceMapValues.defaultWorkset == workset.WorksetName) {
+                    Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
+                    Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
+                }
+            }, this);
         }, this);
         } catch(e) { dev.log(e) }
     }
@@ -112,6 +122,16 @@ class WorkspaceManager {
     get NumGlobalWorkspaces() {
         this.workspaceUpdate();
         return Me.gWorkspaceManager.n_workspaces;
+    }
+    get activeWorksetName() {
+        this.workspaceUpdate();
+        return Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset;
+    }
+    set activeWorksetName(workset) {
+        let name = workset.WorksetName || workset;
+        this.workspaceUpdate();
+        Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset = name;
+        Me.session.saveSession();
     }
 
     getWorkspaceAppIds(workspaceIndex, excludeFavorites=true) {
@@ -167,8 +187,8 @@ class WorkspaceManager {
         //minimum workspaces should equal the amount of active worksets
         let min_workspaces = 0;
         if (!destroyClean) {
-            Me.session.activeSession.Worksets.forEach(function (worksetsbuffer, worksetIndex) {
-                if (worksetsbuffer.active === true) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+                if (workspaceMapValues.currentWorkset != '') {
                     min_workspaces++;
                 }
             }, this);

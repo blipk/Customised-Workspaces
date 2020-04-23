@@ -33,7 +33,7 @@
 //External imports
 const { extensionUtils, util } = imports.misc;
 const { extensionSystem, popupMenu, panelMenu } = imports.ui;
-const { GObject, St } = imports.gi;
+const { GObject, St, Clutter } = imports.gi;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const _ = Gettext.domain('worksets').gettext;
@@ -75,8 +75,8 @@ var WorksetsIndicator = GObject.registerClass({
         let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
         this.icon = new St.Icon({ icon_name: INDICATOR_ICON, style_class: 'system-status-icon worksets-indicator-icon' });
         hbox.add_child(this.icon);
-        let buttonText = new St.Label(    {text: ('Worksets'), y_align: uiUtils.Clutter.ActorAlign.CENTER }   );
-        hbox.add_child(buttonText);
+        //let buttonText = new St.Label(    {text: (''), y_align: uiUtils.Clutter.ActorAlign.CENTER }   );
+        //hbox.add_child(buttonText);
         this.actor.add_child(hbox);
 
         //Build our menu
@@ -153,7 +153,6 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Connect menu items to worksets array
         menuItem.workset = workSetsArrayBuffer;
-        menuItem.currentlyActive = menuItem.workset.active ? true : false;
         menuItem.favoriteState = menuItem.workset.Favorite;
         menuItem.nameText = menuItem.workset.WorksetName;
 
@@ -163,10 +162,9 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
 
         this._worksetMenuItemSetEntryLabel(menuItem);
-
         // Create iconbuttons on MenuItem
         let iconfav_nameuri = menuItem.favoriteState ? 'starred-symbolic' : 'non-starred-symbolic';
-        let iconOpenNew_nameuri = menuItem.workset.active ? 'go-last-symbolic' : 'list-add-symbolic';
+        let iconOpenNew_nameuri = (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) ? 'go-last-symbolic' : 'list-add-symbolic';
         uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
@@ -181,11 +179,18 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Set up sub menu items
         menuItem.favAppsMenuItems = [];
-        this._worksetSubMenuRefreh(menuItem);
+        if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {
+            menuItem.setOrnament(popupMenu.Ornament.DOT)
+            menuItem.currentlyActive = true;
+        } else {
+            menuItem.setOrnament(popupMenu.Ornament.NONE)
+            menuItem.currentlyActive = false;
+        }
 
         //Add to correct list (favorite/not) and decorate with indicator if active
         menuItem.favoriteState ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
-        menuItem.workset.activeWorkspaceIndex === Me.workspaceManager.activeWorkspaceIndex ? menuItem.setOrnament(popupMenu.Ornament.DOT) : menuItem.setOrnament(popupMenu.Ornament.NONE);
+
+        //_worksetSubMenuRefreh(menuItem) // Running this on SubMenu button_press_event instead as generating the bg image was causing delays
         } catch(e) { dev.log(e) }
     }
     _worksetSubMenuRefreh(menuItem) {
@@ -197,7 +202,33 @@ var WorksetsIndicator = GObject.registerClass({
         if (menuItem.infoMenuButton) menuItem.infoMenuButton.destroy();
         if (menuItem.bgMenuButton) menuItem.bgMenuButton.destroy();
         menuItem.favAppsMenuItems = [];
+
+        // Background info
+        menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
+        menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
+        menuItem.bgMenuButton.connect('activate', () => {
+            menuItem.setSubmenuShown(false);
+            Me.session.setWorksetBackgroundImage(menuItem.workset);
+            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+        });
+        uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
+        menuItem.menu.addMenuItem(menuItem.bgMenuButton);
+
+        // Workset info
+        let infoText = "Opens these apps";
+        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
+                infoText += " on workspace " + workspaceMapKey.substr(-1, 1);
+        }, this);
+        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText+":"), "bowser");
+        menuItem.infoMenuButton.connect('activate', () => {
+            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+        });
+        menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
+        //uiUtils.createIconButton(menuItem.infoMenuButton, 'web-browser-sybmolic', () => {});
+        menuItem.menu.addMenuItem(menuItem.infoMenuButton);
         
+        // Favorite Apps entries
         menuItem.workset.FavApps.forEach(function(favApp, i){
             let {name, displayName, exec, icon} = favApp;
             icon = icon || 'web-browser-sybmolic';
@@ -209,33 +240,18 @@ var WorksetsIndicator = GObject.registerClass({
             });
             menuItem.menu.addMenuItem(menuItem.favAppsMenuItems[i]);
         }, this);
-
-        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Opens on workspace "+menuItem.workset.DefaultWorkspaceIndex), "bowser");
-        menuItem.infoMenuButton.connect('activate', () => {
-            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
-        });
-        menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        //uiUtils.createIconButton(menuItem.infoMenuButton, 'web-browser-sybmolic', () => {});
-        menuItem.menu.addMenuItem(menuItem.infoMenuButton);
-
-        menuItem.bgMenuButton = new popupMenu.PopupImageMenuItem(_("Change the background for this workset"), "bowser");
-        menuItem.bgMenuButton.connect('activate', () => {
-            Me.session.getBackground();
-            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
-        });
-        menuItem.bgMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        //uiUtils.createIconButton(menuItem.bgMenuButton, 'web-browser-sybmolic', () => {});
-        menuItem.menu.addMenuItem(menuItem.bgMenuButton);
     }
     _refreshMenu() {
-        try {     
+        try {
+        Me.session.loadSession();
+
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
             Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }, this);
-            this.menu.sessionMenuItem.nameText = Me.session.activeSession.SessionName + "Session";
+            this.menu.sessionMenuItem.nameText = Me.session.activeSession.SessionName + " Session";
             this._worksetMenuItemSetEntryLabel(this.menu.sessionMenuItem);
 
             Me.session.saveSession();

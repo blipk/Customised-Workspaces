@@ -19,7 +19,7 @@
  */
 
 // External imports
-const { GObject, St, Clutter, Gio, GLib } = imports.gi;
+const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
@@ -66,6 +66,36 @@ function showUserFeedbackMessage(input, overviewMessage=false) {
     }
 }
 
+
+/*
+this._image = new PopupMenu.PopupBaseMenuItem();
+    getActorCompat(this._image).content_gravity =
+      Clutter.ContentGravity.RESIZE_ASPECT;
+*/
+function setImage(imgFilePath, parent) {
+    imgFilePath = imgFilePath.replace("file://", "");
+    let img = new Gtk.Image({file: imgFilePath});
+    let pixbuf = img.get_pixbuf()
+
+    const {width, height} = pixbuf;
+    if (height == 0) return;
+
+    const image = new Clutter.Image();
+    const success = image.set_data(
+        pixbuf.get_pixels(),
+        pixbuf.get_has_alpha()
+          ? Cogl.PixelFormat.RGBA_8888
+          : Cogl.PixelFormat.RGB_888,
+        width,
+        height,
+        pixbuf.get_rowstride()
+      );
+    if (!success) 
+    throw Error("error creating Clutter.Image()");
+
+    parent.content = image;
+    parent.height = 135;
+}
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
 //Object Editor Dialog

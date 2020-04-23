@@ -1,9 +1,9 @@
 {"uuid": "worksets@blipk.xyz",
 "name": "Worksets",
 "original-author": "adpl@blipk.xyz", 
-"description": "Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.",
+"description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
 "settings-schema": "org.gnome.shell.extensions.worksets", 
-"url": "http://worksets.blipk.xyz",
+"url": "http://kronosoul.xyz",
 "extension-id": "worksets",
 "gettext-domain": "worksets",
 "shell-version": [
@@ -18,7 +18,10 @@
     "3.24", 
     "3.26", 
     "3.28", 
-    "3.30"
+    "3.30",
+    "3.32",
+    "3.34",
+    "3.36"
 ],
-"version": 1
+"version": 3
 }
