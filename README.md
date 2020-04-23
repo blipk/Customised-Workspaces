@@ -1,4 +1,4 @@
-## Worksets - Gnome-Shell Extension
+## Worksets - Gnome Shell Extension
 
 Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.
 

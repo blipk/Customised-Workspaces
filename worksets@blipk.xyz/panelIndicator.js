@@ -218,9 +218,9 @@ var WorksetsIndicator = GObject.registerClass({
         let infoText = "Opens these apps";
         Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
-                infoText += " on workspace " + workspaceMapKey.substr(-1, 1);
+                infoText += " on the " + stringifyNumber(workspaceMapKey.substr(-1, 1).toInt()) + " workspace";
         }, this);
-        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText+":"), "bowser");
+        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), "bowser");
         menuItem.infoMenuButton.connect('activate', () => {
             this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
         });
