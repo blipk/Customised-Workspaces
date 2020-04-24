@@ -1,6 +1,6 @@
 /*
- * Worksets extension for Gnome 3
- * This file is part of the Worksets Gnome Extension for Gnome 3
+ * Customised Workspaces extension for Gnome 3
+ * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify

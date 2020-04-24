@@ -1,24 +1,49 @@
-## Worksets - Gnome Shell Extension
+## Customised Workspaces - Gnome Shell Extension
 
-Create isolated and customised workspaces each with different favourite applications that can be saved to worksets and organized into collections.
+Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/deltadevelopments)
+[![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
 
 ### Usage
-![User Interface Guide](doc/WorksetsUserInterfaceGuide.png?raw=true "Worksets User Interface Guide")
-
-### Supported Gnome-Shell versions
-
-This should work on any version from 3.00 to 3.30,
-however it has only been thoroughly tested on 3.22 and 3.30,
-please let me know if you are having issues on your specific version.
+![User Interface Guide](doc/CustomisedWorkspacesUserInterfaceGuide.png?raw=true "Customised Workspaces User Interface Guide")
 
 ### Installation
 
-**Option 1:** Install the extension via the Gnome Extensions website:   
+###### Gnome extensions website
 <https://extensions.gnome.org/extension/1583/worksets/>
 
-**Option 2:** Requires **git** to be installed.    
-
+###### Git
 ``` bash
 cd ~/.local/share/gnome-shell
-git clone https://github.com/blipk/worksets.git extensions
+git clone https://github.com/blipk/Customised-Workspaces.git extensions
 ```
+
+###### Clickable installer in the release or run
+``` bash
+chmod +x _install.sh && ./_install.sh
+```
+
+### Support
+
+This has only been thoroughly tested on Gnome Shell versions 3.22, 3.30 and 3.36, although it should work on any version from 3.00 to 3.36.
+
+### Licence
+
+```
+This file is part of the Customised Workspaces Gnome Extension for Gnome 3
+Copyright (C) 2020 A.D. - http://kronosoul.xyz
+```
+
+```
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope this it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+```
+

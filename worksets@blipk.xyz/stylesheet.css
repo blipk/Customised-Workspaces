@@ -56,3 +56,11 @@ entry:indeterminate {
     color: #d6d6d1;
     padding-bottom: .4em; 
 }
+
+.object-dialog-item {
+    padding: 0.4em; 
+}
+.object-dialog-item-icon {
+    padding-right: 0.4em;
+
+}

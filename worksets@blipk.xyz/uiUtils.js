@@ -1,6 +1,6 @@
 /*
- * Bowser extension for Gnome 3
- * This file is part of the Bowser Gnome Extension for Gnome 3
+ * Customised Workspaces extension for Gnome 3
+ * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
 const { modalDialog, shellEntry, tweener } = imports.ui;
-const _ = Gettext.domain('bowser-gnome').gettext;
+const _ = Gettext.domain('worksets').gettext;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -207,27 +207,37 @@ var ObjectInterfaceDialog = GObject.registerClass({
         if (jsobjectsSets) {
             //Build an area for each object set
             jsobjectsSets.forEach(function(objectSet, i){
-                this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box' });
+                this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
                 this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 18, style_class: 'object-dialog-error-icon' });
-                this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: St.Align.MIDDLE });
+                //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: St.Align.MIDDLE });
                 this.contentLayout.add(this._objectsSetBoxes[i], { expand: true });
 
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
-                this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectSetBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
+                //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectSetBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
                 
                 let setDisplayName = 'Object Set '+i;
 
                 //Build area for each object
                 this._objectsSetBoxes[i]._objectBoxes = [];
+                let count = 0;
                 objectSet.forEach(function(object, ii){
+                    // Create a new line if there are too many objects
+                    if (count == 4) {
+                        i++;
+                        count = 0;
+                        this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
+                        this.contentLayout.add(this._objectsSetBoxes[i], { expand: true });
+                        this._objectsSetBoxes[i]._objectBoxes = [];
+                    }
+                    count++;
                     //Box base
-                    this._objectsSetBoxes[i]._objectBoxes[ii] = new St.BoxLayout({ style_class: 'object-dialog-error-box' });  
+                    this._objectsSetBoxes[i]._objectBoxes[ii] = new St.BoxLayout({ style_class: 'object-dialog-item' });  
                     //this._objectsSetBoxes[i]._objectBoxes[ii].set_vertical(true);
                     this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectBoxes[ii], { expand: true });
 
                     //State/type icon
-                    this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon({ icon_name: 'edit-select-symbolic', icon_size: 12, style_class: 'object-dialog-error-icon' });
+                    this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 14, style_class: 'object-dialog-item-icon' });
                     this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon, { y_align: St.Align.MIDDLE });
 
                     //Labelled button to select the object
@@ -255,7 +265,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_label(objectDisplayName);
                 }, this);
 
-                this._objectsSetBoxes[i]._objectSetBoxMessage.set_text(setDisplayName);
+                if (this._objectsSetBoxes[i]._objectSetBoxMessage) this._objectsSetBoxes[i]._objectSetBoxMessage.set_text(setDisplayName);
                 if (setDisplayName.trim() === "") this._objectsSetBoxes[i].remove_actor(this._objectsSetBoxes[i].objectSetBoxStIcon);
             }, this);
         }

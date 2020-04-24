@@ -1,6 +1,6 @@
 /*
- * Worksets extension for Gnome 3
- * This file is part of the worksets extension for Gnome 3
+ * Customised Workspaces extension for Gnome 3
+ * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -66,8 +66,8 @@ var WorkspaceManager = class WorkspaceManager {
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, mapIndex) {
-                if (workspaceMapValues.currentWorkset == workset.WorksetName && this.activeWorkspaceIndex == mapIndex) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+                if (workspaceMapValues.currentWorkset == workset.WorksetName && this.activeWorkspaceIndex == parseInt(workspaceMapKey.substr(-1, 1))) {
                     foundActive = true;
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                 }
@@ -87,7 +87,7 @@ var WorkspaceManager = class WorkspaceManager {
     loadDefaultWorksets(){
         try {
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, workspaceMapIndex) {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                     Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;

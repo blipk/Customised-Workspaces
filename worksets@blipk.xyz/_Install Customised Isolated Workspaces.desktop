@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Install Customised Workspaces Gnome Extension
+Name[en_AU]=Install Customised Workspaces Gnome Extension
+GenericName=Install Customised Workspaces Gnome Extension
+Comment=Install Customised Workspaces Gnome Extension: Customise and manage workspaces
+Exec=bash -c "cd \"$(dirname %k)\" && chmod +x _install.sh && ./_install.sh && zenity --info --text='Restart Gnome Shell to finish installing the extension.'"
+Icon=bowser.png
+Terminal=false
+Type=Application
+X-Desktop-File-Install-Version=0.24

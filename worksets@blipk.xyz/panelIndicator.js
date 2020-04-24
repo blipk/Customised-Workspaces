@@ -1,6 +1,6 @@
 /*
- * Worksets extension for Gnome 3
- * This file is part of the worksets extension for Gnome 3
+ * Customised Workspaces extension for Gnome 3
+ * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://blipk.xyz
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -93,14 +93,10 @@ var WorksetsIndicator = GObject.registerClass({
     _buildMenu() {
         try {
         // Isolate running apps switch
+        this._onIsolateSwitch();
         let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), ISOLATE_RUNNING, { reactive: true });
         isolateRunningAppsMenuItem.connect('toggled', this._onIsolateSwitch);
         this.menu.addMenuItem(isolateRunningAppsMenuItem);
-
-        // Add 'Settings' menu item to open settings
-        //let settingsMenuItem = new popupMenu.PopupMenuItem(('Settings'));
-        //this.menu.addMenuItem(settingsMenuItem);
-        //settingsMenuItem.connect('activate', Lang.bind(this, this._openSettings));
 
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
@@ -130,8 +126,8 @@ var WorksetsIndicator = GObject.registerClass({
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
         
         // Management menu button menu
-        let sessionMenuItem = new popupMenu.PopupImageMenuItem('Manage', '');
-        sessionMenuItem.nameText = "Manage";
+        let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
+        sessionMenuItem.nameText = "New Environment";
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
         this.menu.addMenuItem(sessionMenuItem);
@@ -163,18 +159,23 @@ var WorksetsIndicator = GObject.registerClass({
         let isActive = -1;
         Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.currentWorkset == menuItem.workset.WorksetName) {
-                isActive = i;
+                isActive = parseInt(workspaceMapKey.substr(-1, 1));
                 return;
 
             }
         }, this);
         let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
-        let iconOpenNew_nameuri = (isActive > -1) ? 'go-last-symbolic' : 'list-add-symbolic';
+        let iconOpenNew_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'list-add-symbolic';
+        let iconOpenHere_nameuri = (isActive > -1) ? 'action-unavailable-symbolic' : 'go-jump-symbolic';
+        let openHereCommand = (isActive > -1)
+             ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();} 
+             : () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();};
         uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
+        uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, openHereCommand);
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();});
-        uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {this._worksetMenuItemRemoveEntry(menuItem, 'delete'); this._refreshMenu();});
+        uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();});
 
         // Set up sub menu items
         menuItem.favAppsMenuItems = [];
@@ -219,10 +220,10 @@ var WorksetsIndicator = GObject.registerClass({
 
 
         // Workset info
-        let infoText = "Opens these apps";
+        let infoText = "Has these panel favorites";
         Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
-                infoText += " on the " + utils.stringifyNumber(workspaceMapKey.substr(-1, 1)+1) + " workspace";
+                infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
         }, this);
         menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
         menuItem.infoMenuButton.label.set_x_expand(true);
@@ -262,8 +263,6 @@ var WorksetsIndicator = GObject.registerClass({
             Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }, this);
-            this.menu.sessionMenuItem.nameText = Me.session.activeSession.SessionName + " Session";
-            this._worksetMenuItemSetEntryLabel(this.menu.sessionMenuItem);
 
             Me.session.saveSession();
         }
@@ -282,21 +281,8 @@ var WorksetsIndicator = GObject.registerClass({
     _worksetMenuItemsRemoveAll() {
         this._worksetMenuItemsGetAll().forEach(function (mItem) { mItem.destroy(); });
     }
-    _worksetMenuItemRemoveEntry(menuItem, event) {
-        try {
-        if(event === 'delete') {
-            let backupFilename = Me.session.saveWorkset(menuItem.workset, true);
-            Me.session.activeSession.Worksets = Me.session.activeSession.Worksets.filter(item => item !== menuItem.workset)
-            Me.session.saveSession();
-            this._refreshMenu();
-            menuItem.destroy();
-            uiUtils.showUserFeedbackMessage("Workset removed from session and backup saved to "+backupFilename, true);
-        }
-        } catch(e) { dev.log(e) }
-    }
     _worksetMenuItemMoveToTop(menuItem) {
         try {
-        this._worksetMenuItemRemoveEntry(menuItem);
         Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
             if (worksetBuffer === menuItem.workspace) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
