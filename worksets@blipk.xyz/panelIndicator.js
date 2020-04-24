@@ -32,7 +32,7 @@
 
 //External imports
 const { extensionUtils, util } = imports.misc;
-const { extensionSystem, popupMenu, panelMenu } = imports.ui;
+const { extensionSystem, popupMenu, panelMenu, boxpointer } = imports.ui;
 const extensionManager = imports.ui.main.extensionManager;
 const { GObject, St, Clutter } = imports.gi;
 const Gettext = imports.gettext;
@@ -76,7 +76,7 @@ var WorksetsIndicator = GObject.registerClass({
         let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
         this.icon = new St.Icon({ icon_name: INDICATOR_ICON, style_class: 'system-status-icon worksets-indicator-icon' });
         hbox.add_child(this.icon);
-        //let buttonText = new St.Label(    {text: (''), y_align: uiUtils.Clutter.ActorAlign.CENTER }   );
+        //let buttonText = new St.Label(    {text: (''), y_align: Clutter.ActorAlign.CENTER }   );
         //hbox.add_child(buttonText);
         this.actor.add_child(hbox);
 
@@ -137,13 +137,11 @@ var WorksetsIndicator = GObject.registerClass({
         this.menu.addMenuItem(sessionMenuItem);
         
         this._worksetMenuItemSetEntryLabel(sessionMenuItem);
-        sessionMenuItem.connect('activate', ()=>{Me.session.showObjectManager()});
+        sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu();});
 
         uiUtils.createIconButton(sessionMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._refreshMenu();});
-        uiUtils.createIconButton(sessionMenuItem, 'document-properties-symbolic', () => {Me.session.showObjectManager(); this._refreshMenu();});
         uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();});
 
-        
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
         } catch(e) { dev.log(e) }
@@ -156,13 +154,9 @@ var WorksetsIndicator = GObject.registerClass({
         // Connect menu items to worksets array
         menuItem.workset = workSetsArrayBuffer;
         menuItem.nameText = menuItem.workset.WorksetName;
-
-        // Connect menuitem and its iconbuttons
-        // TO DO
-        menuItem.buttonPressId = menuItem.connect('activate', () => {this._worksetMenuItemsOnMenuSelected(menuItem);} );
-        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
-
         this._worksetMenuItemSetEntryLabel(menuItem);
+
+        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
 
         // Create iconbuttons on MenuItem
         let isActive = -1;
@@ -178,10 +172,27 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
 
-        uiUtils.createIconButton(menuItem, 'document-properties-symbolic', () => {
+
+        let editable = {};
+        Object.assign(editable, menuItem.workset);
+        let workSpaceOptions = {Workspace0: false, Workspace1: false, Workspace2: false, Workspace3: false, Workspace4: false};
+        let workSpaceOptions2 = {Workspace5: false, Workspace6: false, Workspace7: false, Workspace8: false, Workspace9: false};
+        editable.workSpaceOptionsLabel = "Null"
+        editable.workSpaceOptions = workSpaceOptions;
+        editable.workSpaceOptions2 = workSpaceOptions2;
+        let workspaceOptionsEditables = [{Workspace0: 'First', Workspace1: 'Second', Workspace2: 'Third', Workspace3: 'Fourth', Workspace4: 'Fifth'}]
+        let workspaceOptionsEditables2 = [{Workspace5: 'Sixth', Workspace6: 'Seventh', Workspace7: 'Eighth', Workspace8: 'Ninth', Workspace9: 'Tenth'}]
+
+        let editables = [{WorksetName: 'Name'}, {BackgroundImage: ' ', hidden: true}, {Favorite: 'Favorite'},
+            {workSpaceOptionsLabel: 'Opens on these workspaces automatically:', labelOnly: true}, 
+            {workSpaceOptions: ' ', subObjectEditableProperties: workspaceOptionsEditables},
+            {workSpaceOptions2: ' ', subObjectEditableProperties: workspaceOptionsEditables2}]
+        let buttonStyles = [ { label: "Cancel", key: Clutter.KEY_Escape, action: function(){this.returnObject=false, this.close(true)} }, { label: "Done", default: true }];
+
+        uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {
             let editObjectChooseDialog = new uiUtils.ObjectEditorDialog("Properties of Workset: "+menuItem.nameText, () => {
                 uiUtils.showUserFeedbackMessage("Changes saved.");
-            }, menuItem.workset, [{WorksetName: 'Workset Name'}, {DefaultWorkspaceIndex: 'Load on workspace X by default'}, {Favorite: 'Favorite'}]);
+            }, editable, editables, buttonStyles);
         });
 
         uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {this._worksetMenuItemRemoveEntry(menuItem, 'delete'); this._refreshMenu();});
@@ -217,9 +228,10 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
         menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
         menuItem.bgMenuButton.connect('activate', () => {
-            menuItem.setSubmenuShown(false);
+            //this.menu.close();
+            //menuItem.setSubmenuShown(false);
             Me.session.setWorksetBackgroundImage(menuItem.workset);
-            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+            this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
         });
         uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
         menuItem.menu.addMenuItem(menuItem.bgMenuButton);
@@ -233,7 +245,7 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
         menuItem.infoMenuButton.label.set_x_expand(true);
         menuItem.infoMenuButton.connect('activate', () => {
-            this.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+            this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
         });
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
         uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {});
@@ -248,7 +260,7 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.favAppsMenuItems[i].connect('activate', () => {
                 this._worksetSubMenuRefreh(menuItem)
                 menuItem.setSubmenuShown(false);
-                menuItem.menu.itemActivated(BoxPointer.PopupAnimation.NONE);
+                menuItem.menu.itemActivated(boxpointer.PopupAnimation.NONE);
             });
             uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
                 try {
@@ -325,24 +337,6 @@ var WorksetsIndicator = GObject.registerClass({
         this._worksetMenuItemMoveToTop(menuItem);
         } catch(e) { dev.log(e) }
     }
-    _worksetMenuItemsOnMenuSelected(menuItem, close=false) {
-        try {
-        //Turn off all others
-        this._worksetMenuItemsGetAll().forEach(function (mItem) {
-            mItem.currentlyActive = false; mItem.setOrnament(popupMenu.Ornament.NONE);
-        }, this);
-
-        //Toggle current in UI
-        menuItem.currentlyActive ? menuItem.setOrnament(popupMenu.Ornament.NONE) : menuItem.setOrnament(popupMenu.Ornament.DOT);
-        menuItem.currentlyActive = menuItem.currentlyActive ? false : true;
-
-        //Activate selected workset
-        Me.session.displayWorkset(menuItem.workset);
-        this._refreshMenu();
-
-        if (close) {this.menu.close();}
-        } catch(e) { dev.log(e) }
-    }
     _onIsolateSwitch(init=false) {
         try {
         ISOLATE_RUNNING = ISOLATE_RUNNING ? false: true;
@@ -355,10 +349,12 @@ var WorksetsIndicator = GObject.registerClass({
             return uuid;
         };
 
-        // extensionUtils.extensions
+        // Other extensions that implement this behaviours
         let dash2panel = findExtensionCompat('dash-to-panel@jderose9.github.com');
         let dash2dock = findExtensionCompat('dash-to-dock@micxgx.gmail.com');
         let dash2panelSettings, dash2dockSettings;
+
+        // TO DO manage launching new instances of applications when clicking the panel, rather than switching back to the workspace/set that it is already running on
 
         if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
         if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;

@@ -30,12 +30,12 @@ const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
 
 // Directory and file paths for resources
-const USER_CONF_DIR = GLib.get_user_config_dir();
-const USER_CACHE_DIR = GLib.get_user_cache_dir();
-const USER_DATA_DIR = GLib.get_user_data_dir();
-const INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
-const RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
-const CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
+var USER_CONF_DIR = GLib.get_user_config_dir();
+var USER_CACHE_DIR = GLib.get_user_cache_dir();
+var USER_DATA_DIR = GLib.get_user_data_dir();
+var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
+var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
+var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
 
 function checkExists(path) {
     let result = false;

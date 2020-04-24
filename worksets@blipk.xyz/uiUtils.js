@@ -417,12 +417,13 @@ var ObjectEditorDialog = GObject.registerClass({
                     }
                 }, this);
                 if (this.propertyHidden[i]) return;
+                if (value === undefined) return;
+                if (value === null) return;
 
                 //A box area for each property
                 this._propertyBoxes[i] = new St.BoxLayout(this.propertyBoxStyle[i]);
                 if (this.propertyIconStyle[i] != undefined && this.propertyIconStyle[i] != {}) {
                     this._propertyBoxes[i].propertyBoxStNameIcon = new St.Icon(this.propertyIconStyle[i]);
-                    //this._propertyBoxes[i].propertyBoxStNameIcon.set_translation(50, 50, 0)
                     this._propertyBoxes[i].add(this._propertyBoxes[i].propertyBoxStNameIcon, this.propertyIconStyle[i]);
                 }
                 // :hover event doesn't work on style_class elements for BoxLayout, this allows using :focus for hover events
@@ -444,17 +445,15 @@ var ObjectEditorDialog = GObject.registerClass({
                 this._propertyBoxes[i]._propertyBoxMessageButton.connect('button-press-event', () => {
                     this.propertyBoxClickCallbacks[i].call(this, i);
                 });
-                this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxMessageButton, this.propertyLabelStyle[i]);
+                this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxMessageButton, {x_align: St.Align.START, expand: true});
 
                 //Property value editor element
-                //if (value === undefined) {value = 'empty'};
-                //if (value === null) {value = 'empty'};
                 if (this.propertyLabelOnly[i]) return;
                 if (typeof value === 'boolean') {
                     this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox('');
                     this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked = editableObject[key];
                     this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect('clicked', () => {editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked});
-                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement.actor);
+                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement.actor, { expand: true });
                 } else if (typeof value === 'string' || typeof value === 'number') {
                     this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '', x_align: Clutter.ActorAlign.FILL, x_expand: true});
                     this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.min_width = 200;

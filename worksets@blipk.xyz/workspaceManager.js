@@ -41,7 +41,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const utils = Me.imports.utils;
 const dev = Me.imports.devUtils;
 
-class WorkspaceManager { 
+var WorkspaceManager = class WorkspaceManager { 
     constructor() {
         try {
         this.workspaceChangeHandler = null;
@@ -72,7 +72,7 @@ class WorkspaceManager {
         //Loop through worksets and load the one which is set to current
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
             Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, mapIndex) {
-                if (workspaceMapValues.currentWorkset == workset.WorksetName && Me.workspaceManager.activeWorkspaceIndex == mapIndex) {
+                if (workspaceMapValues.currentWorkset == workset.WorksetName && this.activeWorkspaceIndex == mapIndex) {
                     foundActive = true;
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                 }
@@ -126,24 +126,39 @@ class WorkspaceManager {
     get activeWorksetName() {
         try {
         this.workspaceUpdate();
-        if (Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex] == undefined) {
-            let obj = {['Workspace'+Me.workspaceManager.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": ''}}
+        if (Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
+            let obj = {['Workspace'+this.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": ''}}
             Object.assign(Me.session.activeSession.workspaceMaps, obj);
             Me.session.saveSession();
         }
-        return Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset;
+        return Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset;
         } catch(e) { dev.log(e) }
     }
     set activeWorksetName(workset) {
         try {
         let name = workset.WorksetName || workset;
         this.workspaceUpdate();
-        if (Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex] == undefined) {
-            let obj = {['Workspace'+Me.workspaceManager.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": name}}
+        if (Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
+            let obj = {['Workspace'+this.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": name}}
             Object.assign(Me.session.activeSession.workspaceMaps, obj);
             Me.session.saveSession();
         } else {
-            Me.session.activeSession.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset = name;
+            Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = name;
+        }
+        Me.session.saveSession();
+        } catch(e) { dev.log(e) }
+    }
+
+    set lastWorkspaceActiveWorksetName(workset) {
+        try {
+        let name = workset.WorksetName || workset;
+        this.workspaceUpdate();
+        if (Me.session.activeSession.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)] == undefined) {
+            let obj = {['Workspace'+(this.NumGlobalWorkspaces-1)]: {'defaultWorkset':'', "currentWorkset": name}}
+            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Me.session.saveSession();
+        } else {
+            Me.session.activeSession.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)].currentWorkset = name;
         }
         Me.session.saveSession();
         } catch(e) { dev.log(e) }
@@ -211,7 +226,7 @@ class WorkspaceManager {
         }, this);
 
         //minimum workspaces should equal the amount of active worksets
-        let min_workspaces = 0;
+        let min_workspaces = 1;
         if (!destroyClean) {
             Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
                 if (workspaceMapValues.currentWorkset != '') {
@@ -219,6 +234,9 @@ class WorkspaceManager {
                 }
             }, this);
         }
+        if (min_workspaces == 0) return;
+
+        dev.log(min_workspaces);
 
         //first make all workspaces non-persistent
         for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {

@@ -34,7 +34,7 @@
 const AppFavorites = imports.ui.appFavorites;
 const Main = imports.ui.main;
 const extensionUtils = imports.misc.extensionUtils;
-const { GObject } = imports.gi;
+const { GObject, Gio, Clutter } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -42,7 +42,8 @@ const { utils, uiUtils, fileUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceIsolater } = Me.imports;
 const dev = Me.imports.devUtils;
 
-class SessionManager {  
+
+var SessionManager = class SessionManager {  
     constructor () {
         try {
         Me.session = this;
@@ -175,9 +176,9 @@ class SessionManager {
 
         installedApps.forEach(function(app, i) {
             let fullAppPath = app.parentDirectory+app.fullname;
-            let file = fileUtils.Gio.file_new_for_path(fullAppPath);
+            let file = Gio.file_new_for_path(fullAppPath);
             let buffer = file.load_contents(null);
-            let contents = fileUtils.ByteArray.toString(buffer[1]);
+            let contents = imports.byteArray.toString(buffer[1]);
 
             let nameLoc = contents.indexOf("Name=");
             let execLoc = contents.indexOf("Exec=");
@@ -203,13 +204,13 @@ class SessionManager {
             uiUtils.showUserFeedbackMessage("Switched to active workset " + workset.WorksetName, true);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
+                //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
                 Me.workspaceManager.workspaceUpdate();
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
+            Me.workspaceManager.activeWorksetName = workset.WorksetName;
             uiUtils.showUserFeedbackMessage("Loaded workset " + workset.WorksetName, true);
         }
-        //Apply workset changes to workspace
-        Me.workspaceManager.activeWorksetName = workset.WorksetName;
 
         this.setFavorites(workset.FavApps);
         this.setBackground(workset.BackgroundImage);
@@ -296,11 +297,21 @@ class SessionManager {
         worksetObject.BackgroundImage = this.getBackground();
 
         if (!name) {
-            let buttonStyles = [ { label: "Cancel", key: uiUtils.Clutter.KEY_Escape, action: function(){this.close(' ')} }, { label: "Done", default: true }];
+            let buttonStyles = [ { label: "Cancel", key: Clutter.KEY_Escape, action: function(){this.close(' ')} }, { label: "Done", default: true }];
             let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog("Please enter name for new workset.", (returnText) => {
                 if (!returnText) return;
                 returnText = returnText.trim();
                 if (returnText == '') return;
+
+                let exists = false;
+                Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
+                    if (worksetBuffer.WorksetName == returnText) {
+                        exists = true;
+                        uiUtils.showUserFeedbackMessage("Workset with name '"+returnText+"' already exists.");
+                    }
+                }, this);
+                if (exists) return;
+
                 worksetObject.WorksetName = returnText;
                 
                 //Push it to the session
@@ -321,30 +332,23 @@ class SessionManager {
     }
     
     //Storage management
-    showObjectManager() {
-        try {
-        if (utils.isEmpty(this.activeSession)) return;
-
-        let worksetObjects = [];
-        this.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-            worksetObjects.push(this.activeSession.Worksets[worksetIndex]);
-        }, this);
-        
-        let editObjectChooseDialog = new uiUtils.ObjectInterfaceDialog("Please select a workset to edit.", (returnObject) => {
-            let editObjectChooseDialog = new uiUtils.ObjectEditorDialog("Properties of the object.", () => {
-                    uiUtils.showUserFeedbackMessage("Changes have been saved.");
-            }, returnObject, [{WorksetName: 'Workset Name'}, {DefaultWorkspaceIndex: 'Load on workspace X by default'}, {Favorite: 'Favorite'}, {SessionName: 'Collection Name'}]);
-
-        }, false, true, [this.activeSession, worksetObjects], [{SessionName: 'Collections'},{WorksetName: 'Worksets'}]);
-        } catch(e) { dev.log(e) }
-    }
     loadObject() {
         try {
         let worksetsDirectory = fileUtils.CONF_DIR + '/worksets';
-        let loadObjectDialog = new uiUtils.ObjectInterfaceDialog("Please select a previously workset to load from disk.", (returnObject) => {
+        let loadObjectDialog = new uiUtils.ObjectInterfaceDialog("Select a backup to load in to the session", (returnObject) => {
             if (returnObject.WorksetName) {
+                let exists = false;
+                Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
+                    if (worksetBuffer.WorksetName == returnObject.WorksetName) {
+                        exists = true;
+                        uiUtils.showUserFeedbackMessage("Workset with name '"+returnObject.WorksetName+"' already exists.");
+                    }
+                }, this);
+                if (exists) return;
+
                 this.activeSession.Worksets.push(returnObject);
-                uiUtils.showUserFeedbackMessage("Workset loaded from file and added to active session.");  
+                Me.session.saveSession();
+                uiUtils.showUserFeedbackMessage("Loaded "+returnObject.WorksetName+" from file and added to active session.");  
             }
             
         }, false, true, [worksetsDirectory], [{WorksetName: 'Worksets'}]);

@@ -44,8 +44,8 @@ const dev = Me.imports.devUtils;
 //This removes running apps from workspaces they don't have any windows on when using standard gnome-shell dash
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()
 
-//Complete credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
-class WorkspaceIsolator { 
+// Credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
+var WorkspaceIsolator = class WorkspaceIsolator { 
     constructor() {
         try {
         // Extend AppSystem to only return applications running on the active workspace
