@@ -48,11 +48,6 @@ var WorkspaceManager = class WorkspaceManager {
         Me.workspaceManager = this;
         this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
-        // Clean active worksets from previous session
-        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-            Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
-        }, this);
-
         this.workspaceUpdate();
         this.loadDefaultWorksets();
         this.workspaceUpdate();
@@ -92,8 +87,8 @@ var WorkspaceManager = class WorkspaceManager {
     loadDefaultWorksets(){
         try {
         Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '') {
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, workspaceMapIndex) {
+                if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
                     Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
                     Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
                 }
@@ -219,7 +214,7 @@ var WorkspaceManager = class WorkspaceManager {
         Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.currentWorkset != '') {
                 if (currents.indexOf(workspaceMapValues.currentWorkset) > -1)
-                    Me.session.activeSession.workspaceMaps[i].currentWorkset = '';
+                    Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
 
                 currents.push(workspaceMapValues.currentWorkset)
             }
@@ -234,9 +229,7 @@ var WorkspaceManager = class WorkspaceManager {
                 }
             }, this);
         }
-        if (min_workspaces == 0) return;
-
-        dev.log(min_workspaces);
+        if (min_workspaces == 0) return;    // Should not happen
 
         //first make all workspaces non-persistent
         for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {

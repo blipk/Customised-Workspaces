@@ -1,6 +1,6 @@
 {"uuid": "worksets@blipk.xyz",
-"name": "Worksets",
-"original-author": "adpl@blipk.xyz", 
+"name": "Customised Isolated Workspaces",
+"original-author": "adpl@kronosoul.xyz", 
 "description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
 "settings-schema": "org.gnome.shell.extensions.worksets", 
 "url": "http://kronosoul.xyz",
@@ -23,5 +23,5 @@
     "3.34",
     "3.36"
 ],
-"version": 3
+"version": 4
 }

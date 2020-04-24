@@ -34,7 +34,7 @@
 const { extensionUtils, util } = imports.misc;
 const { extensionSystem, popupMenu, panelMenu, boxpointer } = imports.ui;
 const extensionManager = imports.ui.main.extensionManager;
-const { GObject, St, Clutter } = imports.gi;
+const { GObject, St, Clutter, Gtk } = imports.gi;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const _ = Gettext.domain('worksets').gettext;
@@ -53,7 +53,7 @@ const INDICATOR_ICON = 'tab-new-symbolic';
 let ISOLATE_RUNNING      = false;
 let MAX_ENTRY_LENGTH     = 50;
 
-//TO DO implement the workspace isolater
+
 var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
 }, class WorksetsIndicator extends panelMenu.Button {
@@ -157,6 +157,7 @@ var WorksetsIndicator = GObject.registerClass({
         this._worksetMenuItemSetEntryLabel(menuItem);
 
         menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
+        //menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
 
         // Create iconbuttons on MenuItem
         let isActive = -1;
@@ -164,6 +165,7 @@ var WorksetsIndicator = GObject.registerClass({
             if (workspaceMapValues.currentWorkset == menuItem.workset.WorksetName) {
                 isActive = i;
                 return;
+
             }
         }, this);
         let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
@@ -171,30 +173,7 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
-
-
-        let editable = {};
-        Object.assign(editable, menuItem.workset);
-        let workSpaceOptions = {Workspace0: false, Workspace1: false, Workspace2: false, Workspace3: false, Workspace4: false};
-        let workSpaceOptions2 = {Workspace5: false, Workspace6: false, Workspace7: false, Workspace8: false, Workspace9: false};
-        editable.workSpaceOptionsLabel = "Null"
-        editable.workSpaceOptions = workSpaceOptions;
-        editable.workSpaceOptions2 = workSpaceOptions2;
-        let workspaceOptionsEditables = [{Workspace0: 'First', Workspace1: 'Second', Workspace2: 'Third', Workspace3: 'Fourth', Workspace4: 'Fifth'}]
-        let workspaceOptionsEditables2 = [{Workspace5: 'Sixth', Workspace6: 'Seventh', Workspace7: 'Eighth', Workspace8: 'Ninth', Workspace9: 'Tenth'}]
-
-        let editables = [{WorksetName: 'Name'}, {BackgroundImage: ' ', hidden: true}, {Favorite: 'Favorite'},
-            {workSpaceOptionsLabel: 'Opens on these workspaces automatically:', labelOnly: true}, 
-            {workSpaceOptions: ' ', subObjectEditableProperties: workspaceOptionsEditables},
-            {workSpaceOptions2: ' ', subObjectEditableProperties: workspaceOptionsEditables2}]
-        let buttonStyles = [ { label: "Cancel", key: Clutter.KEY_Escape, action: function(){this.returnObject=false, this.close(true)} }, { label: "Done", default: true }];
-
-        uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {
-            let editObjectChooseDialog = new uiUtils.ObjectEditorDialog("Properties of Workset: "+menuItem.nameText, () => {
-                uiUtils.showUserFeedbackMessage("Changes saved.");
-            }, editable, editables, buttonStyles);
-        });
-
+        uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {this._worksetMenuItemRemoveEntry(menuItem, 'delete'); this._refreshMenu();});
 
         // Set up sub menu items
@@ -221,20 +200,23 @@ var WorksetsIndicator = GObject.registerClass({
         // Remove all and re-add
         menuItem.favAppsMenuItems.forEach(function (mItem) { mItem.destroy(); });
         if (menuItem.infoMenuButton) menuItem.infoMenuButton.destroy();
-        if (menuItem.bgMenuButton) menuItem.bgMenuButton.destroy();
         menuItem.favAppsMenuItems = [];
 
         // Background info
-        menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
-        menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
-        menuItem.bgMenuButton.connect('activate', () => {
-            //this.menu.close();
-            //menuItem.setSubmenuShown(false);
-            Me.session.setWorksetBackgroundImage(menuItem.workset);
-            this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
-        });
-        uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
-        menuItem.menu.addMenuItem(menuItem.bgMenuButton);
+        if (menuItem.bgMenuButton == undefined || menuItem.bgMenuButton.imgSrc != menuItem.workset.BackgroundImage) { // Only update if the image has changed
+            if (menuItem.bgMenuButton) menuItem.bgMenuButton.destroy();
+            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
+            menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
+            menuItem.bgMenuButton.connect('activate', () => {
+                //this.menu.close();
+                //menuItem.setSubmenuShown(false);
+                Me.session.setWorksetBackgroundImage(menuItem.workset);
+                this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
+            });
+            uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
+            menuItem.menu.addMenuItem(menuItem.bgMenuButton);
+        }
+
 
         // Workset info
         let infoText = "Opens these apps";
@@ -244,11 +226,9 @@ var WorksetsIndicator = GObject.registerClass({
         }, this);
         menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
         menuItem.infoMenuButton.label.set_x_expand(true);
-        menuItem.infoMenuButton.connect('activate', () => {
-            this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
-        });
+        menuItem.infoMenuButton.connect('activate', () => { });
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {});
+        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {{Me.session.editWorkset(menuItem.workset); this._refreshMenu();}});
         menuItem.menu.addMenuItem(menuItem.infoMenuButton);
         
         // Favorite Apps entries

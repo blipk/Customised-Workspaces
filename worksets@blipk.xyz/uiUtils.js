@@ -93,6 +93,7 @@ function setImage(imgFilePath, parent) {
     if (!success) 
     throw Error("error creating Clutter.Image()");
 
+    parent.imgSrc = imgFilePath;
     parent.content = image;
     parent.height = 135;
 }
@@ -309,7 +310,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                                }
                              });
         }
-        } catch (e) {logError(e); dev.log(e);}
+        } catch (e) {dev.log(e);}
     }
 });
 
@@ -527,7 +528,7 @@ var ObjectEditorDialog = GObject.registerClass({
                         this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.set_text(subObjectPropertyDisplayName);
                         
                         // Toggling Function
-                        let togglingFunction = function() {
+                        function togglingFunction() {
                             // subObjectToggleValidationCallback will return values to set for any other bool in the subobject and whether to toggle the current one
                             let [allowed, boolValues] = subObjectToggleValidationCallback.call(this, value, n);
                             if (!boolValues) boolValues = Object.values(value);
@@ -606,6 +607,6 @@ var ObjectEditorDialog = GObject.registerClass({
                                }
                              });
         }
-        } catch (e) {logError(e); dev.log(e);}
+        } catch (e) { dev.log(e);}
     }
 });
