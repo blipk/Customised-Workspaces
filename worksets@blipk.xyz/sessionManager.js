@@ -175,10 +175,9 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     scanInstalledApps() {
-        let appPath = '/usr/share/applications/'
-        let userAppPath = fileUtils.USER_DATA_DIR+'/applications/'
-        let installedApps = fileUtils.enumarateDirectoryChildren(appPath)
-        installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(userAppPath))
+        let appPaths = ['/usr/share/applications/', fileUtils.USER_DATA_DIR+'/applications/', '/var/lib/flatpak/exports/share/applications/'];
+        let installedApps = [];
+        appPaths.forEach(p => installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(p)));
 
         installedApps.forEach(function(app, i) {
             let fullAppPath = app.parentDirectory+app.fullname;
