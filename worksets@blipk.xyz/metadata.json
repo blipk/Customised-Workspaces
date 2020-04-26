@@ -3,7 +3,7 @@
 "original-author": "adpl@kronosoul.xyz", 
 "description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
 "settings-schema": "org.gnome.shell.extensions.worksets", 
-"url": "http://kronosoul.xyz",
+"url": "https://github.com/blipk/Customised-Workspaces",
 "extension-id": "worksets",
 "gettext-domain": "worksets",
 "shell-version": [

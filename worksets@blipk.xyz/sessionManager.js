@@ -398,6 +398,15 @@ var SessionManager = class SessionManager {
                     this.activeSession.workspaceMaps[workSpaceOptionsKey].defaultWorkset = '';
             }, this);
 
+
+            // Update the name on the maps if it has changed
+            this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+                if (workspaceMapValues.defaultWorkset == worksetIn.WorksetName)
+                    this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = returnObject.WorksetName;
+                if (workspaceMapValues.currentWorkset == worksetIn.WorksetName)
+                    this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = returnObject.WorksetName;
+            }, this);
+            
             this.saveSession();
             Me.workspaceManager.loadDefaultWorksets();
             uiUtils.showUserFeedbackMessage("Changes saved.");
