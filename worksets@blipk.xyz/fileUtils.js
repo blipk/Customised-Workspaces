@@ -33,6 +33,7 @@ const dev = Me.imports.devUtils;
 var USER_CONF_DIR = GLib.get_user_config_dir();
 var USER_CACHE_DIR = GLib.get_user_cache_dir();
 var USER_DATA_DIR = GLib.get_user_data_dir();
+var SYS_DATA_DIRS = GLib.get_system_data_dirs();
 var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
 var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
 var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);

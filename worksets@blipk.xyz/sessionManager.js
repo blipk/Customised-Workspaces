@@ -175,9 +175,13 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     scanInstalledApps() {
-        let appPaths = fileUtils.GLib.get_system_data_dirs().map(p => p + '/applications/').filter(p => fileUtils.checkExists(p));
-        let installedApps = [];
-        appPaths.forEach(p => installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(p)));
+        let installedApps = []
+        let userAppPath = fileUtils.USER_DATA_DIR+'/applications/'
+        if (fileUtils.checkExists(userAppPath)) installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(userAppPath));
+
+        fileUtils.SYS_DATA_DIRS.map(p => p + '/applications/')
+            .filter(p => fileUtils.checkExists(p))
+            .forEach(p => installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(p)));
 
         installedApps.forEach(function(app, i) {
             let fullAppPath = app.parentDirectory+app.fullname;
