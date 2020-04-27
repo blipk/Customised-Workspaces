@@ -34,7 +34,7 @@
 const AppFavorites = imports.ui.appFavorites;
 const Main = imports.ui.main;
 const extensionUtils = imports.misc.extensionUtils;
-const { GObject, Gio, Clutter } = imports.gi;
+const { GObject, Gio, Clutter, Shell } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -175,27 +175,15 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     scanInstalledApps() {
-        let installedApps = []
-        let userAppPath = fileUtils.USER_DATA_DIR+'/applications/'
-        if (fileUtils.checkExists(userAppPath)) installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(userAppPath));
-
-        fileUtils.SYS_DATA_DIRS.map(p => p + '/applications/')
-            .filter(p => fileUtils.checkExists(p))
-            .forEach(p => installedApps = installedApps.concat(fileUtils.enumarateDirectoryChildren(p)));
-
-        installedApps.forEach(function(app, i) {
-            let fullAppPath = app.parentDirectory+app.fullname;
-            let file = Gio.file_new_for_path(fullAppPath);
-            let buffer = file.load_contents(null);
-            let contents = imports.byteArray.toString(buffer[1]);
-
-            let nameLoc = contents.indexOf("Name=");
-            let execLoc = contents.indexOf("Exec=");
-            let iconLoc = contents.indexOf("Icon=");
-
-            this.allApps[app.fullname] = {'displayName': contents.substring(nameLoc+5, contents.indexOf("\n", nameLoc)),
-                                                'icon': contents.substring(iconLoc+5, contents.indexOf("\n", iconLoc)), 
-                                                'exec': contents.substring(execLoc+5, contents.indexOf("\n", execLoc)) };
+        // Shell.AppSystem includes flatpak and snap installed applications
+        let installedApps = Shell.AppSystem.get_default().get_installed();
+        installedApps.forEach(function(app){
+            let id = app.get_id();
+            let name = app.get_name() || app.get_display_name() || 'Unkown App Name';
+            let exec = app.get_string("Exec");
+            let icon = '';
+            if (app.get_icon()) icon = app.get_icon().to_string();
+            this.allApps[id] = {'displayName': name, 'icon': icon, 'exec': exec };
         }, this);
     }
     displayWorkset(workset, loadInNewWorkspace=false) {
