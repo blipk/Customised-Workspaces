@@ -169,21 +169,21 @@ var WorkspaceManager = class WorkspaceManager {
         
         windows.forEach(function (w) {
             let id = windowTracker.get_window_app(w).get_id();
-            if (id.indexOf("window:") > -1) {   //Snap installed applications just reporting 'window:x' so need to do some hackish matching
+
+            //Snap installed applications just reporting 'window:x' so need to do some hackish matching
+            if (id.indexOf("window:") > -1) {   
                 let wmclass = w.get_wm_class().toLowerCase().split(" ");
                 wmclass = wmclass.concat(w.get_wm_class_instance().toLowerCase().split(" "));
 
-                let match;
                 Me.session.allApps.forEachEntry(function (appName, appValues) {
                     wmclass.forEach(function (wc) {
                         if (appName.indexOf(wc) > -1 || appValues.exec.indexOf(wc) > -1)
-                            match = appName;
+                            id = appName;
                     }, this)
                 }, this);
-                appIDs.push(match);
-            } else {
-                appIDs.push(id);
             }
+            
+            appIDs.push(id);
         }, this)
 
         //remove duplicates from apps with multiple windows
