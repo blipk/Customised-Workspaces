@@ -34,7 +34,7 @@
 const Main = imports.ui.main;
 const Gettext = imports.gettext;
 const Workspace = imports.ui.workspace;
-const { GObject, Meta, Wnck, Shell } = imports.gi;
+const { GObject, Meta, Wnck, Shell, GLib } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -170,17 +170,12 @@ var WorkspaceManager = class WorkspaceManager {
         windows.forEach(function (w) {
             let id = windowTracker.get_window_app(w).get_id();
 
-            //Snap installed applications just reporting 'window:x' so need to do some hackish matching
+            // Snap installed applications are launched as window backed so need to get the hint that is set for ubuntus BAMF daemon from the apps environment vars
+            // Possible alternative if the BAMF method proves unreliable: Shell.AppSystem.search(w.get_wm_class_instance())
             if (id.indexOf("window:") > -1) {   
-                let wmclass = w.get_wm_class().toLowerCase().split(" ");
-                wmclass = wmclass.concat(w.get_wm_class_instance().toLowerCase().split(" "));
-
-                Me.session.allApps.forEachEntry(function (appName, appValues) {
-                    wmclass.forEach(function (wc) {
-                        if (appName.indexOf(wc) > -1 || appValues.exec.indexOf(wc) > -1)
-                            id = appName;
-                    }, this)
-                }, this);
+                let env = GLib.spawn_command_line_sync('ps e '+ w.get_pid())[1].toString().toLowerCase();
+                let bamfHint = env.substring(env.indexOf("bamf_desktop_file_hint=")+23, env.indexOf(".desktop")+8)
+                id = GLib.path_get_basename(bamfHint);
             }
             
             appIDs.push(id);
