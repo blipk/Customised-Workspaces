@@ -199,7 +199,7 @@ var SessionManager = class SessionManager {
         
         if (isActive > -1) { //switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
-            uiUtils.showUserFeedbackMessage("Switched to active environment " + workset.WorksetName, true);
+            dev.log("Switched to active environment " + workset.WorksetName);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
@@ -207,7 +207,7 @@ var SessionManager = class SessionManager {
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
-            uiUtils.showUserFeedbackMessage("Loaded environment " + workset.WorksetName, true);
+            dev.log("Loaded environment " + workset.WorksetName);
         }
 
         this.setFavorites(workset.FavApps);
