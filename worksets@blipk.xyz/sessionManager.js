@@ -82,6 +82,7 @@ var SessionManager = class SessionManager {
         try {
         if (typeof this.activeSession.SessionName !== 'string') this.activeSession.SessionName = "Session " + i;
         if (typeof this.activeSession.Favorite !== 'boolean') this.activeSession.Favorite = false;
+        if (typeof this.activeSession.IsolateRunningApps !== 'boolean') this.activeSession.IsolateRunningApps = false;
 
         // Clean active worksets from previous session
         this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {

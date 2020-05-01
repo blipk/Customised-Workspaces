@@ -44,13 +44,11 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const utils = Me.imports.utils;
 const workspaceManager = Me.imports.workspaceManager;
 const workspaceIsolater = Me.imports.workspaceIsolater;
-const fileUtils = Me.imports.fileUtils;
 const uiUtils = Me.imports.uiUtils;
 const dev = Me.imports.devUtils;
 const scopeName = "panelIndicator";
 
 const INDICATOR_ICON = 'tab-new-symbolic';
-let ISOLATE_RUNNING      = false;
 let MAX_ENTRY_LENGTH     = 50;
 
 
@@ -94,7 +92,7 @@ var WorksetsIndicator = GObject.registerClass({
         try {
         // Isolate running apps switch
         this._onIsolateSwitch();
-        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), ISOLATE_RUNNING, { reactive: true });
+        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.IsolateRunningApps, { reactive: true });
         isolateRunningAppsMenuItem.connect('toggled', this._onIsolateSwitch);
         this.menu.addMenuItem(isolateRunningAppsMenuItem);
 
@@ -305,7 +303,7 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _onIsolateSwitch(init=false) {
         try {
-        ISOLATE_RUNNING = ISOLATE_RUNNING ? false: true;
+        Me.session.activeSession.IsolateRunningApps = Me.session.activeSession.IsolateRunningApps ? false : true;
         
         let findExtensionCompat = function (uuid) {
             if (extensionUtils.extensions)
@@ -325,7 +323,7 @@ var WorksetsIndicator = GObject.registerClass({
         if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
         if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;
 
-        if (ISOLATE_RUNNING) {
+        if (Me.session.activeSession.IsolateRunningApps) {
             if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
                 dash2panelSettings.set_boolean('isolate-workspaces', true);
             } else if (dash2dock && dash2dockSettings && dash2dock.state === extensionSystem.ExtensionState.ENABLED) {

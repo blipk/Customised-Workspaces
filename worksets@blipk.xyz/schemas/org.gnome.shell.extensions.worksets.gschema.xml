@@ -32,7 +32,7 @@
       <description>Contains the information on each set.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{ \"SessionName\":\"\",\"Favorite\":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <default>"{ \"SessionName\":\"\",\"Favorite\":false,\"IsolateRunningApps \":false,\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on each set.</description>
     </key>
