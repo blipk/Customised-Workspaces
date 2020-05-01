@@ -66,12 +66,6 @@ function showUserFeedbackMessage(input, overviewMessage=false) {
     }
 }
 
-
-/*
-this._image = new PopupMenu.PopupBaseMenuItem();
-    getActorCompat(this._image).content_gravity =
-      Clutter.ContentGravity.RESIZE_ASPECT;
-*/
 function setImage(imgFilePath, parent) {
     imgFilePath = imgFilePath.replace("file://", "");
     let img = new Gtk.Image({file: imgFilePath});

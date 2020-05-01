@@ -57,17 +57,6 @@ let MAX_ENTRY_LENGTH     = 50;
 var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
 }, class WorksetsIndicator extends panelMenu.Button {
-    destroy() {
-        try {
-        if (Me.workspaceIsolater) {
-            Me.workspaceIsolater.destroy();
-            workspaceIsolater.WorkspaceIsolator.refresh();
-            delete Me.workspaceIsolater;
-        }
-        super._onDestroy();
-        delete Main.panel.statusArea['WorksetsIndicator'];
-        } catch(e) { dev.log(e) }
-    }
     _init() {
         try {
         super._init(0.0, "WorksetsIndicator");

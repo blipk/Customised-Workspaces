@@ -117,6 +117,8 @@ var WorkspaceIsolator = class WorkspaceIsolator {
             global.window_manager.disconnect(this._onSwitchWorkspaceId);
             this._onSwitchWorkspaceId = 0;
         }
+
+        WorkspaceIsolator.refresh();
     }
 };
 

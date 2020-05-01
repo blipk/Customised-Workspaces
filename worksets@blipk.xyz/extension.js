@@ -74,7 +74,8 @@ function disable() {
     try {
     dev.log(scopeName+'.'+arguments.callee.name, "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|");
 
-    if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator;
+    if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator'];
+    if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
     if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
     if (Me.session) Me.session.destroy(); delete Me.session;
     if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
