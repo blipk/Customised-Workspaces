@@ -204,6 +204,7 @@ var SessionManager = class SessionManager {
         this.setFavorites(workset.FavApps);
         this.setBackground(workset.BackgroundImage);
 
+        Me.workspaceViewManager.refreshThumbNailsBoxes();
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
@@ -215,6 +216,7 @@ var SessionManager = class SessionManager {
             }, this);
 
             this.saveSession();
+            Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
 

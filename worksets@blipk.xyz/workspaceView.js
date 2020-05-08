@@ -38,35 +38,41 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     }
     refreshThumbNailsBoxes() {
         try {
-        this.thumbnailBoxes.forEach(function(thumbnailBox) {
+        this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
-            let worksetInfoBox = new popupMenu.PopupBaseMenuItem();
-            
-            worksetInfoBox.width = thumbnailBox._contents.width;
-            worksetInfoBox.height = thumbnailBox._contents.height / 3;
-    
-            let worksetLabel = new St.Label({text: '',
-                                            style_class: 'workset-workspace-label',
-                                            y_expand: true,
-                                            y_align: Clutter.ActorAlign.CENTER});
-            worksetInfoBox.add(worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.MIDDLE, expand: true});
-    
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                if (parseInt(workspaceMapKey.substr(-1, 1)) == thumbnailBox.metaWorkspace.index() && workspaceMapValues.currentWorkset != '') {
-                    worksetLabel.set_text(workspaceMapValues.currentWorkset);
-                
-                    Me.session.activeSession.Worksets.forEach(function (worksetBuffer, index) {
-                        if (worksetBuffer.WorksetName != workspaceMapValues.currentWorkset) return;
-                        let newbg = new Meta.Background({ meta_display: Me.gScreen });
-                        newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                        thumbnailBox._bgManager.backgroundActor.background = newbg;
-                        thumbnailBox._bgManager.connect('changed', ()=> { Me.workspaceViewManager.refreshThumbNailsBoxes() })
-                    }, this);
-                }
-            }, this);
-    
-            thumbnailBox._contents.add_child(worksetInfoBox);
+            if (thumbnailBox.worksetInfoBox) thumbnailBox.worksetInfoBox.destroy();
+            if (!thumbnailBox._bgManager) return;
 
+            thumbnailBox.worksetInfoBox = new St.BoxLayout();
+            thumbnailBox.worksetInfoBox.width = thumbnailBox._contents.width;
+            thumbnailBox.worksetInfoBox.height = thumbnailBox._contents.height / 3;
+            
+            thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-workspace-label'});
+            thumbnailBox.worksetInfoBox.add(thumbnailBox.worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.MIDDLE, expand: true});
+            
+            // Default background
+            let newbg = new Meta.Background({ meta_display: Me.gScreen });
+            newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+
+            // Find backgrounds for active custom workspaces
+            let text = Me.session.activeSession.workspaceMaps['Workspace'+i].currentWorkset;
+            thumbnailBox.worksetLabel.set_text(text);
+            Me.session.activeSession.Worksets.forEach(function (worksetBuffer, index) {
+                if (worksetBuffer.WorksetName == Me.session.activeSession.workspaceMaps['Workspace'+i].currentWorkset)
+                    newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            }, this);
+
+            // Image for last workspace thumbnail
+            if (Me.workspaceManager.NumGlobalWorkspaces == i+1)
+                newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            
+            // Prevent excessive recursion but enforce background updates during various events
+            thumbnailBox._updated = false;
+            thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+
+            // Apply changes
+            thumbnailBox._bgManager.backgroundActor.background = newbg;
+            thumbnailBox._contents.add_child(thumbnailBox.worksetInfoBox);
             } catch(e) { dev.log(e) }
         }, this)
 
