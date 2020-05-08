@@ -204,7 +204,7 @@ var SessionManager = class SessionManager {
         this.setFavorites(workset.FavApps);
         this.setBackground(workset.BackgroundImage);
 
-        Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
@@ -223,7 +223,7 @@ var SessionManager = class SessionManager {
     // Workset Management
     setWorksetBackgroundImage(workset) {
         try {
-        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose New Background'],  fileUtils.GLib.get_environ(), 0, null,
+        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose Background for ' + workset.WorksetName],  fileUtils.GLib.get_environ(), 0, null,
         (resource) => {
             try {
             if (!resource) return;
@@ -363,13 +363,7 @@ var SessionManager = class SessionManager {
             returnObject.WorksetName = returnObject.WorksetName.trim();
             if (returnObject.WorksetName == '') return;
 
-            // Update workset name and favorite state
-            this.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-                if (workset.WorksetName == worksetIn.WorksetName) {
-                    this.activeSession.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
-                    this.activeSession.Worksets[worksetIndex].Favorite = returnObject.Favorite;
-                }
-            }, this);
+
 
             // Update workspace maps - this currently overrides any previous worksets assigned to the workspace
             Object.assign(returnObject.workSpaceOptions, returnObject.workSpaceOptions2);
@@ -383,17 +377,26 @@ var SessionManager = class SessionManager {
                     this.activeSession.workspaceMaps[workSpaceOptionsKey].defaultWorkset = '';
             }, this);
 
-
             // Update the name on the maps if it has changed
+            dev.log(worksetIn.WorksetName)
             this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == worksetIn.WorksetName)
                     this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = returnObject.WorksetName;
                 if (workspaceMapValues.currentWorkset == worksetIn.WorksetName)
                     this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = returnObject.WorksetName;
             }, this);
+
+            // Update workset name and favorite state
+            this.activeSession.Worksets.forEach(function (workset, worksetIndex) {
+                if (workset.WorksetName == worksetIn.WorksetName) {
+                    this.activeSession.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
+                    this.activeSession.Worksets[worksetIndex].Favorite = returnObject.Favorite;
+                }
+            }, this);
             
-            this.saveSession();
+            this.saveSession(); this.loadSession();
             Me.workspaceManager.loadDefaultWorksets();
+            Me.workspaceViewManager.refreshThumbNailsBoxes();
             uiUtils.showUserFeedbackMessage("Changes saved.");
         }, editable, editables, buttonStyles);
         } catch(e) { dev.log(e) }

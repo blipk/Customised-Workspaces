@@ -7,10 +7,6 @@
     padding: .5em;
 }
 
-.workset-workspace-label {
-    font-size: 15em; 
-}
-
 .ci-notification-label {
     font-weight: bold;
     color: #ffffff;
@@ -67,4 +63,12 @@ entry:indeterminate {
 .object-dialog-item-icon {
     padding-right: 0.4em;
 
+}
+
+
+.workspace-overlay {
+    padding-bottom: 3em;
+}
+.workspace-overlay .workset-label {
+    font-size: 15em; 
 }

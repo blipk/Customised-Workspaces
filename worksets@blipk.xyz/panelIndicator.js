@@ -140,18 +140,18 @@ var WorksetsIndicator = GObject.registerClass({
             }
         }, this);
         let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
-        let iconOpenNew_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'list-add-symbolic';
-        let iconOpenHere_nameuri = (isActive > -1) ? 'action-unavailable-symbolic' : 'go-jump-symbolic';
+        let iconOpenNew_nameuri = (isActive > -1) ? 'action-unavailable-symbolic' : 'list-add-symbolic';
+        let iconOpenHere_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
         let openHereCommand = (isActive > -1)
              ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();} 
-             : () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();};
+             : () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();};
         uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
-        uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, openHereCommand);
-        uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
-        uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();});
-
+        uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();});
+        uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openHereCommand);
+        uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();});
+        
         // Set up sub menu items
         menuItem.favAppsMenuItems = [];
         if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {

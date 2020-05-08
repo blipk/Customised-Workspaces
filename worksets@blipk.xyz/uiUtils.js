@@ -37,11 +37,16 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, fileUtils } = Me.imports;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
-function createIconButton (parentItem, iconNameURI, onClickFn, options) { //St.Side.RIGHT
-    let defaults = {x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.END};
+function createIconButton (parentItem, iconNameURI, callback, options) { //St.Side.RIGHT
+    let defaults = {icon_name: iconNameURI, 
+                              style_class: 'system-status-icon',
+                              x_expand: true, 
+                              x_align: Clutter.ActorAlign.END,
+                              y_expand: true,
+                              y_align: Clutter.ActorAlign.END};
     options = {...defaults, ...options };
 
-    let icon = new St.Icon({icon_name: iconNameURI, style_class: 'system-status-icon' });
+    let icon = new St.Icon(options);
     let iconButton = new St.Button({
         style_class: 'ci-action-btn', x_fill: true, can_focus: true,
         child: icon,
@@ -51,7 +56,7 @@ function createIconButton (parentItem, iconNameURI, onClickFn, options) { //St.S
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
     parentItem.iconButtons.push(iconButton);
-    parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', onClickFn) );
+    parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
 }
 
 //Display a short overlay message on the screen for user feedback etc..
