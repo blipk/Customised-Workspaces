@@ -7,6 +7,10 @@
     padding: .5em;
 }
 
+.test-label {
+    font-size: 15em; 
+}
+
 .ci-notification-label {
     font-weight: bold;
     color: #ffffff;

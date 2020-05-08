@@ -3,31 +3,25 @@
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
  * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * This program is distributed in the hope this it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
  * 
- * Credits:
- * This extension was created by using the following gnome-shell extensions
- * as a source for code and/or a learning resource
- * - dash-to-panel@jderose9.github.com.v16.shell-extension
- * - clipboard-indicator@tudmotu.com
- * - workspaces-to-dock@passingthru67.gmail.com
- * - workspace-isolated-dash@n-yuki.v14.shell-extension
- * - historymanager-prefix-search@sustmidown.centrum.cz
- * - minimum-workspaces@philbot9.github.com.v9.shell-extension
- * 
- * Many thanks to those great extensions.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 // External imports
@@ -38,10 +32,8 @@ const { GObject, Gio, Clutter, Shell } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const { utils, uiUtils, fileUtils } = Me.imports;
+const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceIsolater } = Me.imports;
-const dev = Me.imports.devUtils;
-
 
 var SessionManager = class SessionManager {  
     constructor () {

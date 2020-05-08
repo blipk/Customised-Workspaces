@@ -21,7 +21,7 @@ git clone https://github.com/blipk/Customised-Workspaces.git extensions
 
 ###### Clickable installer in the release or run
 ``` bash
-chmod +x _install.sh && ./_install.sh
+chmod +x install.sh && ./install.sh
 ```
 
 ### Support
@@ -37,13 +37,10 @@ Copyright (C) 2020 A.D. - http://kronosoul.xyz
 
 ```
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
+it under the terms of the BSD 2-clause licence.
 
 This program is distributed in the hope this it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the BSD 2-clause License for more details.
 ```
-

@@ -11,7 +11,8 @@ CNAME export-ignore
 *README export-ignore
 
 # project files
-debug.log export-ignore
-
-# docs
 /doc export-ignore
+/res export-ignore
+_start.sh export-ignore
+_package.sh export-ignore
+debug.log export-ignore
