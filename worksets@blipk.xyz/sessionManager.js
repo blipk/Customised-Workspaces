@@ -274,7 +274,7 @@ var SessionManager = class SessionManager {
         this.loadSession(sessionObject);
         } catch(e) { dev.log(e) }
     }
-    newWorkset(name, fromEnvironment=true) {
+    newWorkset(name, fromEnvironment=true, activate=false) {
         try {
         //Create new workset object from protoype in gschema
         let worksetObject = JSON.parse(Me.settings.get_string("workset-prototype-json"));
@@ -318,7 +318,7 @@ var SessionManager = class SessionManager {
                 //Push it to the session
                 this.activeSession.Worksets.push(worksetObject);
                 this.saveSession();
-
+                if (activate) this.displayWorkset(this.activeSession.Worksets[this.activeSession.Worksets.length-1]);
                 uiUtils.showUserFeedbackMessage("Environment "+returnText+" created.");
             }, true, false, [], [], buttonStyles);
         } else {
@@ -326,9 +326,9 @@ var SessionManager = class SessionManager {
             //Push it to the session
             this.activeSession.Worksets.push(worksetObject);
             this.saveSession();
+            if (activate) this.displayWorkset(this.activeSession.Worksets[this.activeSession.Worksets.length-1]);
         }
-        
-        
+
         } catch(e) { dev.log(e) }
     }
     editWorkset(worksetIn) {
@@ -407,11 +407,14 @@ var SessionManager = class SessionManager {
         // Remove it as the default on any workspace
         this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
             if (workspaceMapValues.defaultWorkset == workset.WorksetName)
-            this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = '';
+                this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = '';
+            if (workspaceMapValues.currentWorkset == workset.WorksetName)
+                this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
         }, this);
 
         this.activeSession.Worksets = this.activeSession.Worksets.filter(item => item !== workset);
         this.saveSession();
+        Me.workspaceViewManager.refreshThumbNailsBoxes();
         uiUtils.showUserFeedbackMessage("Environment removed from session and backup saved to "+backupFilename, true);
         } catch(e) { dev.log(e) }
     }

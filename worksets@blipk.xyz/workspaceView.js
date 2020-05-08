@@ -75,8 +75,11 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             }
 
             // Image for last empty workspace thumbnail
-            if (Me.workspaceManager.NumGlobalWorkspaces == i+1 && !thumbnailBox.workset)
+            if (Me.workspaceManager.NumGlobalWorkspaces == i+1 && !thumbnailBox.workset) {
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 200})
+
                 newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            }
             
             // Prevent excessive recursion but enforce background updates during various events
             thumbnailBox._updated = false;

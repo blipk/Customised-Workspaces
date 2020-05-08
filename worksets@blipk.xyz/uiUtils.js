@@ -48,9 +48,7 @@ function createIconButton (parentItem, iconNameURI, callback, options) { //St.Si
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        style_class: 'ci-action-btn', x_fill: true, can_focus: true,
-        child: icon,
-
+        child: icon, style_class: 'ci-action-btn', x_fill: true, can_focus: true,
     });
     parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();

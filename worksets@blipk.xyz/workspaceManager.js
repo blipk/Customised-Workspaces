@@ -219,28 +219,27 @@ var WorkspaceManager = class WorkspaceManager {
             if (workspaceMapValues.currentWorkset != '') {
                 if (currents.indexOf(workspaceMapValues.currentWorkset) > -1)
                     Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
-
                 currents.push(workspaceMapValues.currentWorkset)
             }
         }, this);
 
-        //minimum workspaces should equal the amount of active worksets
+        // Minimum workspaces should be one more than the workspace index that the last active workset is on
         let min_workspaces = 1;
         if (!destroyClean) {
             Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                if (workspaceMapValues.currentWorkset != '') {
-                    min_workspaces++;
-                }
+                let index = parseInt(workspaceMapKey.substr(-1, 1));
+                dev.log(index)
+                if (workspaceMapValues.currentWorkset != '' && index > min_workspaces-2)
+                    min_workspaces = index+2;
             }, this);
         }
-        if (min_workspaces == 0) return;    // Should not happen
 
-        //first make all workspaces non-persistent
+        // Make all workspaces non-persistent
         for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {
             Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = false;
         }
 
-        //if we have less than the minimum workspaces create new ones and make them persistent
+        // If we have less than the minimum workspaces create new ones and make them persistent
         if(Me.gWorkspaceManager.n_workspaces < min_workspaces-1) {
             for(let i = 0; i < min_workspaces-1; i++) {
                 if(i >= Me.gWorkspaceManager.n_workspaces) {
@@ -248,13 +247,13 @@ var WorkspaceManager = class WorkspaceManager {
                 }
                 Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;    
             }
-        } else { //if we already have enough workspaces make the first ones persistent
+        } else { // If we already have enough workspaces make the first ones persistent
             for(let i = 0; i < min_workspaces-1; i++) {
                 Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;
             }
         }
         
-        //update the workspace view
+        // Update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
         } catch(e) { dev.log(e) }
     }
