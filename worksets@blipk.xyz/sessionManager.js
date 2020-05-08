@@ -33,7 +33,7 @@ const { GObject, Gio, Clutter, Shell } = imports.gi;
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils, fileUtils } = Me.imports;
-const { panelIndicator, workspaceManager, workspaceIsolater } = Me.imports;
+const { panelIndicator, workspaceManager, workspaceIsolater, workspaceView } = Me.imports;
 
 var SessionManager = class SessionManager {  
     constructor () {
@@ -62,7 +62,7 @@ var SessionManager = class SessionManager {
 
             this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
             Me.workspaceManager = new workspaceManager.WorkspaceManager();
-
+            Me.workspaceViewManager = new workspaceView.WorkspaceViewManager();
             Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
             Main.panel.addToStatusArea('WorksetsIndicator', Me.worksetsIndicator, 1);
 

@@ -47,7 +47,7 @@ const _ = Gettext.domain('worksets').gettext;
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils } = Me.imports;
-const { panelIndicator, workspaceManager, sessionManager, workspaceView } = Me.imports;
+const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "worksetsalphaextension";
 
 
@@ -60,8 +60,6 @@ function enable() {
     try {
     dev.log(scopeName+'.'+arguments.callee.name, "@---------------------------------|");
     if (Me.session) return; // Already initialized
-
-    Me.workspaceView = new workspaceView.WorkspaceViewManager();
     
     // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
     Me.gScreen = global.screen || global.display;
@@ -84,6 +82,7 @@ function disable() {
     if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator'];
     if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
     if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
+    if (Me.workspaceViewManager) Me.workspaceViewManager.destroy(); delete Me.workspaceViewManager;
     if (Me.session) Me.session.destroy(); delete Me.session;
     if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
     if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);

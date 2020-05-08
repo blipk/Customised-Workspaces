@@ -37,7 +37,6 @@ const { dev, utils } = Me.imports;
 var WorkspaceManager = class WorkspaceManager { 
     constructor() {
         try {
-        this.workspaceChangeHandler = null;
         Me.workspaceManager = this;
         this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
@@ -55,6 +54,7 @@ var WorkspaceManager = class WorkspaceManager {
     }
     _activeWorkspaceChanged() {
         try {
+
         this.workspaceUpdate();
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
@@ -70,6 +70,7 @@ var WorkspaceManager = class WorkspaceManager {
         //If there's not any active on the workspace, load any that are set to default here
         if (foundActive === false) this.loadDefaultWorksets();
         this.workspaceUpdate();
+        Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     workspaceUpdate() {

@@ -16,54 +16,62 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils } = Me.imports;
 const { sessionManager } = Me.imports;
 
-let injections = {};
 
 var WorkspaceViewManager = class WorkspaceViewManager { 
     constructor() {
-        try {          
-            injections['_createBackground'] = workspaceThumbnail.WorkspaceThumbnail.prototype._createBackground;
-            dev.log(workspaceThumbnail.WorkspaceThumbnail._createBackgroundOriginal)
-            workspaceThumbnail.WorkspaceThumbnail.prototype._createBackground = function() {
-                injections['_createBackground'].call(this); // Call parent
-                
-                
-                //this._bgManager._container.remove_child(this._bgManager.backgroundActor);
-                let worksetInfoBox = new popupMenu.PopupBaseMenuItem();
-                //let newbg = uiUtils.setImage('/home/kronosoul/Pictures/duat-blk.jpg', worksetInfoBox);
-                worksetInfoBox.width = this._contents.width;
-                worksetInfoBox.height = this._contents.height / 3;
-                worksetInfoBox.set_x_align(St.Align.END)
+        try { 
+            this.injections = {}
+            this.thumbnailBoxes = [];
+            this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
 
-                let worksetLabel = new St.Label({text: '',
-                                                style_class: 'test-label',
-                                                y_expand: true,
-                                                y_align: Clutter.ActorAlign.CENTER});
-                worksetInfoBox.add(worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.MIDDLE, expand: true});
-
-                Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                    if (parseInt(workspaceMapKey.substr(-1, 1)) == this.metaWorkspace.index() && workspaceMapValues.currentWorkset != '') {
-                        worksetLabel.set_text(workspaceMapValues.currentWorkset);
-                    
-                        Me.session.activeSession.Worksets.forEach(function (worksetBuffer, index) {
-                            if (worksetBuffer.WorksetName != workspaceMapValues.currentWorkset) return;
-                            let newbg = new Meta.Background({ meta_display: Me.gScreen });
-                            newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                            this._bgManager.backgroundActor.background = newbg;
-                        }, this);
-                    }
-                }, this);
-                
-                
-                 this._contents.add_child(worksetInfoBox);
+            workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
+                Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
+                Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
+                Me.workspaceViewManager.refreshThumbNailsBoxes();
             };
         } catch(e) { dev.log(e) }
     }
     destroy() {
         try {
+            workspaceThumbnail.WorkspaceThumbnail.prototype.addThumbnails = this.injections['addThumbnails'];
+        } catch(e) { dev.log(e) }
+    }
+    refreshThumbNailsBoxes() {
+        try {
+        this.thumbnailBoxes.forEach(function(thumbnailBox) {
+            try {
+            let worksetInfoBox = new popupMenu.PopupBaseMenuItem();
+            
+            worksetInfoBox.width = thumbnailBox._contents.width;
+            worksetInfoBox.height = thumbnailBox._contents.height / 3;
+    
+            let worksetLabel = new St.Label({text: '',
+                                            style_class: 'workset-workspace-label',
+                                            y_expand: true,
+                                            y_align: Clutter.ActorAlign.CENTER});
+            worksetInfoBox.add(worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.MIDDLE, expand: true});
+    
+            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+                if (parseInt(workspaceMapKey.substr(-1, 1)) == thumbnailBox.metaWorkspace.index() && workspaceMapValues.currentWorkset != '') {
+                    worksetLabel.set_text(workspaceMapValues.currentWorkset);
+                
+                    Me.session.activeSession.Worksets.forEach(function (worksetBuffer, index) {
+                        if (worksetBuffer.WorksetName != workspaceMapValues.currentWorkset) return;
+                        let newbg = new Meta.Background({ meta_display: Me.gScreen });
+                        newbg.set_file(Gio.file_new_for_path(Me.session.activeSession.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                        thumbnailBox._bgManager.backgroundActor.background = newbg;
+                        thumbnailBox._bgManager.connect('changed', ()=> { Me.workspaceViewManager.refreshThumbNailsBoxes() })
+                    }, this);
+                }
+            }, this);
+    
+            thumbnailBox._contents.add_child(worksetInfoBox);
+
+            } catch(e) { dev.log(e) }
+        }, this)
 
         } catch(e) { dev.log(e) }
     }
-
 };
 
 /*
