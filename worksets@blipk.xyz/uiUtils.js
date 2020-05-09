@@ -58,8 +58,8 @@ function createIconButton (parentItem, iconNameURI, callback, options) { //St.Si
 
 //Display a short overlay message on the screen for user feedback etc..
 let messages = [];
-function showUserFeedbackMessage(input, overviewMessage=false) {
-    dev.log('User Feedback', input);
+function showUserFeedbackMessage(input, overviewMessage=false, fadeTime=2.9 ) {
+    dev.log('Notification', input);
     if (overviewMessage) {
         Main.overview.setMessage(_(input), { forFeedback: true });
     } else {
@@ -69,7 +69,7 @@ function showUserFeedbackMessage(input, overviewMessage=false) {
         messages[lastItem].opacity = 255;
         let monitor = Main.layoutManager.primaryMonitor;
         messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
-        tweener.addTween(messages[lastItem], { opacity: 0, time: 2.9, transition: 'easeOutQuad', onComplete: () => { Main.uiGroup.remove_actor(messages[lastItem]); messages[lastItem] = null;} });
+        tweener.addTween(messages[lastItem], { opacity: 0, time: fadeTime, transition: 'easeOutQuad', onComplete: () => { Main.uiGroup.remove_actor(messages[lastItem]); messages[lastItem] = null;} });
     }
 }
 
