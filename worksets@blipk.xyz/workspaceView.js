@@ -76,11 +76,17 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
             thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            
+            // Faster than setting text-shadows in CSS
+            let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
+            //dev.log(thumbnailBox.worksetLabel.clutter_text.get_constraints () )
+            thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
 
-            //thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
-            //thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
-            //thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
-            //thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
+            thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
+            thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
+            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetLabelUnderlay.clutter_text.set_scale(1.1, 1.1);
 
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -98,7 +104,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Set text for any custom workspaces
             let text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             thumbnailBox.worksetLabel.set_text(text);
-            //thumbnailBox.worksetLabelUnderlay.set_text(text);
+            thumbnailBox.worksetLabelUnderlay.set_text(text);
 
             if (thumbnailBox.workset) {
                 // Action buttons for custom workspaces

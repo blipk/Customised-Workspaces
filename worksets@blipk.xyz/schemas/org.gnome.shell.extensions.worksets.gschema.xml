@@ -10,7 +10,7 @@
     <value value='6' nick='METRO'/>
   </enum>
 
-  <schema path="/org/gnome/shell/extensions/worksets/" id="org.gnome.shell.extensions.worksets">
+  <schema id="org.gnome.shell.extensions.worksets" path="/org/gnome/shell/extensions/worksets/">
     <key name="panel-position" enum="org.gnome.shell.extensions.worksets.test">
       <default>'DOTS'</default>
       <summary>test</summary>
@@ -18,22 +18,22 @@
     </key>
     <key name="isolate-workspaces" type="b">
       <default>true</default>
-      <summary>State of the workspace isolater</summary>
+      <summary>Isolate running applications</summary>
       <description>When active, running applications are only shown on the dash/panel in their workspace</description>
     </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
-      <summary>Visibility of the panel indicator for the extension</summary>
+      <summary>Show panel indicator</summary>
       <description>When active, a management indicator is shown on the panel.</description>
     </key>
     <key name="show-workspace-overlay" type="b">
       <default>true</default>
-      <summary>Visibility of the overlay on the workspace popup in the Gnome Shell overview</summary>
+      <summary>Show workspace overlay</summary>
       <description>When active, labels of the active custom workspaces are shown .</description>
     </key>
     <key name="show-notifications" type="b">
       <default>true</default>
-      <summary>Visibility of notifications when switching custom workspaces.</summary>
+      <summary>Show notifications.</summary>
       <description>When active, a desktop notification is shown indicating when a custom workspace has been switched to.</description>
     </key>
      <key name="favorites-prototype" type="s">

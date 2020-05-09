@@ -45,10 +45,11 @@ var SessionManager = class SessionManager {
         // Set up settings bindings
         this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
         this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
-                Me.workspaceViewManager.refreshThumbNailsBoxes()}
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()}
             );
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
                                             this.loadOptions();
+                                            if (!Me.worksetsIndicator) return;
                                             if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
                                                 Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
                                             }

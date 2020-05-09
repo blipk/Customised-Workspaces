@@ -68,22 +68,22 @@ entry:indeterminate {
 .workspace-overlay {
     padding-top: 55em;
 }
+.workspace-overlay StIcon {
+    color: white;
+    background-color: rgba(0, 0, 0, 0.23);
+}
 .workspace-overlay .workset-label {
     font: small-caps bold 12em/12em Arial;
     color: ghostwhite;
     text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
 
-    text-shadow: black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
-                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
-                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
-                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px;
-
+    /*text-shadow: 0px 20px 20px black, 0px -20px 20px black, 20px 0px 20px black, -20px 0px 20px black;*/
 }
 
 .workspace-underlay {
     padding-top: 52em;
 }
 .workspace-underlay .workset-label-underlay {
-    font-size: 15em;
+    font-size: 12em;
+    color: black;
 }

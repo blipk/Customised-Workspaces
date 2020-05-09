@@ -67,6 +67,7 @@ function enable() {
 
     if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
     Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
+    //Gio.Settings.new(Me.metadata['settings-schema']);
 
     // Spawn session
     Me.session = new sessionManager.SessionManager();

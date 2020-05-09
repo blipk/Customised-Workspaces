@@ -50,7 +50,7 @@ var WorksetsIndicator = GObject.registerClass({
         hbox.add_child(this.icon);
         //let buttonText = new St.Label(    {text: (''), y_align: Clutter.ActorAlign.CENTER }   );
         //hbox.add_child(buttonText);
-        this.actor.add_child(hbox);
+        (this.add_child) ? this.add_child(hbox) : this.actor.add_child(hbox);
 
         //Build our menu
         this._buildMenu();
@@ -68,6 +68,15 @@ var WorksetsIndicator = GObject.registerClass({
         try {
         // Sub menu for option switches
         this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
+
+        /*
+        this.OptionMenuItems = [];
+
+        Me.session.activeSession.Options.forEachEntry(function (optionName, optionValue) {
+            let OptionMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.Options.IsolateWorkspaces, { reactive: true });
+            let OptionMenuItem.pressHandler = letOptionMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
+        }, this);
+        */
 
         this.isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.Options.IsolateWorkspaces, { reactive: true });
         this.isolateRunningAppsMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
