@@ -39,21 +39,23 @@ const { dev, utils, fileUtils } = Me.imports;
 function createIconButton (parentItem, iconNameURI, callback, options) { //St.Side.RIGHT
     let defaults = {icon_name: iconNameURI,
                               style_class: 'system-status-icon',
-                              x_expand: true,
+                              x_expand: false,
                               x_align: Clutter.ActorAlign.END,
-                              y_expand: true,
+                              y_expand: false,
                               y_align: Clutter.ActorAlign.END};
     options = {...defaults, ...options };
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        child: icon, style_class: 'ci-action-btn', x_fill: true, can_focus: true,
+        child: icon, style_class: 'ci-action-btn', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
     });
     parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
     parentItem.iconButtons.push(iconButton);
     parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
+
+    return iconButton;
 }
 
 //Display a short overlay message on the screen for user feedback etc..

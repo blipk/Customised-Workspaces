@@ -70,16 +70,17 @@ var SessionManager = class SessionManager {
         if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
         } catch(e) { dev.log(e) }
     }
-    saveOptions() {
+    saveOptions() { 
         Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
-        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator);
-        Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
+        Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
+        //Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); // This is done via signal connects
+        //Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
     }
     loadOptions() {
         this.activeSession.Options.ShowWorkspaceOverlay = Me.settings.get_boolean("show-workspace-overlay");
         this.activeSession.Options.ShowPanelIndicator = Me.settings.get_boolean("show-panel-indicator");
         this.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean("isolate-workspaces");
-        //this.saveSession();
+        this.activeSession.Options.ShowNotifications = Me.settings.get_boolean("show-notifications");
     }
     _setup(sessionObject) {
         try {
@@ -148,10 +149,12 @@ var SessionManager = class SessionManager {
     saveSession(backup=false) {
         try {
         if (utils.isEmpty(this.activeSession)) return;
+        
         this.saveOptions();
         this.activeSession.Worksets = this.Worksets;
         this.activeSession.workspaceMaps = this.workspaceMaps;
         this.activeSession.SessionName = this.SessionName;
+        
 
         let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
@@ -244,7 +247,7 @@ var SessionManager = class SessionManager {
 
         if (isActive > -1) { //switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
-            uiUtils.showUserFeedbackMessage("Switched to active environment " + workset.WorksetName, false, 0.7);
+            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserFeedbackMessage("Switched to active environment " + workset.WorksetName, false, 0.7);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
@@ -252,7 +255,7 @@ var SessionManager = class SessionManager {
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
-            uiUtils.showUserFeedbackMessage("Loaded environment " + workset.WorksetName, false, 1.4);
+            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserFeedbackMessage("Loaded environment " + workset.WorksetName, false, 1.4);
         }
 
         this.setFavorites(workset.FavApps);

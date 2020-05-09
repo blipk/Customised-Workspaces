@@ -31,6 +31,11 @@
       <summary>Visibility of the overlay on the workspace popup in the Gnome Shell overview</summary>
       <description>When active, labels of the active custom workspaces are shown .</description>
     </key>
+    <key name="show-notifications" type="b">
+      <default>true</default>
+      <summary>Visibility of notifications when switching custom workspaces.</summary>
+      <description>When active, a desktop notification is shown indicating when a custom workspace has been switched to.</description>
+    </key>
      <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
       <summary>Object represting the current favorite apps on the panel</summary>
@@ -47,7 +52,7 @@
       <description>Contains the information about the state and position of custom workspaces.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{ \"SessionName\":\"\",\"Options\":{\"IsolateWorkspaces\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <default>"{ \"SessionName\":\"\",\"Options\":{\"ShowNotifications\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on the extensions session.</description>
     </key>

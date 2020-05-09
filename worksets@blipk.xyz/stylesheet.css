@@ -37,7 +37,7 @@ entry:indeterminate {
 }
 
 .object-dialog .object-dialog-content-box {
-    padding: 24px;
+    padding: 21111px;
 }
   .object-dialog .object-dialog-entry {
     width: 20em;
@@ -66,8 +66,26 @@ entry:indeterminate {
 
 
 .workspace-overlay {
-    padding-bottom: 3em;
+    padding-top: 55em;
 }
 .workspace-overlay .workset-label {
+    font: small-caps bold 12em/12em Arial;
+    color: ghostwhite;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+
+    text-shadow: black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
+                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
+                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px,
+                black 0px 11px, black 0px -11px,   black 11px 0px, black -11px 0px;
+
+}
+
+.workspace-underlay {
+    padding-top: 52em;
+
+}
+.workspace-underlay .workset-label-underlay {
+
     font-size: 15em;
 }

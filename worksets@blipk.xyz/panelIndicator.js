@@ -78,9 +78,17 @@ var WorksetsIndicator = GObject.registerClass({
         this.showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.activeSession.Options.ShowWorkspaceOverlay, { reactive: true });
         this.showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{Me.session.activeSession.Options.ShowWorkspaceOverlay = !Me.session.activeSession.Options.ShowWorkspaceOverlay; Me.session.saveSession(); Me.session.loadSession();});
 
+        this.showNotificationsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show notifications"), Me.session.activeSession.Options.ShowNotifications, { reactive: true });
+        this.showNotificationsMenuItem.connect('toggled', ()=>{
+            Me.session.activeSession.Options.ShowNotifications = !Me.session.activeSession.Options.ShowNotifications; 
+            dev.log(Me.session.activeSession.Options.ShowNotifications); 
+            Me.session.saveSession();dev.log(Me.session.activeSession.Options.ShowNotifications);  Me.session.loadSession();
+        });
+
         this.optionsMenuItem.menu.addMenuItem(this.isolateRunningAppsMenuItem);
         this.optionsMenuItem.menu.addMenuItem(this.showWorkSpaceOverlayMenuItem);
         this.optionsMenuItem.menu.addMenuItem(this.showPanelIndicatorMenuItem);
+        this.optionsMenuItem.menu.addMenuItem(this.showNotificationsMenuItem);
         this.menu.addMenuItem(this.optionsMenuItem);
 
         // Add separator
@@ -245,6 +253,7 @@ var WorksetsIndicator = GObject.registerClass({
         this.showPanelIndicatorMenuItem._switch.state = Me.session.activeSession.Options.ShowPanelIndicator;
         this.showWorkSpaceOverlayMenuItem._switch.state = Me.session.activeSession.Options.ShowWorkspaceOverlay;
         this.isolateRunningAppsMenuItem._switch.state = Me.session.activeSession.Options.IsolateWorkspaces;
+        this.showNotificationsMenuItem._switch.state = Me.session.activeSession.Options.ShowNotifications;
 
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
