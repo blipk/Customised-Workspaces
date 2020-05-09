@@ -73,7 +73,6 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     saveOptions() {
-        dev.log ('a', Me.session.activeSession.Options.ShowWorkspaceOverlay)
         Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
         Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
         Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
@@ -152,7 +151,6 @@ var SessionManager = class SessionManager {
     saveSession(backup=false) {
         try {
         if (utils.isEmpty(this.activeSession)) return;
-        dev.log (Me.session.activeSession.Options.ShowWorkspaceOverlay)
         this.saveOptions();
         this.activeSession.Worksets = this.Worksets;
         this.activeSession.workspaceMaps = this.workspaceMaps;
