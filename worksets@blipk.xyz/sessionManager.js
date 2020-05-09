@@ -44,11 +44,13 @@ var SessionManager = class SessionManager {
 
         // Set up settings bindings
         this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
-        this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {Me.workspaceViewManager.refreshThumbNailsBoxes()});
+        this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
+                Me.workspaceViewManager.refreshThumbNailsBoxes()}
+            );
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
                                             this.loadOptions();
                                             if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
-                                                Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu(); 
+                                                Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
                                             }
                                         });
 
@@ -70,11 +72,12 @@ var SessionManager = class SessionManager {
         if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
         } catch(e) { dev.log(e) }
     }
-    saveOptions() { 
+    saveOptions() {
+        dev.log ('a', Me.session.activeSession.Options.ShowWorkspaceOverlay)
         Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
         Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
-        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); 
-        //Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay); // This is done via signal connects
+        Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
+        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); // This has to be last or the signal callback will change the other options
     }
     loadOptions() {
         this.activeSession.Options.ShowWorkspaceOverlay = Me.settings.get_boolean("show-workspace-overlay");
@@ -149,12 +152,12 @@ var SessionManager = class SessionManager {
     saveSession(backup=false) {
         try {
         if (utils.isEmpty(this.activeSession)) return;
-        
+        dev.log (Me.session.activeSession.Options.ShowWorkspaceOverlay)
         this.saveOptions();
         this.activeSession.Worksets = this.Worksets;
         this.activeSession.workspaceMaps = this.workspaceMaps;
         this.activeSession.SessionName = this.SessionName;
-        
+
 
         let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');

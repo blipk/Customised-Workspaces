@@ -37,7 +37,7 @@ entry:indeterminate {
 }
 
 .object-dialog .object-dialog-content-box {
-    padding: 21111px;
+    padding: 21px;
 }
   .object-dialog .object-dialog-entry {
     width: 20em;
@@ -83,9 +83,7 @@ entry:indeterminate {
 
 .workspace-underlay {
     padding-top: 52em;
-
 }
 .workspace-underlay .workset-label-underlay {
-
     font-size: 15em;
 }

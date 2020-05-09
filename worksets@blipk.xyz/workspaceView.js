@@ -82,7 +82,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             //thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
             //thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
 
-
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
             newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);

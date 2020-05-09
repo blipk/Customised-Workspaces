@@ -76,7 +76,12 @@ var WorksetsIndicator = GObject.registerClass({
         this.showPanelIndicatorMenuItem.connect('toggled', ()=>{Me.session.activeSession.Options.ShowPanelIndicator = !Me.session.activeSession.Options.ShowPanelIndicator; Me.session.saveSession();});
 
         this.showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.activeSession.Options.ShowWorkspaceOverlay, { reactive: true });
-        this.showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{Me.session.activeSession.Options.ShowWorkspaceOverlay = !Me.session.activeSession.Options.ShowWorkspaceOverlay; Me.session.saveSession(); Me.session.loadSession();});
+        this.showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{
+            
+            Me.session.activeSession.Options.ShowWorkspaceOverlay = !Me.session.activeSession.Options.ShowWorkspaceOverlay; 
+            Me.session.saveSession();
+            
+        });
 
         this.showNotificationsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show notifications"), Me.session.activeSession.Options.ShowNotifications, { reactive: true });
         this.showNotificationsMenuItem.connect('toggled', ()=>{
