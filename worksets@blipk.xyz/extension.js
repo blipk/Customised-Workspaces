@@ -37,15 +37,14 @@
  */
 
 // External imports
-const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const ExtensionSystem = imports.ui.extensionSystem;
 const { extensionUtils } = imports.misc;
 const { Meta, GLib, Gio } = imports.gi;
-const _ = Gettext.domain('worksets').gettext;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "worksetsalphaextension";

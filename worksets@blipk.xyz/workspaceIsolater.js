@@ -27,7 +27,6 @@
 // External imports
 const AppIcon = imports.ui.appDisplay.AppIcon;
 const Main = imports.ui.main;
-const Gettext = imports.gettext;
 const { GObject, Meta, Shell } = imports.gi;
 const AppSystem = Shell.AppSystem.get_default();
 

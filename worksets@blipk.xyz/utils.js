@@ -26,11 +26,10 @@
 
 // External imports
 const { GLib, Gio } = imports.gi;
-const Gettext = imports.gettext;
-const _ = Gettext.domain('worksets').gettext;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const dev = Me.imports.dev;
 
 function textFormatter(text, options = {/*length: 50*/ }) {

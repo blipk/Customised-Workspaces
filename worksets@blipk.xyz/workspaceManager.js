@@ -26,12 +26,12 @@
 
 // External imports
 const Main = imports.ui.main;
-const Gettext = imports.gettext;
-const Workspace = imports.ui.workspace;
+const { workspace, extensionSystem } = imports.ui;
+const { extensionUtils, util } = imports.misc;
 const { GObject, Meta, Wnck, Shell, GLib } = imports.gi;
 
 // Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Me = extensionUtils.getCurrentExtension();
 const { dev, utils } = Me.imports;
 
 var WorkspaceManager = class WorkspaceManager { 
@@ -40,51 +40,92 @@ var WorkspaceManager = class WorkspaceManager {
         Me.workspaceManager = this;
         this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         this.loadDefaultWorksets();
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         } catch(e) { dev.log(e) }
     }
     destroy() {
         try {
         this.switchToWorkspace(0);
-        this._cleanWorkspaces(true);
-        global.window_manager.disconnect(this.workspaceChangeHandler);
+        this._workspaceUpdate(true);
+        if (this.workspaceChangeHandler) global.window_manager.disconnect(this.workspaceChangeHandler);
+        } catch(e) { dev.log(e) }
+    }
+    _workspaceUpdate(destroyClean=false) {
+        try {
+        // Remove any worksets that are set to current on more than one workspace
+        let currents = [];
+        Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            if (workspaceMapValues.currentWorkset != '') {
+                if (currents.indexOf(workspaceMapValues.currentWorkset) > -1)
+                    Me.session.workspaceMaps[workspaceMapKey].currentWorkset = '';
+                currents.push(workspaceMapValues.currentWorkset)
+            }
+        }, this);
+
+        // Minimum workspaces should be one more than the workspace index that the last active workset is on
+        let min_workspaces = 1;
+        if (!destroyClean) {
+            Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+                let index = parseInt(workspaceMapKey.substr(-1, 1));
+                if (workspaceMapValues.currentWorkset != '' && index > min_workspaces-2)
+                    min_workspaces = index+2;
+            }, this);
+        }
+        if (min_workspaces < 2) min_workspaces = 2;
+
+        // Make all workspaces non-persistent
+        for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {
+            Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = false;
+        }
+
+        // If we have less than the minimum workspaces create new ones and make them persistent
+        if(Me.gWorkspaceManager.n_workspaces < min_workspaces-1) {
+            for(let i = 0; i < min_workspaces-1; i++) {
+                if(i >= Me.gWorkspaceManager.n_workspaces) {
+                    Me.gWorkspaceManager.append_new_workspace(false, global.get_current_time());
+                }
+                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;    
+            }
+        } else { // If we already have enough workspaces make the first ones persistent
+            for(let i = 0; i < min_workspaces-1; i++) {
+                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;
+            }
+        }
+        
+        // Update the workspace view
+        Main.wm._workspaceTracker._checkWorkspaces();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
         try {
 
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
-        Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+        Me.session.Worksets.forEach(function (workset, worksetIndex) {
+            Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.currentWorkset == workset.WorksetName && this.activeWorkspaceIndex == parseInt(workspaceMapKey.substr(-1, 1))) {
                     foundActive = true;
-                    Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
+                    Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                 }
             }, this);
         }, this);
 
         //If there's not any active on the workspace, load any that are set to default here
         if (foundActive === false) this.loadDefaultWorksets();
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         Me.workspaceViewManager.refreshThumbNailsBoxes();
-        } catch(e) { dev.log(e) }
-    }
-    workspaceUpdate() {
-        try {    
-        this._cleanWorkspaces();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets(){
         try {
-        Me.session.activeSession.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+        Me.session.Worksets.forEach(function (workset, worksetIndex) {
+            Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
-                    Me.session.displayWorkset(Me.session.activeSession.Worksets[worksetIndex]);
-                    Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
+                    Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
+                    Me.session.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
                 }
             }, this);
         }, this);
@@ -101,53 +142,52 @@ var WorkspaceManager = class WorkspaceManager {
         } catch(e) { dev.log(e) }
     }
     get activeWorkspace() {
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         return Me.gWorkspaceManager.get_active_workspace();
     }
     get activeWorkspaceIndex() {
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         return Me.gWorkspaceManager.get_active_workspace_index();
     }
     get NumGlobalWorkspaces() {
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         return Me.gWorkspaceManager.n_workspaces;
     }
     get activeWorksetName() {
         try {
-        this.workspaceUpdate();
-        if (Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
+        this._workspaceUpdate();
+        if (Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
             let obj = {['Workspace'+this.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": ''}}
-            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Object.assign(Me.session.workspaceMaps, obj);
             Me.session.saveSession();
         }
-        return Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset;
+        return Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset;
         } catch(e) { dev.log(e) }
     }
     set activeWorksetName(workset) {
         try {
         let name = workset.WorksetName || workset;
-        this.workspaceUpdate();
-        if (Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
+        this._workspaceUpdate();
+        if (Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
             let obj = {['Workspace'+this.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": name}}
-            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Object.assign(Me.session.workspaceMaps, obj);
             Me.session.saveSession();
         } else {
-            Me.session.activeSession.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = name;
+            Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = name;
         }
         Me.session.saveSession();
         } catch(e) { dev.log(e) }
     }
-
     set lastWorkspaceActiveWorksetName(workset) {
         try {
         let name = workset.WorksetName || workset;
-        this.workspaceUpdate();
-        if (Me.session.activeSession.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)] == undefined) {
+        this._workspaceUpdate();
+        if (Me.session.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)] == undefined) {
             let obj = {['Workspace'+(this.NumGlobalWorkspaces-1)]: {'defaultWorkset':'', "currentWorkset": name}}
-            Object.assign(Me.session.activeSession.workspaceMaps, obj);
+            Object.assign(Me.session.workspaceMaps, obj);
             Me.session.saveSession();
         } else {
-            Me.session.activeSession.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)].currentWorkset = name;
+            Me.session.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)].currentWorkset = name;
         }
         Me.session.saveSession();
         } catch(e) { dev.log(e) }
@@ -203,58 +243,56 @@ var WorkspaceManager = class WorkspaceManager {
     switchToWorkspace(index=0) {
         try {
         index = parseInt(index, 10);   
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         Me.gWorkspaceManager.get_workspace_by_index(index).activate(0);
-        this.workspaceUpdate();
+        this._workspaceUpdate();
         } catch(e) { dev.log(e) }
     }
     _moveWindowsToWorkspace() {
         //TO DO        
     }
-    _cleanWorkspaces(destroyClean=false) {
+    activateIsolater() {
         try {
-        // Remove any worksets that are set to current on more than one workspace
-        let currents = [];
-        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-            if (workspaceMapValues.currentWorkset != '') {
-                if (currents.indexOf(workspaceMapValues.currentWorkset) > -1)
-                    Me.session.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
-                currents.push(workspaceMapValues.currentWorkset)
-            }
-        }, this);
-
-        // Minimum workspaces should be one more than the workspace index that the last active workset is on
-        let min_workspaces = 1;
-        if (!destroyClean) {
-            Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-                let index = parseInt(workspaceMapKey.substr(-1, 1));
-                if (workspaceMapValues.currentWorkset != '' && index > min_workspaces-2)
-                    min_workspaces = index+2;
-            }, this);
-        }
-        if (min_workspaces < 2) min_workspaces = 2;
-
-        // Make all workspaces non-persistent
-        for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {
-            Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = false;
-        }
-
-        // If we have less than the minimum workspaces create new ones and make them persistent
-        if(Me.gWorkspaceManager.n_workspaces < min_workspaces-1) {
-            for(let i = 0; i < min_workspaces-1; i++) {
-                if(i >= Me.gWorkspaceManager.n_workspaces) {
-                    Me.gWorkspaceManager.append_new_workspace(false, global.get_current_time());
-                }
-                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;    
-            }
-        } else { // If we already have enough workspaces make the first ones persistent
-            for(let i = 0; i < min_workspaces-1; i++) {
-                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;
-            }
-        }
+        Me.session.IsolateWorkspaces = !Me.session.IsolateWorkspaces;
         
-        // Update the workspace view
-        Main.wm._workspaceTracker._checkWorkspaces();
+        let findExtensionCompat = function (uuid) {
+            if (extensionUtils.extensions)
+                uuid = extensionUtils.extensions[uuid]
+            else
+                uuid = Main.extensionManager.lookup(uuid)
+            return uuid;
+        };
+        
+        // Other extensions that implement this behaviours
+        let dash2panel = findExtensionCompat('dash-to-panel@jderose9.github.com');
+        let dash2dock = findExtensionCompat('dash-to-dock@micxgx.gmail.com');
+        let dash2panelSettings, dash2dockSettings;
+
+        if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
+        if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;
+
+        if (Me.session.IsolateWorkspaces) {
+            util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
+            util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
+            if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
+                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
+                dash2panelSettings.set_boolean('isolate-workspaces', true);
+            } else if (dash2dock && dash2dockSettings && dash2dock.state === extensionSystem.ExtensionState.ENABLED) {
+                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
+                dash2dockSettings.set_boolean('isolate-workspaces', true);
+            } else {
+                Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
+                workspaceIsolater.WorkspaceIsolator.refresh();
+            }
+        } else {
+            util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
+            util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
+            if (dash2panel && dash2panelSettings) dash2panelSettings.set_boolean('isolate-workspaces', false);
+            if (dash2dock && dash2dockSettings) dash2dockSettings.set_boolean('isolate-workspaces', false);
+            if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
+        }
         } catch(e) { dev.log(e) }
+
+        Me.session.saveSession();
     }
 };

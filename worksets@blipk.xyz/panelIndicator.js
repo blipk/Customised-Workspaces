@@ -25,20 +25,16 @@
  */
 
 //External imports
+const Main = imports.ui.main;
 const { extensionUtils, util } = imports.misc;
 const { extensionSystem, popupMenu, panelMenu, boxpointer } = imports.ui;
-const extensionManager = imports.ui.main.extensionManager;
 const { GObject, St, Clutter, Gtk } = imports.gi;
-const Gettext = imports.gettext;
-const Main = imports.ui.main;
-const _ = Gettext.domain('worksets').gettext;
 
 //Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { workspaceManager, workspaceIsolater } = Me.imports;
-
-let ISOLATE_RUNNING      = true;
 
 var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
@@ -46,8 +42,9 @@ var WorksetsIndicator = GObject.registerClass({
     _init() {
         try {
         super._init(0.0, "WorksetsIndicator");
+        Me.worksetsIndicator = this;
 
-        //set up menu box to build into
+        // Set up menu box to build into
         let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
         this.icon = new St.Icon({ icon_name: 'tab-new-symbolic', style_class: 'system-status-icon worksets-indicator-icon' });
         hbox.add_child(this.icon);
@@ -58,7 +55,9 @@ var WorksetsIndicator = GObject.registerClass({
         //Build our menu
         this._buildMenu();
         this._refreshMenu()
-        } catch(e) { dev.log(e) }    
+
+        Main.panel.addToStatusArea('WorksetsIndicator', this, 1);
+        } catch(e) { dev.log(e) }
     }
     _onOpenStateChanged(menu, open) {/*Override from parent class to handle menuitem refresh*/
         this._refreshMenu();
@@ -67,11 +66,21 @@ var WorksetsIndicator = GObject.registerClass({
     //main UI builder
     _buildMenu() {
         try {
-        // Isolate running apps switch
-        this._onIsolateSwitch(true);
-        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), ISOLATE_RUNNING, { reactive: true });
-        isolateRunningAppsMenuItem.connect('toggled', this._onIsolateSwitch);
-        this.menu.addMenuItem(isolateRunningAppsMenuItem);
+        // Sub menu for option switches
+        let optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
+        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.IsolateWorkspaces, { reactive: true });
+        isolateRunningAppsMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
+
+        let showPanelIndicatorMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show panel indicator"), Me.session.ShowPanelIndicator, { reactive: true });
+        showPanelIndicatorMenuItem.connect('toggled', ()=>{Me.session.ShowPanelIndicator = !Me.session.ShowPanelIndicator; Me.session.saveSession();});
+
+        let showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.ShowWorkspaceOverlay, { reactive: true });
+        showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{Me.session.ShowWorkspaceOverlay = !Me.session.ShowWorkspaceOverlay; Me.session.saveSession(); Me.session.loadSession();});
+
+        optionsMenuItem.menu.addMenuItem(isolateRunningAppsMenuItem);
+        optionsMenuItem.menu.addMenuItem(showWorkSpaceOverlayMenuItem);
+        optionsMenuItem.menu.addMenuItem(showPanelIndicatorMenuItem);
+        this.menu.addMenuItem(optionsMenuItem);
 
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
@@ -132,7 +141,7 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Create iconbuttons on MenuItem
         let isActive = -1;
-        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+        Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.currentWorkset == menuItem.workset.WorksetName) {
                 isActive = parseInt(workspaceMapKey.substr(-1, 1));
                 return;
@@ -196,7 +205,7 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Workset info
         let infoText = "Has these panel favorites";
-        Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+        Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
                 infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
         }, this);
@@ -235,7 +244,7 @@ var WorksetsIndicator = GObject.registerClass({
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
-            Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
+            Me.session.Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }, this);
 
@@ -244,7 +253,7 @@ var WorksetsIndicator = GObject.registerClass({
         } catch(e) { dev.log(e) }
     }
     _findRawWorksetByMenuItem(menuItem) {
-        let tmpWorkset = Me.session.activeSession.Worksets.filter(item => item === menuItem.workset)[0];
+        let tmpWorkset = Me.session.Worksets.filter(item => item === menuItem.workset)[0];
         return tmpWorkset;
     }
     _worksetMenuItemSetEntryLabel(menuItem) {
@@ -258,7 +267,7 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _worksetMenuItemMoveToTop(menuItem) {
         try {
-        Me.session.activeSession.Worksets.forEach(function (worksetBuffer) {
+        Me.session.Worksets.forEach(function (worksetBuffer) {
             if (worksetBuffer === menuItem.workspace) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }
@@ -268,9 +277,9 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _worksetMenuItemToggleFavorite(menuItem) {
         try {
-        Me.session.activeSession.Worksets.forEach(function (worksetBuffer, i) {
+        Me.session.Worksets.forEach(function (worksetBuffer, i) {
             if (worksetBuffer.WorksetName == menuItem.workset.WorksetName) {
-                Me.session.activeSession.Worksets[i].Favorite = Me.session.activeSession.Worksets[i].Favorite ? false : true;
+                Me.session.Worksets[i].Favorite = !Me.session.Worksets[i].Favorite;
             }
         }, this);
         Me.session.saveSession();
@@ -278,48 +287,7 @@ var WorksetsIndicator = GObject.registerClass({
         this._worksetMenuItemMoveToTop(menuItem);
         } catch(e) { dev.log(e) }
     }
-    _onIsolateSwitch() {
-        try {
-        ISOLATE_RUNNING = ISOLATE_RUNNING ? false : true;
-        
-        let findExtensionCompat = function (uuid) {
-            if (extensionUtils.extensions)
-                uuid = extensionUtils.extensions[uuid]
-            else
-                uuid = extensionManager.lookup(uuid)
-            return uuid;
-        };
-        
-        // Other extensions that implement this behaviours
-        let dash2panel = findExtensionCompat('dash-to-panel@jderose9.github.com');
-        let dash2dock = findExtensionCompat('dash-to-dock@micxgx.gmail.com');
-        let dash2panelSettings, dash2dockSettings;
-
-        if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
-        if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;
-
-        if (ISOLATE_RUNNING) {
-            if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
-                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-                dash2panelSettings.set_boolean('isolate-workspaces', true);
-            } else if (dash2dock && dash2dockSettings && dash2dock.state === extensionSystem.ExtensionState.ENABLED) {
-                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-                dash2dockSettings.set_boolean('isolate-workspaces', true);
-            } else {
-                Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
-                workspaceIsolater.WorkspaceIsolator.refresh();
-            }
-        } else {
-            if (dash2panel && dash2panelSettings) dash2panelSettings.set_boolean('isolate-workspaces', false);
-            if (dash2dock && dash2dockSettings) dash2dockSettings.set_boolean('isolate-workspaces', false);
-            if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-        }
-        } catch(e) { dev.log(e) }
-    }
-    _toggleMenu(){
+    toggleMenu(){
         this.menu.toggle();
-    }
-    _openSettings() {
-        util.spawn(["gnome-shell-extension-prefs", Me.uuid]);
     }
 });

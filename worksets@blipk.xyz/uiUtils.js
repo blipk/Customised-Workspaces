@@ -26,14 +26,13 @@
 
 // External imports
 const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
-const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
 const { modalDialog, shellEntry, tweener } = imports.ui;
-const _ = Gettext.domain('worksets').gettext;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere

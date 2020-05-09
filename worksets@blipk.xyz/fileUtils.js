@@ -26,12 +26,11 @@
 
 // External imports
 const ByteArray = imports.byteArray;
-const { GLib, Gio, Shell } = imports.gi;
-const Gettext = imports.gettext;
-const _ = Gettext.domain('worksets').gettext;
+const { GLib, Gio } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils } = Me.imports;
 
 // Directory and file paths for resources

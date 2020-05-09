@@ -25,8 +25,8 @@
  */
 
 // External imports
-const AppFavorites = imports.ui.appFavorites;
 const Main = imports.ui.main;
+const AppFavorites = imports.ui.appFavorites;
 const extensionUtils = imports.misc.extensionUtils;
 const { GObject, Gio, Clutter, Shell } = imports.gi;
 
@@ -39,10 +39,9 @@ var SessionManager = class SessionManager {
     constructor () {
         try {
         Me.session = this;
-
         this.activeSession = null;
-        this.favoritesChangeHandler = null;
         this.allApps = {};
+        this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
 
         //Create sesion or initialize from session file if it exists
         if (fileUtils.checkExists(fileUtils.CONF_DIR + '/session.json')) {
@@ -54,17 +53,68 @@ var SessionManager = class SessionManager {
         }
         } catch(e) { dev.log(e) }
     }
+    destroy() {
+        try {
+        this.saveSession();
+        if (this.favoritesChangeHandler) {AppFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler)};
+        } catch(e) { dev.log(e) }
+    }
+    get IsolateWorkspaces() {
+        this.loadOptions();
+        return Me.settings.get_boolean("isolate-workspaces");
+    }
+    set IsolateWorkspaces(IsolateWorkspaces) {
+        this.activeSession.Options.IsolateWorkspaces = IsolateWorkspaces;
+        this.saveOptions();
+    }
+    get ShowPanelIndicator() {
+        this.loadOptions();
+        return Me.settings.get_boolean("show-panel-indicator");
+    }
+    set ShowPanelIndicator(ShowPanelIndicator) {
+        this.activeSession.Options.ShowPanelIndicator = ShowPanelIndicator;
+        this.saveOptions();
+    }
+    get ShowWorkspaceOverlay() {
+        this.loadOptions();
+        return Me.settings.get_boolean("show-workspace-overlay");
+    }
+    set ShowWorkspaceOverlay(ShowWorkspaceOverlay) {
+        this.activeSession.Options.ShowWorkspaceOverlay = ShowWorkspaceOverlay;
+        this.saveOptions();
+    }
+    saveOptions () {
+        Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
+        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator);
+        Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
+        this.saveSession();
+    }
+    loadOptions () {
+        this.ShowWorkspaceOverlay = Me.settings.get_boolean("show-workspace-overlay");
+        this.ShowPanelIndicator = Me.settings.get_boolean("show-panel-indicator");
+        this.IsolateWorkspaces = Me.settings.get_boolean("isolate-workspaces");
+        //this.loadSession();
+    }
     _setup(sessionObject) {
         try {
         if (!utils.isEmpty(sessionObject)) {
             this.activeSession = sessionObject;
+            this.Worksets = this.activeSession.Worksets;
+            this.workspaceMaps = this.activeSession.workspaceMaps;
+            this.SessionName = this.activeSession.SessionName;
+            Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
+            Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator);
+            Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
             this._cleanWorksets();
 
-            this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
-            Me.workspaceManager = new workspaceManager.WorkspaceManager();
-            Me.workspaceViewManager = new workspaceView.WorkspaceViewManager();
-            Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
-            Main.panel.addToStatusArea('WorksetsIndicator', Me.worksetsIndicator, 1);
+            if (!Me.workspaceManager) Me.workspaceManager = new workspaceManager.WorkspaceManager();
+            if (!Me.workspaceViewManager && this.ShowWorkspaceOverlay) 
+                Me.workspaceViewManager = new workspaceView.WorkspaceViewManager();
+            else if (Me.workspaceViewManager && !this.ShowWorkspaceOverlay) 
+                Me.workspaceViewManager.destroy();
+            
+            if (!Me.worksetsIndicator) Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
+            this.ShowPanelIndicator ? Me.worksetsIndicator.show() : Me.worksetsIndicator.hide();
 
             this.saveSession();
         }
@@ -72,18 +122,17 @@ var SessionManager = class SessionManager {
     }
     _cleanWorksets() {
         try {
-        if (typeof this.activeSession.SessionName !== 'string') this.activeSession.SessionName = "Session " + i;
-        if (typeof this.activeSession.Favorite !== 'boolean') this.activeSession.Favorite = false;
+        if (typeof this.SessionName !== 'string') this.SessionName = 'Default';
 
         let filteredWorksets;
-        this.activeSession.Worksets.forEach(function (worksetBuffer, ii) {
+        this.Worksets.forEach(function (worksetBuffer, ii) {
             //Fix entries
             if (!Array.isArray(worksetBuffer.FavApps)) worksetBuffer.FavApps = [];
             if (typeof worksetBuffer.WorksetName !== 'string') worksetBuffer.WorksetName = "Workset " + ii;
             if (typeof worksetBuffer.Favorite !== 'boolean') worksetBuffer.Favorite = false;
 
             // Remove duplicate entries
-            filteredWorksets = this.activeSession.Worksets.filter(function(item) {                    
+            filteredWorksets = this.Worksets.filter(function(item) {                    
                 if (item !== worksetBuffer &&
                     (JSON.stringify(item) === JSON.stringify(worksetBuffer)))
                     { return false; }
@@ -92,30 +141,43 @@ var SessionManager = class SessionManager {
         }, this);
 
         // Apply
-        this.activeSession.Worksets = filteredWorksets;
+        this.Worksets = filteredWorksets;
 
         // Clean workspace maps
         let worksetNames = [];
-        this.activeSession.Worksets.forEach(function (workset) {
+        this.Worksets.forEach(function (workset) {
             worksetNames.push(workset.WorksetName);
         }, this);
 
-        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+        this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (!worksetNames.includes(workspaceMapValues.currentWorkset))
-                this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
+                this.workspaceMaps[workspaceMapKey].currentWorkset = '';
         }, this);
 
-        
-
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
-    destroy() {
+    loadSession(sessionsObject) {
         try {
-        this.saveSession();
-        if (this.favoritesChangeHandler) {AppFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler)};
+        if (utils.isEmpty(sessionsObject)) 
+            sessionsObject = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
+        this._setup(sessionsObject)
+
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
+    saveSession(backup=false) {
+        try {
+        if (utils.isEmpty(this.activeSession)) return;
+        let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
+        let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
+        let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
+        fileUtils.saveJSObjectToFile(sessionCopy, filename, fileUtils.CONF_DIR);
+
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        } catch(e) { dev.log(e) }
+    }
+
     getBackground() {
         try{
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
@@ -153,11 +215,11 @@ var SessionManager = class SessionManager {
     }
     removeFavorite(workset, appid) {
         try {
-        this.activeSession.Worksets.forEach(function (worksetBuffer, i) {
+        this.Worksets.forEach(function (worksetBuffer, i) {
             if (worksetBuffer.WorksetName == workset.WorksetName) {
-                this.activeSession.Worksets[i].FavApps = worksetBuffer.FavApps.filter(favApps => favApps.name != appid)
+                this.Worksets[i].FavApps = worksetBuffer.FavApps.filter(favApps => favApps.name != appid)
                 if (Me.workspaceManager.activeWorksetName == workset.WorksetName)
-                    this.setFavorites(this.activeSession.Worksets[i].FavApps);
+                    this.setFavorites(this.Worksets[i].FavApps);
                 return;
             }
         }, this);
@@ -166,9 +228,9 @@ var SessionManager = class SessionManager {
     }
     _favoritesChanged() {
         try {
-        this.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+        this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
             if(worksetBuffer.WorksetName == Me.workspaceManager.activeWorksetName) {
-                this.activeSession.Worksets[worksetIndex].FavApps = this.getFavorites(); 
+                this.Worksets[worksetIndex].FavApps = this.getFavorites(); 
             }
         }, this);
         this.saveSession()
@@ -189,7 +251,7 @@ var SessionManager = class SessionManager {
     displayWorkset(workset, loadInNewWorkspace=false) {
         try {
         let isActive = -1;
-        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+        this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
             if (workspaceMapValues.currentWorkset == workset.WorksetName) {
                 isActive = parseInt(workspaceMapKey.substr(-1, 1));
                 return;
@@ -212,19 +274,17 @@ var SessionManager = class SessionManager {
         this.setFavorites(workset.FavApps);
         this.setBackground(workset.BackgroundImage);
 
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
     closeWorkset(workset) {
         try {
-            this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+            this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.currentWorkset == workset.WorksetName)
-                    this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
+                    this.workspaceMaps[workspaceMapKey].currentWorkset = '';
             }, this);
 
             this.saveSession();
-            Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
 
@@ -240,9 +300,9 @@ var SessionManager = class SessionManager {
             let fileName = fileUtils.GLib.path_get_basename(resource);
 
             // Find the workset and update the background image path property
-            this.activeSession.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+            this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != workset.WorksetName) return;
-                this.activeSession.Worksets[worksetIndex].BackgroundImage = resource;
+                this.Worksets[worksetIndex].BackgroundImage = resource;
                 this.saveSession();
             }, this);
 
@@ -313,7 +373,7 @@ var SessionManager = class SessionManager {
                 if (returnText == '') return;
 
                 let exists = false;
-                this.activeSession.Worksets.forEach(function (worksetBuffer) {
+                this.Worksets.forEach(function (worksetBuffer) {
                     if (worksetBuffer.WorksetName == returnText) {
                         exists = true;
                         uiUtils.showUserFeedbackMessage("Environment with name '"+returnText+"' already exists.");
@@ -324,17 +384,17 @@ var SessionManager = class SessionManager {
                 worksetObject.WorksetName = returnText;
                 
                 //Push it to the session
-                this.activeSession.Worksets.push(worksetObject);
+                this.Worksets.push(worksetObject);
                 this.saveSession();
-                if (activate) this.displayWorkset(this.activeSession.Worksets[this.activeSession.Worksets.length-1]);
+                if (activate) this.displayWorkset(this.Worksets[this.Worksets.length-1]);
                 uiUtils.showUserFeedbackMessage("Environment "+returnText+" created.");
             }, true, false, [], [], buttonStyles);
         } else {
             worksetObject.WorksetName = name;
             //Push it to the session
-            this.activeSession.Worksets.push(worksetObject);
+            this.Worksets.push(worksetObject);
             this.saveSession();
-            if (activate) this.displayWorkset(this.activeSession.Worksets[this.activeSession.Worksets.length-1]);
+            if (activate) this.displayWorkset(this.Worksets[this.Worksets.length-1]);
         }
 
         } catch(e) { dev.log(e) }
@@ -345,7 +405,7 @@ var SessionManager = class SessionManager {
         Object.assign(editable, worksetIn);
         let workSpaceOptions = {Workspace0: false, Workspace1: false, Workspace2: false, Workspace3: false, Workspace4: false};
         let workSpaceOptions2 = {Workspace5: false, Workspace6: false, Workspace7: false, Workspace8: false, Workspace9: false};
-        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+        this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             try {
             if (workspaceMapValues.defaultWorkset == worksetIn.WorksetName) {
                 if (workSpaceOptions[workspaceMapKey] != undefined) workSpaceOptions[workspaceMapKey] = true;
@@ -371,40 +431,36 @@ var SessionManager = class SessionManager {
             returnObject.WorksetName = returnObject.WorksetName.trim();
             if (returnObject.WorksetName == '') return;
 
-
-
             // Update workspace maps - this currently overrides any previous worksets assigned to the workspace
             Object.assign(returnObject.workSpaceOptions, returnObject.workSpaceOptions2);
             returnObject.workSpaceOptions.forEachEntry(function(workSpaceOptionsKey, workSpaceOptionsValue, i) {
-                if (this.activeSession.workspaceMaps[workSpaceOptionsKey] == undefined) 
-                    Object.assign(this.activeSession.workspaceMaps, {[workSpaceOptionsKey]: {'defaultWorkset':'', "currentWorkset": ''}});
+                if (this.workspaceMaps[workSpaceOptionsKey] == undefined) 
+                    Object.assign(this.workspaceMaps, {[workSpaceOptionsKey]: {'defaultWorkset':'', "currentWorkset": ''}});
 
                 if (workSpaceOptionsValue == true)
-                    this.activeSession.workspaceMaps[workSpaceOptionsKey].defaultWorkset = returnObject.WorksetName;
-                else if (workSpaceOptionsValue == false && this.activeSession.workspaceMaps[workSpaceOptionsKey].defaultWorkset == returnObject.WorksetName)
-                    this.activeSession.workspaceMaps[workSpaceOptionsKey].defaultWorkset = '';
+                    this.workspaceMaps[workSpaceOptionsKey].defaultWorkset = returnObject.WorksetName;
+                else if (workSpaceOptionsValue == false && this.workspaceMaps[workSpaceOptionsKey].defaultWorkset == returnObject.WorksetName)
+                    this.workspaceMaps[workSpaceOptionsKey].defaultWorkset = '';
             }, this);
 
             // Update the name on the maps if it has changed
-            dev.log(worksetIn.WorksetName)
-            this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+            this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == worksetIn.WorksetName)
-                    this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = returnObject.WorksetName;
+                    this.workspaceMaps[workspaceMapKey].defaultWorkset = returnObject.WorksetName;
                 if (workspaceMapValues.currentWorkset == worksetIn.WorksetName)
-                    this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = returnObject.WorksetName;
+                    this.workspaceMaps[workspaceMapKey].currentWorkset = returnObject.WorksetName;
             }, this);
 
             // Update workset name and favorite state
-            this.activeSession.Worksets.forEach(function (workset, worksetIndex) {
+            this.Worksets.forEach(function (workset, worksetIndex) {
                 if (workset.WorksetName == worksetIn.WorksetName) {
-                    this.activeSession.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
-                    this.activeSession.Worksets[worksetIndex].Favorite = returnObject.Favorite;
+                    this.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
+                    this.Worksets[worksetIndex].Favorite = returnObject.Favorite;
                 }
             }, this);
             
             this.saveSession(); this.loadSession();
             Me.workspaceManager.loadDefaultWorksets();
-            Me.workspaceViewManager.refreshThumbNailsBoxes();
             uiUtils.showUserFeedbackMessage("Changes saved.");
         }, editable, editables, buttonStyles);
         } catch(e) { dev.log(e) }
@@ -413,28 +469,27 @@ var SessionManager = class SessionManager {
         try {
         let backupFilename = this.saveWorkset(workset, true);
         // Remove it as the default on any workspace
-        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
+        this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
             if (workspaceMapValues.defaultWorkset == workset.WorksetName)
-                this.activeSession.workspaceMaps[workspaceMapKey].defaultWorkset = '';
+                this.workspaceMaps[workspaceMapKey].defaultWorkset = '';
             if (workspaceMapValues.currentWorkset == workset.WorksetName)
-                this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
+                this.workspaceMaps[workspaceMapKey].currentWorkset = '';
         }, this);
 
-        this.activeSession.Worksets = this.activeSession.Worksets.filter(item => item !== workset);
+        this.Worksets = this.Worksets.filter(item => item !== workset);
         this.saveSession();
-        Me.workspaceViewManager.refreshThumbNailsBoxes();
         uiUtils.showUserFeedbackMessage("Environment removed from session and backup saved to "+backupFilename, true);
         } catch(e) { dev.log(e) }
     }
     
-    //Storage management
+    // Storage management
     loadObject() {
         try {
         let worksetsDirectory = fileUtils.CONF_DIR + '/envbackups';
         let loadObjectDialog = new uiUtils.ObjectInterfaceDialog("Select a backup to load in to the session", (returnObject) => {
             if (returnObject.WorksetName) {
                 let exists = false;
-                this.activeSession.Worksets.forEach(function (worksetBuffer) {
+                this.Worksets.forEach(function (worksetBuffer) {
                     if (worksetBuffer.WorksetName == returnObject.WorksetName) {
                         exists = true;
                         uiUtils.showUserFeedbackMessage("Environment with name '"+returnObject.WorksetName+"' already exists.");
@@ -442,35 +497,12 @@ var SessionManager = class SessionManager {
                 }, this);
                 if (exists) return;
 
-                this.activeSession.Worksets.push(returnObject);
+                this.Worksets.push(returnObject);
                 this.saveSession();
                 uiUtils.showUserFeedbackMessage("Loaded "+returnObject.WorksetName+" from file and added to active session.");  
             }
             
         }, false, true, [worksetsDirectory], [{WorksetName: 'Worksets'}]);
-        } catch(e) { dev.log(e) }
-    }
-    loadSession(sessionsObject, restore=false) {
-        try {
-        if (sessionsObject) {
-            this.activeSession = sessionsObject;
-        } else {
-            let filename = (restore ? 'session-backup.json' : 'session.json');
-            let sessionObj = fileUtils.loadJSObjectFromFile(filename, fileUtils.CONF_DIR);
-            if (!utils.isEmpty(sessionObj)) /*&& utils.isEmpty(this.activeSession)*/ 
-                this.activeSession = sessionObj;
-        }
-        } catch(e) { dev.log(e) }
-    }
-    saveSession(backup=false) {
-        try {
-        if (utils.isEmpty(this.activeSession)) return;
-
-        let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
-
-        let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
-        let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
-        fileUtils.saveJSObjectToFile(sessionCopy, filename, fileUtils.CONF_DIR);
         } catch(e) { dev.log(e) }
     }
     saveWorkset(workset, backup=false) {
