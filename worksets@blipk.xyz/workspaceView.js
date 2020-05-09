@@ -22,7 +22,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         try { 
             this.injections = {}
             this.thumbnailBoxes = [];
-            this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
+            if (!this.injections['addThumbnails']) this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
                 Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
@@ -33,7 +33,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     }
     destroy() {
         try {
-            workspaceThumbnail.WorkspaceThumbnail.prototype.addThumbnails = this.injections['addThumbnails'];
+            workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
         } catch(e) { dev.log(e) }
     }
     refreshThumbNailsBoxes() {

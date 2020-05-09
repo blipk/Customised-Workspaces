@@ -75,11 +75,6 @@ var SessionManager = class SessionManager {
         if (typeof this.activeSession.SessionName !== 'string') this.activeSession.SessionName = "Session " + i;
         if (typeof this.activeSession.Favorite !== 'boolean') this.activeSession.Favorite = false;
 
-        // Clean active worksets from previous session
-        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-            this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
-        }, this);
-
         let filteredWorksets;
         this.activeSession.Worksets.forEach(function (worksetBuffer, ii) {
             //Fix entries
@@ -98,6 +93,19 @@ var SessionManager = class SessionManager {
 
         // Apply
         this.activeSession.Worksets = filteredWorksets;
+
+        // Clean workspace maps
+        let worksetNames = [];
+        this.activeSession.Worksets.forEach(function (workset) {
+            worksetNames.push(workset.WorksetName);
+        }, this);
+
+        this.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+            if (!worksetNames.includes(workspaceMapValues.currentWorkset))
+                this.activeSession.workspaceMaps[workspaceMapKey].currentWorkset = '';
+        }, this);
+
+        
 
         this.saveSession();
         } catch(e) { dev.log(e) }

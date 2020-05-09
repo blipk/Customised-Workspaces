@@ -228,11 +228,11 @@ var WorkspaceManager = class WorkspaceManager {
         if (!destroyClean) {
             Me.session.activeSession.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
                 let index = parseInt(workspaceMapKey.substr(-1, 1));
-                dev.log(index)
                 if (workspaceMapValues.currentWorkset != '' && index > min_workspaces-2)
                     min_workspaces = index+2;
             }, this);
         }
+        if (min_workspaces < 2) min_workspaces = 2;
 
         // Make all workspaces non-persistent
         for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {
