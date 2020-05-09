@@ -73,8 +73,8 @@ var SessionManager = class SessionManager {
     saveOptions() { 
         Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
         Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
-        //Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); // This is done via signal connects
-        //Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
+        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); 
+        //Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay); // This is done via signal connects
     }
     loadOptions() {
         this.activeSession.Options.ShowWorkspaceOverlay = Me.settings.get_boolean("show-workspace-overlay");

@@ -1,27 +1,16 @@
-{"uuid": "worksets@blipk.xyz",
-"name": "Customised Isolated Workspaces",
-"original-author": "adpl@kronosoul.xyz",
-"description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
-"settings-schema": "org.gnome.shell.extensions.worksets",
-"url": "https://github.com/blipk/Customised-Workspaces",
-"extension-id": "worksets",
-"gettext-domain": "worksets",
-"shell-version": [
-    "3.00",
-    "3.10",
-    "3.12",
-    "3.14",
-    "3.16",
-    "3.18",
-    "3.20",
-    "3.22",
-    "3.24",
-    "3.26",
-    "3.28",
-    "3.30",
-    "3.32",
-    "3.34",
-    "3.36"
-],
-"version": 9
+{   "uuid": "worksets@blipk.xyz",
+
+    "name": "Customised Isolated Workspaces",
+    "url": "https://github.com/blipk/Customised-Workspaces",
+    "description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
+    "original-author": "admin@kronosoul.xyz",
+    "version": 9,
+
+    "extension-id": "worksets",
+    "application-id": "org.kronosoul.worksets",
+    "settings-schema": "org.gnome.shell.extensions.worksets",
+    "resource-path": "/org/kronosoul/worksets/",
+    "gettext-domain": "worksets",
+    "shell-version": ["3.00", "3.10", "3.12", "3.14", "3.16", "3.18", "3.20", "3.22",
+                      "3.24", "3.26", "3.28", "3.30", "3.32", "3.34", "3.36"]
 }
