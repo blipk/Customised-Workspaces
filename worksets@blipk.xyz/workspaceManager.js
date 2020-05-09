@@ -2,7 +2,7 @@
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -32,9 +32,9 @@ const { GObject, Meta, Wnck, Shell, GLib } = imports.gi;
 
 // Internal imports
 const Me = extensionUtils.getCurrentExtension();
-const { dev, utils } = Me.imports;
+const { dev, utils, workspaceIsolater } = Me.imports;
 
-var WorkspaceManager = class WorkspaceManager { 
+var WorkspaceManager = class WorkspaceManager {
     constructor() {
         try {
         Me.workspaceManager = this;
@@ -86,21 +86,20 @@ var WorkspaceManager = class WorkspaceManager {
                 if(i >= Me.gWorkspaceManager.n_workspaces) {
                     Me.gWorkspaceManager.append_new_workspace(false, global.get_current_time());
                 }
-                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;    
+                Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;
             }
         } else { // If we already have enough workspaces make the first ones persistent
             for(let i = 0; i < min_workspaces-1; i++) {
                 Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = true;
             }
         }
-        
+
         // Update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
         try {
-
         this._workspaceUpdate();
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
@@ -200,18 +199,18 @@ var WorkspaceManager = class WorkspaceManager {
         let windowTracker = Shell.WindowTracker.get_default();
         let windows = this.getWorkspaceWindows(workspaceIndex);
         let appIDs = [];
-        
+
         windows.forEach(function (w) {
             let id = windowTracker.get_window_app(w).get_id();
 
             // Snap installed applications are launched as window backed so need to get the hint that is set for ubuntus BAMF daemon from the apps environment vars
             // Possible alternative if the BAMF method proves unreliable: Shell.AppSystem.search(w.get_wm_class_instance())
-            if (id.indexOf("window:") > -1) {   
+            if (id.indexOf("window:") > -1) {
                 let env = GLib.spawn_command_line_sync('ps e '+ w.get_pid())[1].toString().toLowerCase();
                 let bamfHint = env.substring(env.indexOf("bamf_desktop_file_hint=")+23, env.indexOf(".desktop")+8)
                 id = GLib.path_get_basename(bamfHint);
             }
-            
+
             appIDs.push(id);
         }, this)
 
@@ -242,19 +241,19 @@ var WorkspaceManager = class WorkspaceManager {
     }
     switchToWorkspace(index=0) {
         try {
-        index = parseInt(index, 10);   
+        index = parseInt(index, 10);
         this._workspaceUpdate();
         Me.gWorkspaceManager.get_workspace_by_index(index).activate(0);
         this._workspaceUpdate();
         } catch(e) { dev.log(e) }
     }
     _moveWindowsToWorkspace() {
-        //TO DO        
+        //TO DO
     }
     activateIsolater() {
         try {
-        Me.session.IsolateWorkspaces = !Me.session.IsolateWorkspaces;
-        
+        Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces;
+
         let findExtensionCompat = function (uuid) {
             if (extensionUtils.extensions)
                 uuid = extensionUtils.extensions[uuid]
@@ -262,7 +261,7 @@ var WorkspaceManager = class WorkspaceManager {
                 uuid = Main.extensionManager.lookup(uuid)
             return uuid;
         };
-        
+
         // Other extensions that implement this behaviours
         let dash2panel = findExtensionCompat('dash-to-panel@jderose9.github.com');
         let dash2dock = findExtensionCompat('dash-to-dock@micxgx.gmail.com');
@@ -271,7 +270,7 @@ var WorkspaceManager = class WorkspaceManager {
         if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
         if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;
 
-        if (Me.session.IsolateWorkspaces) {
+        if (Me.session.activeSession.Options.IsolateWorkspaces) {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
             if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
@@ -282,7 +281,7 @@ var WorkspaceManager = class WorkspaceManager {
                 dash2dockSettings.set_boolean('isolate-workspaces', true);
             } else {
                 Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
-                workspaceIsolater.WorkspaceIsolator.refresh();
+                //workspaceIsolater.WorkspaceIsolator.refresh();
             }
         } else {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);

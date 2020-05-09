@@ -2,7 +2,7 @@
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,12 +24,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-// - create a toolbar area for the fav/worksets and allow them to be dragged onto workspaces as well as similar edit options to the panel indicator
-// - few basic option/switches on the toolbar as well - same as on panel indicator
-// - Add a draggable fav apps editor to the object editor
-
-
 // External imports
 const Main = imports.ui.main;
 const { workspace, workspacesView, workspaceThumbnail, popupMenu } = imports.ui;
@@ -40,13 +34,14 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils } = Me.imports;
 const { sessionManager } = Me.imports;
 
-
-var WorkspaceViewManager = class WorkspaceViewManager { 
+var WorkspaceViewManager = class WorkspaceViewManager {
     constructor() {
         try {
             Me.workspaceViewManager = this;
             this.injections = {}
             this.thumbnailBoxes = [];
+            this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
+
             if (!this.injections['addThumbnails']) this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
@@ -56,13 +51,20 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             };
         } catch(e) { dev.log(e) }
     }
+    cleanupInjections() {
+        workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
+        delete this.injections;
+    }
     destroy() {
         try {
-            workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
+            this.cleanupInjections();
+            delete this;
         } catch(e) { dev.log(e) }
     }
     refreshThumbNailsBoxes() {
         try {
+        this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
+        if (!this._visible) return;
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
             if (thumbnailBox.worksetOverlayBox) thumbnailBox.worksetOverlayBox.destroy();
@@ -71,10 +73,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay'});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
             thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
-            
+
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
             thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
-            
+
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
             newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
@@ -101,11 +103,14 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Image for last empty workspace thumbnail
             if (Me.workspaceManager.NumGlobalWorkspaces == i+1 && !thumbnailBox.workset) {
+                if (!Me.session.activeSession.Options.ShowPanelIndicator)
+                    uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'view-reveal-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.saveSession(); Me.session.loadSession(); }, {icon_size: 200, x_align: St.Align.START})
+
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 200})
 
                 newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
-            
+
             // Prevent excessive recursion but enforce background updates during various events
             thumbnailBox._updated = false;
             thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
@@ -121,6 +126,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 };
 
 /*
-                    
-                    
+
+
 */

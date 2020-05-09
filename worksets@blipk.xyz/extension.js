@@ -2,7 +2,7 @@
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -59,7 +59,7 @@ function enable() {
     try {
     dev.log(scopeName+'.'+arguments.callee.name, "@---------------------------------|");
     if (Me.session) return; // Already initialized
-    
+
     // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
     Me.gScreen = global.screen || global.display;
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
@@ -77,7 +77,7 @@ function enable() {
 function disable() {
     try {
     dev.log(scopeName+'.'+arguments.callee.name, "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|");
-    
+
     Me.session.saveSession();
     if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator'];
     if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
@@ -89,7 +89,7 @@ function disable() {
 
     dev.log(scopeName+'.'+arguments.callee.name, "!^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|"+'\r\n');
     } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
-    
+
 }
 
 // 3.0 API backward compatibility

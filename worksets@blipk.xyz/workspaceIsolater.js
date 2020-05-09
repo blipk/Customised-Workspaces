@@ -2,7 +2,7 @@
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -38,7 +38,7 @@ const dev = Me.imports.dev;
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()
 
 // Credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
-var WorkspaceIsolator = class WorkspaceIsolator { 
+var WorkspaceIsolator = class WorkspaceIsolator {
     constructor() {
         try {
         // Extend AppSystem to only return applications running on the active workspace
@@ -56,14 +56,14 @@ var WorkspaceIsolator = class WorkspaceIsolator {
             let activeWorkspace = Me.gWorkspaceManager.get_active_workspace();
             let windows = this.get_windows().filter(w => w.get_workspace().index() == activeWorkspace.index());
 
-            if (windows.length > 0 && 
-                (!(windows.length == 1 && windows[0].skip_taskbar) || 
+            if (windows.length > 0 &&
+                (!(windows.length == 1 && windows[0].skip_taskbar) ||
                  this.is_on_workspace(activeWorkspace)))
                 return Main.activateWindow(windows[0]);
 
             if (WorkspaceIsolator.isActiveApp(this))
                 return this._workspace_isolated_dash_nyuki_activate();
-            
+
             return this.open_new_window(-1);
         };
         // Extend AppIcon's state change to hide 'running' indicator for applications not on the active workspace
@@ -127,7 +127,7 @@ WorkspaceIsolator.refresh = function() {
         running = AppSystem._workspace_isolated_dash_nyuki_get_running();
     else
         running = AppSystem.get_running();
-    
+
     running.forEach(function(app) {
         app.notify('state');
     });

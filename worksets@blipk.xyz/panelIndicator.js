@@ -2,7 +2,7 @@
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
  * Copyright (C) 2020 A.D. - http://kronosoul.xyz
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -11,7 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,7 +34,7 @@ const { GObject, St, Clutter, Gtk } = imports.gi;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils, fileUtils } = Me.imports;
-const { workspaceManager, workspaceIsolater } = Me.imports;
+const { workspaceManager } = Me.imports;
 
 var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
@@ -67,20 +67,21 @@ var WorksetsIndicator = GObject.registerClass({
     _buildMenu() {
         try {
         // Sub menu for option switches
-        let optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
-        let isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.IsolateWorkspaces, { reactive: true });
-        isolateRunningAppsMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
+        this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
 
-        let showPanelIndicatorMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show panel indicator"), Me.session.ShowPanelIndicator, { reactive: true });
-        showPanelIndicatorMenuItem.connect('toggled', ()=>{Me.session.ShowPanelIndicator = !Me.session.ShowPanelIndicator; Me.session.saveSession();});
+        this.isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.Options.IsolateWorkspaces, { reactive: true });
+        this.isolateRunningAppsMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
 
-        let showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.ShowWorkspaceOverlay, { reactive: true });
-        showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{Me.session.ShowWorkspaceOverlay = !Me.session.ShowWorkspaceOverlay; Me.session.saveSession(); Me.session.loadSession();});
+        this.showPanelIndicatorMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show panel indicator"), Me.session.activeSession.Options.ShowPanelIndicator, { reactive: true });
+        this.showPanelIndicatorMenuItem.connect('toggled', ()=>{Me.session.activeSession.Options.ShowPanelIndicator = !Me.session.activeSession.Options.ShowPanelIndicator; Me.session.saveSession();});
 
-        optionsMenuItem.menu.addMenuItem(isolateRunningAppsMenuItem);
-        optionsMenuItem.menu.addMenuItem(showWorkSpaceOverlayMenuItem);
-        optionsMenuItem.menu.addMenuItem(showPanelIndicatorMenuItem);
-        this.menu.addMenuItem(optionsMenuItem);
+        this.showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.activeSession.Options.ShowWorkspaceOverlay, { reactive: true });
+        this.showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{Me.session.activeSession.Options.ShowWorkspaceOverlay = !Me.session.activeSession.Options.ShowWorkspaceOverlay; Me.session.saveSession(); Me.session.loadSession();});
+
+        this.optionsMenuItem.menu.addMenuItem(this.isolateRunningAppsMenuItem);
+        this.optionsMenuItem.menu.addMenuItem(this.showWorkSpaceOverlayMenuItem);
+        this.optionsMenuItem.menu.addMenuItem(this.showPanelIndicatorMenuItem);
+        this.menu.addMenuItem(this.optionsMenuItem);
 
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
@@ -108,14 +109,14 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
-        
+
         // Management menu button menu
         let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
         sessionMenuItem.nameText = "New Environment";
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
         this.menu.addMenuItem(sessionMenuItem);
-        
+
         this._worksetMenuItemSetEntryLabel(sessionMenuItem);
         sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu();});
 
@@ -152,7 +153,7 @@ var WorksetsIndicator = GObject.registerClass({
         let iconOpenNew_nameuri = (isActive > -1) ? 'action-unavailable-symbolic' : 'list-add-symbolic';
         let iconOpenHere_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
         let openHereCommand = (isActive > -1)
-             ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();} 
+             ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();}
              : () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();};
         uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true);
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();});
@@ -160,7 +161,7 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openHereCommand);
         uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();});
-        
+
         // Set up sub menu items
         menuItem.favAppsMenuItems = [];
         if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {
@@ -215,7 +216,7 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
         uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {{Me.session.editWorkset(menuItem.workset); this._refreshMenu();}});
         menuItem.menu.addMenuItem(menuItem.infoMenuButton);
-        
+
         // Favorite Apps entries
         menuItem.workset.FavApps.forEach(function(favApp, i){
             let {name, displayName, exec, icon} = favApp;
@@ -240,6 +241,10 @@ var WorksetsIndicator = GObject.registerClass({
     _refreshMenu() {
         try {
         Me.session.loadSession();
+
+        this.showPanelIndicatorMenuItem._switch.state = Me.session.activeSession.Options.ShowPanelIndicator;
+        this.showWorkSpaceOverlayMenuItem._switch.state = Me.session.activeSession.Options.ShowWorkspaceOverlay;
+        this.isolateRunningAppsMenuItem._switch.state = Me.session.activeSession.Options.IsolateWorkspaces;
 
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {

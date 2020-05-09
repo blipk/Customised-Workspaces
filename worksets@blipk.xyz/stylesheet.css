@@ -33,31 +33,31 @@ entry:indeterminate {
     border-radius: 9px;
     color: #eeeeec;
     background-color: rgba(23, 25, 26, 0.95);
-    border: 3px solid rgba(238, 238, 236, 0.5); 
+    border: 3px solid rgba(238, 238, 236, 0.5);
 }
 
 .object-dialog .object-dialog-content-box {
-    padding: 24px; 
+    padding: 24px;
 }
   .object-dialog .object-dialog-entry {
     width: 20em;
-    margin-bottom: 6px; 
+    margin-bottom: 6px;
 }
   .object-dialog .object-dialog-error-box {
     padding-top: 16px;
 }
   .object-dialog .object-dialog-button-box {
-    padding-top: 1em; 
+    padding-top: 1em;
 }
   .object-dialog .object-dialog-label {
     font-size: 12pt;
     font-weight: bold;
     color: #d6d6d1;
-    padding-bottom: .4em; 
+    padding-bottom: .4em;
 }
 
 .object-dialog-item {
-    padding: 0.4em; 
+    padding: 0.4em;
 }
 .object-dialog-item-icon {
     padding-right: 0.4em;
@@ -69,5 +69,5 @@ entry:indeterminate {
     padding-bottom: 3em;
 }
 .workspace-overlay .workset-label {
-    font-size: 15em; 
+    font-size: 15em;
 }
