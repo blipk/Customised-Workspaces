@@ -40,9 +40,9 @@ function createIconButton (parentItem, iconNameURI, callback, options) { //St.Si
     let defaults = {icon_name: iconNameURI,
                               style_class: 'system-status-icon',
                               x_expand: false,
-                              x_align: Clutter.ActorAlign.END,
+                              x_align: Clutter.ActorAlign.CENTER,
                               y_expand: false,
-                              y_align: Clutter.ActorAlign.END};
+                              y_align: Clutter.ActorAlign.CENTER};
     options = {...defaults, ...options };
 
     let icon = new St.Icon(options);

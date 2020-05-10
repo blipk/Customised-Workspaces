@@ -68,6 +68,7 @@ var WorksetsIndicator = GObject.registerClass({
         try {
         // Sub menu for option switches
         this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
+        this.optionsMenuItem.icon.icon_name = 'org.gnome.tweaks';
         this.optionsMenuItems = [];
         Me.session.activeSession.Options.forEachEntry(function (optionName, optionValue) {
             let settingsKeyName = utils.textToKebabCase(optionName)

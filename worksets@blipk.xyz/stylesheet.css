@@ -66,12 +66,15 @@ entry:indeterminate {
 
 .workspace-overlay {
     padding-top: 55em;
-    /*background-color: rgba(0, 0, 255, 0.23);/**/
 }
 .workspace-overlay StIcon {
     color: ghostwhite;
-    /*background-color: rgba(0, 0, 0, 0.23);/**/
-    icon-shadow: 20px 20px 5px black;
+    icon-shadow: 1em 1em 0px black;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 3px hidden black;
+    border-radius: 40px;
+    padding: 1.3em;
+    margin-left: 0.5em;
 }
 .workspace-overlay .workset-label {
     font: small-caps bold 12em/12em Arial;
