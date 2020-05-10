@@ -361,6 +361,7 @@ var SessionManager = class SessionManager {
         worksetObject.BackgroundImage = this.getBackground();
 
         if (!name) {
+            let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '-');
             let buttonStyles = [ { label: "Cancel", key: Clutter.KEY_Escape, action: function(){this.close(' ')} }, { label: "Done", default: true }];
             let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog("Please enter name for the new custom workspace:", (returnText) => {
                 if (!returnText) return;
@@ -383,7 +384,7 @@ var SessionManager = class SessionManager {
                 this.saveSession();
                 if (activate) this.displayWorkset(this.Worksets[this.Worksets.length-1]);
                 uiUtils.showUserFeedbackMessage("Environment "+returnText+" created.");
-            }, true, false, [], [], buttonStyles);
+            }, true, false, [], [], buttonStyles, 'Environment '+timestamp);
         } else {
             worksetObject.WorksetName = name;
             //Push it to the session

@@ -144,7 +144,9 @@ var ObjectInterfaceDialog = GObject.registerClass({
         showTextInput=true, disableTextInput=false,
         jsobjectsSets=[], /*array of js objects or of strings to valid directories with .json files*/
         objectSetMasks=[{objectNameIdentifier: 'Object Set Display Name'}],
-        buttons=null ) {
+        buttons=null,
+        defaultText = ''
+        ) {
 
         if (typeof dialogText === 'object') {
             super._init(dialogText);
@@ -164,7 +166,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
         this.contentLayout.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
         //Text field for user input
-        this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '' });
+        this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: defaultText });
         shellEntry.addContextMenu(this.stEntryUText);
         this.stEntryUText.label_actor = stLabelUText;
         //Customisation
