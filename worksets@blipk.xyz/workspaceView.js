@@ -76,7 +76,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
             thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: false, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
-            
+
             // Faster than setting text-shadows in CSS
             //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
             //thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
@@ -134,15 +134,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             thumbnailBox._bgManager.backgroundActor.background = newbg;
             //thumbnailBox._contents.add_child(thumbnailBox.worksetUnderlayBox);
             thumbnailBox._contents.add_child(thumbnailBox.worksetOverlayBox);
-            
+
             } catch(e) { dev.log(e) }
         }, this)
 
         } catch(e) { dev.log(e) }
     }
 };
-
-/*
-
-
-*/

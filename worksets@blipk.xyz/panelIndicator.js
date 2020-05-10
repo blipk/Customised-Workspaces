@@ -75,7 +75,7 @@ var WorksetsIndicator = GObject.registerClass({
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
             let apply = (optionName == 'IsolateWorkspaces')
-                ? function() {Me.workspaceManager.activateIsolater()} 
+                ? function() {Me.workspaceManager.activateIsolater()}
                 : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
             optionMenuItem.pressHandler = optionMenuItem.connect('toggled', apply);
             this.optionsMenuItems.push(optionMenuItem)

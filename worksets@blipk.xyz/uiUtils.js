@@ -102,6 +102,7 @@ function setImage(imgFilePath, parent) {
     return image;
 }
 
+// Shader example
 var TextOutlineEffect = GObject.registerClass({
     GTypeName: 'TextOutlineEffect'
 }, class TextOutlineEffect extends Clutter.ShaderEffect {
@@ -113,7 +114,7 @@ var TextOutlineEffect = GObject.registerClass({
                 const float smoothing = 1.0/16.0;
                 const float outlineWidth = 3.0/16.0;
                 const float outerEdgeCenter = 0.5 - outlineWidth;
-                
+
                 void main() {
                     float distance = texture2D(tex, cogl_tex_coord_in[0].xy).a;
                     float alpha = smoothstep(outerEdgeCenter - smoothing, outerEdgeCenter + smoothing, distance);
