@@ -61,23 +61,29 @@ entry:indeterminate {
 }
 .object-dialog-item-icon {
     padding-right: 0.4em;
-
 }
 
 
 .workspace-overlay {
     padding-top: 55em;
+    /*background-color: rgba(0, 0, 255, 0.23);/**/
 }
 .workspace-overlay StIcon {
-    color: white;
-    background-color: rgba(0, 0, 0, 0.23);
+    color: ghostwhite;
+    /*background-color: rgba(0, 0, 0, 0.23);/**/
+    icon-shadow: 20px 20px 5px black;
 }
 .workspace-overlay .workset-label {
     font: small-caps bold 12em/12em Arial;
     color: ghostwhite;
-    text-rendering: optimizeLegibility;
-
-    /*text-shadow: 0px 20px 20px black, 0px -20px 20px black, 20px 0px 20px black, -20px 0px 20px black;*/
+    text-shadow: 20px 20px 5px black;
+     /*
+        -20px 20px 0 red; BOTTOM LEFT
+        -20px -20px 0 red; TOP LEFT
+        20px 20px 0 red; BOTTOM RIGHT
+        20px -20px 0 red; TOP RIGHT
+        Stacking these seemed to just mix up the offsets somehow and just use the last colour specified
+     */
 }
 
 .workspace-underlay {

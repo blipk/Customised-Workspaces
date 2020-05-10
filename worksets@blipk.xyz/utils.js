@@ -39,6 +39,9 @@ function textFormatter(text, options = {/*length: 50*/ }) {
     return text;
 }
 
+var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
+var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+
 //General
 function truncateString(instring, length = 50) {
     let shortened = instring.replace(/\s+/g, ' ');

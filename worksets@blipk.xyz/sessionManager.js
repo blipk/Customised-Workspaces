@@ -44,16 +44,18 @@ var SessionManager = class SessionManager {
 
         // Set up settings bindings
         this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
+
+        this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {});
         this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
-                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()}
-            );
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
+            });
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
-                                            this.loadOptions();
-                                            if (!Me.worksetsIndicator) return;
-                                            if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
-                                                Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
-                                            }
-                                        });
+                this.loadOptions();
+                if (!Me.worksetsIndicator) return;
+                if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
+                    Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
+                }
+            });
 
         // Create sesion or initialize from session file if it exists
         if (fileUtils.checkExists(fileUtils.CONF_DIR + '/session.json')) {
@@ -166,7 +168,11 @@ var SessionManager = class SessionManager {
         if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
-
+    applySession(callback) {
+        this.saveSession();
+        if (callback) callback();
+        this.loadSession();
+    }
     getBackground() {
         try{
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
@@ -253,7 +259,7 @@ var SessionManager = class SessionManager {
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
-                Me.workspaceManager.workspaceUpdate();
+                Me.workspaceManager._workspaceUpdate();
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
@@ -448,7 +454,7 @@ var SessionManager = class SessionManager {
                 }
             }, this);
 
-            this.saveSession(); this.loadSession();
+            this.applySession();
             Me.workspaceManager.loadDefaultWorksets();
             uiUtils.showUserFeedbackMessage("Changes saved.");
         }, editable, editables, buttonStyles);

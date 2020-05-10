@@ -72,21 +72,29 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
-            thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height / 3;
+            //thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
 
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
-            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: true, y_fill: true, x_align: St.Align.START, y_align: St.Align.END, expand: true});
             
             // Faster than setting text-shadows in CSS
-            let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
-            //dev.log(thumbnailBox.worksetLabel.clutter_text.get_constraints () )
-            thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
+            //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
+            //thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
 
+            /*
             thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
             thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
             thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
-            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: true, x_align: St.Align.START, y_align: St.Align.END, expand: true});
             thumbnailBox.worksetLabelUnderlay.clutter_text.set_scale(1.1, 1.1);
+            */
+
+            // Set text for any custom workspaces
+
+            let text = '';
+            if (Me.session.workspaceMaps['Workspace'+i] != undefined) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
+            thumbnailBox.worksetLabel.set_text(text);
+            //thumbnailBox.worksetLabelUnderlay.set_text(text);
 
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -101,22 +109,17 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
             }, this);
 
-            // Set text for any custom workspaces
-            let text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
-            thumbnailBox.worksetLabel.set_text(text);
-            thumbnailBox.worksetLabelUnderlay.set_text(text);
-
             if (thumbnailBox.workset) {
                 // Action buttons for custom workspaces
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, {icon_size: 170});
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, {icon_size: 170})
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'edit-delete-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, {icon_size: 170})
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, {icon_size: 170})
             }
 
             // Image for last empty workspace thumbnail
             if (Me.workspaceManager.NumGlobalWorkspaces == i+1 && !thumbnailBox.workset) {
                 if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                    uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'view-reveal-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.saveSession(); Me.session.loadSession(); }, {icon_size: 170, x_align: St.Align.START})
+                    uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START})
 
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 170})
 
@@ -131,6 +134,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             thumbnailBox._bgManager.backgroundActor.background = newbg;
             //thumbnailBox._contents.add_child(thumbnailBox.worksetUnderlayBox);
             thumbnailBox._contents.add_child(thumbnailBox.worksetOverlayBox);
+            
             } catch(e) { dev.log(e) }
         }, this)
 

@@ -68,41 +68,18 @@ var WorksetsIndicator = GObject.registerClass({
         try {
         // Sub menu for option switches
         this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Options', true);
-
-        /*
-        this.OptionMenuItems = [];
-
+        this.optionsMenuItems = [];
         Me.session.activeSession.Options.forEachEntry(function (optionName, optionValue) {
-            let OptionMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.Options.IsolateWorkspaces, { reactive: true });
-            let OptionMenuItem.pressHandler = letOptionMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
+            let settingsKeyName = utils.textToKebabCase(optionName)
+            let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
+            optionMenuItem.optionName = optionName;
+            let apply = (optionName == 'IsolateWorkspaces')
+                ? function() {Me.workspaceManager.activateIsolater()} 
+                : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
+            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', apply);
+            this.optionsMenuItems.push(optionMenuItem)
+            this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
         }, this);
-        */
-
-        this.isolateRunningAppsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Isolate running applications"), Me.session.activeSession.Options.IsolateWorkspaces, { reactive: true });
-        this.isolateRunningAppsMenuItem.connect('toggled', Me.workspaceManager.activateIsolater);
-
-        this.showPanelIndicatorMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show panel indicator"), Me.session.activeSession.Options.ShowPanelIndicator, { reactive: true });
-        this.showPanelIndicatorMenuItem.connect('toggled', ()=>{
-            Me.session.activeSession.Options.ShowPanelIndicator = !Me.session.activeSession.Options.ShowPanelIndicator;
-            Me.session.saveSession();
-        });
-
-        this.showWorkSpaceOverlayMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show workspace overlay"), Me.session.activeSession.Options.ShowWorkspaceOverlay, { reactive: true });
-        this.showWorkSpaceOverlayMenuItem.connect('toggled', ()=>{
-            Me.session.activeSession.Options.ShowWorkspaceOverlay = !Me.session.activeSession.Options.ShowWorkspaceOverlay;
-            Me.session.saveSession();
-        });
-
-        this.showNotificationsMenuItem = new popupMenu.PopupSwitchMenuItem(_("Show notifications"), Me.session.activeSession.Options.ShowNotifications, { reactive: true });
-        this.showNotificationsMenuItem.connect('toggled', ()=>{
-            Me.session.activeSession.Options.ShowNotifications = !Me.session.activeSession.Options.ShowNotifications;
-            Me.session.saveSession(); Me.session.loadSession();
-        });
-
-        this.optionsMenuItem.menu.addMenuItem(this.isolateRunningAppsMenuItem);
-        this.optionsMenuItem.menu.addMenuItem(this.showWorkSpaceOverlayMenuItem);
-        this.optionsMenuItem.menu.addMenuItem(this.showPanelIndicatorMenuItem);
-        this.optionsMenuItem.menu.addMenuItem(this.showNotificationsMenuItem);
         this.menu.addMenuItem(this.optionsMenuItem);
 
         // Add separator
@@ -168,11 +145,10 @@ var WorksetsIndicator = GObject.registerClass({
             if (workspaceMapValues.currentWorkset == menuItem.workset.WorksetName) {
                 isActive = parseInt(workspaceMapKey.substr(-1, 1));
                 return;
-
             }
         }, this);
         let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
-        let iconOpenNew_nameuri = (isActive > -1) ? 'action-unavailable-symbolic' : 'list-add-symbolic';
+        let iconOpenNew_nameuri = (isActive > -1) ? 'window-close-symbolic' : 'list-add-symbolic';
         let iconOpenHere_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
         let openHereCommand = (isActive > -1)
              ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();}
@@ -264,10 +240,10 @@ var WorksetsIndicator = GObject.registerClass({
         try {
         Me.session.loadSession();
 
-        this.showPanelIndicatorMenuItem._switch.state = Me.session.activeSession.Options.ShowPanelIndicator;
-        this.showWorkSpaceOverlayMenuItem._switch.state = Me.session.activeSession.Options.ShowWorkspaceOverlay;
-        this.isolateRunningAppsMenuItem._switch.state = Me.session.activeSession.Options.IsolateWorkspaces;
-        this.showNotificationsMenuItem._switch.state = Me.session.activeSession.Options.ShowNotifications;
+        // Ensure option switches match settings
+        this.optionsMenuItems.forEach(function (menuItem, i) {
+            this.optionsMenuItems[i]._switch.state = Me.session.activeSession.Options[this.optionsMenuItems[i].optionName];
+        }, this);
 
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {

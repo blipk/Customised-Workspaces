@@ -33,7 +33,7 @@
     </key>
     <key name="show-notifications" type="b">
       <default>true</default>
-      <summary>Show notifications.</summary>
+      <summary>Show notifications</summary>
       <description>When active, a desktop notification is shown indicating when a custom workspace has been switched to.</description>
     </key>
      <key name="favorites-prototype" type="s">

@@ -115,7 +115,7 @@ var WorkspaceManager = class WorkspaceManager {
         //If there's not any active on the workspace, load any that are set to default here
         if (foundActive === false) this.loadDefaultWorksets();
         this._workspaceUpdate();
-        Me.workspaceViewManager.refreshThumbNailsBoxes();
+        //Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets(){
