@@ -78,6 +78,7 @@ var SessionManager = class SessionManager {
     saveOptions() {
         Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
         Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
+        Me.settings.set_boolean("show-helpers", this.activeSession.Options.ShowHelpers);
         Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
         Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); // This has to be last or the signal callback will change the other options
     }
@@ -86,6 +87,7 @@ var SessionManager = class SessionManager {
         this.activeSession.Options.ShowPanelIndicator = Me.settings.get_boolean("show-panel-indicator");
         this.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean("isolate-workspaces");
         this.activeSession.Options.ShowNotifications = Me.settings.get_boolean("show-notifications");
+        this.activeSession.Options.ShowHelpers = Me.settings.get_boolean("show-helpers");
     }
     _setup(sessionObject) {
         try {

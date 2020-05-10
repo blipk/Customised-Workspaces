@@ -35,8 +35,28 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
 
+
+//Display a short overlay message on the screen for user feedback etc..
+let messages = [];
+function showUserFeedbackMessage(input, overviewMessage=false, fadeTime=2.9 ) {
+    dev.log('Notification', input);
+    if (overviewMessage) {
+        Main.overview.setMessage(_(input), { forFeedback: true });
+    } else {
+        messages.push(new St.Label({ style_class: 'feedback-label', text: _(input) }));
+        var lastItem = messages.length-1;
+        Main.uiGroup.add_actor(messages[lastItem]);
+        messages[lastItem].opacity = 255;
+        let monitor = Main.layoutManager.primaryMonitor;
+        messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
+        if (fadeTime > 0) tweener.addTween(messages[lastItem], { opacity: 0, time: fadeTime, transition: 'easeOutQuad', onComplete: () => { Main.uiGroup.remove_actor(messages[lastItem]); delete messages[lastItem];} });
+    }
+
+    return lastItem;
+}
+
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
-function createIconButton (parentItem, iconNameURI, callback, options) { //St.Side.RIGHT
+function createIconButton (parentItem, iconNameURI, callback, options, tooltip) { //St.Side.RIGHT
     let defaults = {icon_name: iconNameURI,
                               style_class: 'system-status-icon',
                               x_expand: false,
@@ -55,25 +75,42 @@ function createIconButton (parentItem, iconNameURI, callback, options) { //St.Si
     parentItem.iconButtons.push(iconButton);
     parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
 
+    if (tooltip) createTooltip(iconButton, tooltip);
+
     return iconButton;
 }
 
-//Display a short overlay message on the screen for user feedback etc..
-let messages = [];
-function showUserFeedbackMessage(input, overviewMessage=false, fadeTime=2.9 ) {
-    dev.log('Notification', input);
-    if (overviewMessage) {
-        Main.overview.setMessage(_(input), { forFeedback: true });
-    } else {
-        messages.push(new St.Label({ style_class: 'feedback-label', text: _(input) }));
-        let lastItem = messages.length-1;
-        Main.uiGroup.add_actor(messages[lastItem]);
-        messages[lastItem].opacity = 255;
-        let monitor = Main.layoutManager.primaryMonitor;
-        messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
-        tweener.addTween(messages[lastItem], { opacity: 0, time: fadeTime, transition: 'easeOutQuad', onComplete: () => { Main.uiGroup.remove_actor(messages[lastItem]); messages[lastItem] = null;} });
-    }
+function createTooltip(widget, tooltip) {
+    if (!tooltip) return;
+    widget.connect('enter_event', ()=>{
+        widget.hovering = true;
+        GLib.timeout_add(null, tooltip.delay || 700, ()=> {
+            // Ensure any previous tooltips are removed
+            if (messages[widget.msgIndex]) {
+                Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
+                delete messages[widget.msgIndex];
+            }
+            // Create message
+            if(widget.hovering && !messages[widget.msgIndex] && Me.session.activeSession.Options.ShowHelpers) 
+                widget.msgIndex = showUserFeedbackMessage(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0)
+            // Make sure they're eventually removed for any missed cases
+            GLib.timeout_add(null, 7000, ()=> {
+                Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
+                delete messages[widget.msgIndex];
+            });
+        });
+    });
+    widget.connect('leave_event', ()=>{
+        widget.hovering = false;
+        if (!messages[widget.msgIndex]) return;
+        tweener.addTween(messages[widget.msgIndex], { opacity: 0, time: 1.4, transition: 'easeOutQuad', onComplete: () => { 
+            Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
+            delete messages[widget.msgIndex];
+        } });
+    });
+    
 }
+
 
 function setImage(imgFilePath, parent) {
     imgFilePath = imgFilePath.replace("file://", "");
