@@ -302,7 +302,7 @@ var SessionManager = class SessionManager {
             if (parseInt(closing.substr(-1, 1)) == Me.workspaceManager.activeWorkspaceIndex)
                 this.displayWorkset(this.DefaultWorkset, false, true);
 
-            uiUtils.showUserNotification("Environment '" + workset.WorksetName + "' disengaged.", false, 1.4);
+            uiUtils.showUserNotification("Environment '" + workset.WorksetName + "' disengaged.", false, 1.8);
             this.saveSession();
         } catch(e) { dev.log(e) }
     }

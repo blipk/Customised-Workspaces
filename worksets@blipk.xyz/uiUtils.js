@@ -40,6 +40,7 @@ const { dev, utils, fileUtils } = Me.imports;
 let messages = [];
 function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
     dev.log('Notification', input);
+    removeAllUserNotifications();
     if (overviewMessage) {
         Main.overview.setMessage(_(input), { forFeedback: true });
     } else {
@@ -123,13 +124,13 @@ function createTooltip(widget, tooltip) {
     });
 
     widget.connect('button-press-event', ()=>{
-        //widget.hovering = false;
+        widget.hovering = false;
         if (widget.notificationLabel)
             removeUserNotification(widget.notificationLabel, 0.7);
     });
     if (widget instanceof popupMenu.PopupSwitchMenuItem)
         widget.connect('toggled', ()=>{
-            //widget.hovering = false;
+            widget.hovering = false;
             if (widget.notificationLabel)
                 removeUserNotification(widget.notificationLabel, 0.7);
         });
