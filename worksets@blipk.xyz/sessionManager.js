@@ -42,20 +42,9 @@ var SessionManager = class SessionManager {
         this.activeSession = null;
         this.allApps = {};
 
-        // Set up settings bindings
+        // Set up our bindings
         this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
-
-        this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {});
-        this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
-                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
-            });
-        this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
-                this.loadOptions();
-                if (!Me.worksetsIndicator) return;
-                if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
-                    Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
-                }
-            });
+        this.watchOptions();
 
         // Create sesion or initialize from session file if it exists
         if (fileUtils.checkExists(fileUtils.CONF_DIR + '/session.json')) {
@@ -75,19 +64,31 @@ var SessionManager = class SessionManager {
         if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
         } catch(e) { dev.log(e) }
     }
+    watchOptions() {
+        this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {}); // This is done via the switch event
+        this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
+            });
+        this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
+                this.loadOptions();
+                if (!Me.worksetsIndicator) return;
+                if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
+                    Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
+                }
+            });
+    }
     saveOptions() {
-        Me.settings.set_boolean("isolate-workspaces", this.activeSession.Options.IsolateWorkspaces);
-        Me.settings.set_boolean("show-notifications", this.activeSession.Options.ShowNotifications);
-        Me.settings.set_boolean("show-helpers", this.activeSession.Options.ShowHelpers);
-        Me.settings.set_boolean("show-workspace-overlay", this.activeSession.Options.ShowWorkspaceOverlay);
-        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); // This has to be last or the signal callback will change the other options
+        this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
+            if (optionName != 'ShowPanelIndicator')
+                Me.settings.set_boolean(utils.textToKebabCase(optionName), this.activeSession.Options[optionName]);
+        }, this);
+        // This has to be last or the signal callback will change the other options
+        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); 
     }
     loadOptions() {
-        this.activeSession.Options.ShowWorkspaceOverlay = Me.settings.get_boolean("show-workspace-overlay");
-        this.activeSession.Options.ShowPanelIndicator = Me.settings.get_boolean("show-panel-indicator");
-        this.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean("isolate-workspaces");
-        this.activeSession.Options.ShowNotifications = Me.settings.get_boolean("show-notifications");
-        this.activeSession.Options.ShowHelpers = Me.settings.get_boolean("show-helpers");
+        this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
+            this.activeSession.Options[optionName] =  Me.settings.get_boolean(utils.textToKebabCase(optionName));
+        }, this);
     }
     _setup(sessionObject) {
         try {
@@ -257,7 +258,7 @@ var SessionManager = class SessionManager {
 
         if (isActive > -1) { //switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
-            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 0.7);
+            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 1);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;

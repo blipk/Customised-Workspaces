@@ -122,8 +122,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START}, {msg: "Show the panel indicator menu"})
 
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 170}, {msg: "Create new custom workspace here"})
-
-                newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                let index = 0;
+                Me.session.Worksets.forEach(function(workset, i) {
+                    if (workset.WorksetName == Me.session.workspaceMaps.Workspace0.currentWorkset)
+                        index = i;
+                }, this);
+                newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
 
             // Prevent excessive recursion but enforce background updates during various events

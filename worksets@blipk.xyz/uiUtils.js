@@ -28,7 +28,7 @@
 const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
-const { modalDialog, shellEntry, tweener } = imports.ui;
+const { modalDialog, shellEntry, tweener, popupMenu } = imports.ui;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -96,11 +96,7 @@ function createIconButton (parentItem, iconNameURI, callback, options, tooltip) 
 
     parentItem.iconButtons.push(iconButton);
     if (tooltip) createTooltip(iconButton, tooltip);
-    parentItem.iconsButtonsPressIds.push(
-        iconButton.connect('button-press-event', () => {
-            if (tooltip && iconButton.notificationLabel) removeUserNotification(iconButton.notificationLabel);
-            callback();
-        }) );
+    parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
 
     return iconButton;
 }
@@ -110,22 +106,33 @@ function createTooltip(widget, tooltip) {
     widget.connect('enter_event', ()=>{
         widget.hovering = true;
         GLib.timeout_add(null, tooltip.delay || 700, ()=> {
-            // Ensure any previous tooltips are removed
-            if (widget.notificationLabel) removeUserNotification(widget.notificationLabel);
+            // Ensure there is only one notification per widget
+            if (widget.notificationLabel) return;
             // Create message
             if(widget.hovering && !widget.notificationLabel && Me.session.activeSession.Options.ShowHelpers)
                 widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0);
                 widget.notificationLabel.attachedTo = widget;
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, 7000, ()=> { removeUserNotification(widget.notificationLabel);});
+            GLib.timeout_add(null, 4000, ()=> { removeUserNotification(widget.notificationLabel, 1);});
         });
     });
     widget.connect('leave_event', ()=>{
         widget.hovering = false;
-        if (!widget.notificationLabel) return;
-        removeUserNotification(widget.notificationLabel, 1.4);
+        if (widget.notificationLabel)
+            removeUserNotification(widget.notificationLabel, 1.4);
     });
 
+    widget.connect('button-press-event', ()=>{
+        //widget.hovering = false;
+        if (widget.notificationLabel)
+            removeUserNotification(widget.notificationLabel, 0.7);
+    });
+    if (widget instanceof popupMenu.PopupSwitchMenuItem)
+        widget.connect('toggled', ()=>{
+            //widget.hovering = false;
+            if (widget.notificationLabel)
+                removeUserNotification(widget.notificationLabel, 0.7);
+        });
 }
 
 
