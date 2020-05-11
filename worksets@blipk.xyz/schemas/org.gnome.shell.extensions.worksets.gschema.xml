@@ -57,7 +57,7 @@
       <description>Contains the information about the state and position of custom workspaces.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{ \"SessionName\":\"\",\"Options\":{\"ShowNotifications\":true, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <default>"{ \"SessionName\":\"\",\"DefaultWorkset\": \"\",\"Options\":{\"ShowNotifications\":true, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on the extensions session.</description>
     </key>

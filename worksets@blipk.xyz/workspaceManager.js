@@ -96,6 +96,9 @@ var WorkspaceManager = class WorkspaceManager {
 
         // Update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
+
+        // Update the overlay
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
@@ -112,14 +115,15 @@ var WorkspaceManager = class WorkspaceManager {
             }, this);
         }, this);
 
-        //If there's not any active on the workspace, load any that are set to default here
+        //If there's not any active on the workspace, load any that are set to default here, or just display the background/favourites from the default
         if (foundActive === false) this.loadDefaultWorksets();
         this._workspaceUpdate();
-        //Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets(){
         try {
+        Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
+
         Me.session.Worksets.forEach(function (workset, worksetIndex) {
             Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
@@ -170,7 +174,6 @@ var WorkspaceManager = class WorkspaceManager {
         if (Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex] == undefined) {
             let obj = {['Workspace'+this.activeWorkspaceIndex]: {'defaultWorkset':'', "currentWorkset": name}}
             Object.assign(Me.session.workspaceMaps, obj);
-            Me.session.saveSession();
         } else {
             Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = name;
         }
@@ -184,7 +187,6 @@ var WorkspaceManager = class WorkspaceManager {
         if (Me.session.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)] == undefined) {
             let obj = {['Workspace'+(this.NumGlobalWorkspaces-1)]: {'defaultWorkset':'', "currentWorkset": name}}
             Object.assign(Me.session.workspaceMaps, obj);
-            Me.session.saveSession();
         } else {
             Me.session.workspaceMaps['Workspace'+(this.NumGlobalWorkspaces-1)].currentWorkset = name;
         }

@@ -88,6 +88,10 @@ var WorksetsIndicator = GObject.registerClass({
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
 
         // Menu sections for workset items
+        // Default
+        this.defaultSection = new popupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this.defaultSection);
+
         // Favorites
         this.favoritesSection = new popupMenu.PopupMenuSection();
         this.scrollViewFavoritesMenuSection = new popupMenu.PopupMenuSection();
@@ -143,33 +147,29 @@ var WorksetsIndicator = GObject.registerClass({
         //menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
 
         // Create iconbuttons on MenuItem
-        let isActive = -1;
-        Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-            if (workspaceMapValues.currentWorkset == menuItem.workset.WorksetName) {
-                isActive = parseInt(workspaceMapKey.substr(-1, 1));
-                return;
-            }
-        }, this);
-        let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
-        let iconOpenNew_nameuri = (isActive > -1) ? 'window-close-symbolic' : 'list-add-symbolic';
-        let iconOpenHere_nameuri = (isActive > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
-        let openCloseCommand = (isActive > -1)
+        let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
+        //let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
+        let icondefault_nameuri = (Me.session.activeSession.Default == menuItem.workset.WorksetName) ? 'starred-symbolic' : 'non-starred-symbolic';
+        let iconOpenNew_nameuri = (activeIndex > -1) ? 'window-close-symbolic' : 'list-add-symbolic';
+        let iconOpenHere_nameuri = (activeIndex > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
+        let openCloseCommand = (activeIndex > -1)
              ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();}
              : () => {Me.session.displayWorkset(menuItem.workset, true); this._refreshMenu();};
-        let openCloseMsg = (isActive > -1)
+        let openCloseMsg = (activeIndex > -1)
              ? "Disengage '"+menuItem.workset.WorksetName+"'"
              : "Load '"+menuItem.workset.WorksetName+"' in a new workspace";
-        let viewOpenMessage = (isActive > -1)
+        let viewOpenMessage = (activeIndex > -1)
              ? "Switch to '"+menuItem.workset.WorksetName+"'"
              : "Load '"+menuItem.workset.WorksetName+"' in this workspace";
-        uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true, {msg: "Pin '"+menuItem.workset.WorksetName+"' to the top of the list"});
+        //uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true, {msg: "Pin '"+menuItem.workset.WorksetName+"' to the top of the list"});
+        uiUtils.createIconButton(menuItem, icondefault_nameuri, () => {Me.session.setDefaultWorkset(menuItem.workset); this._refreshMenu();}, true, {msg: "Set '"+menuItem.workset.WorksetName+"' as the default"});
         uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openCloseCommand, {}, {msg: openCloseMsg});
         uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: viewOpenMessage});
 
-        // Set up sub menu items
+        //Decorate with indicator if active
         menuItem.favAppsMenuItems = [];
         if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {
             menuItem.setOrnament(popupMenu.Ornament.DOT)
@@ -179,9 +179,12 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.currentlyActive = false;
         }
 
-        //Add to correct list (favorite/not) and decorate with indicator if active
-        menuItem.workset.Favorite ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
-
+        //Add to correct list (favorite/not) and 
+        if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
+            this.defaultSection.addMenuItem(menuItem, 0);
+        else (activeIndex > -1) 
+                ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0); 
+        
         //_worksetSubMenuRefreh(menuItem) // Running this on SubMenu button_press_event instead as generating the bg image was causing delays
         } catch(e) { dev.log(e) }
     }
@@ -273,7 +276,7 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.label.set_text(utils.truncateString(menuItem.nameText));
     }
     _worksetMenuItemsGetAll(text) {
-        return this.historySection._getMenuItems().concat(this.favoritesSection._getMenuItems());
+        return this.historySection._getMenuItems().concat(this.favoritesSection._getMenuItems()).concat(this.defaultSection._getMenuItems());
     }
     _worksetMenuItemsRemoveAll() {
         this._worksetMenuItemsGetAll().forEach(function (mItem) { mItem.destroy(); });

@@ -64,7 +64,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     refreshThumbNailsBoxes() {
         try {
         this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
-        if (!this._visible) return;
+
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
             if (thumbnailBox.worksetOverlayBox) thumbnailBox.worksetOverlayBox.destroy();
@@ -92,7 +92,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Set text for any custom workspaces
 
             let text = '';
-            if (Me.session.workspaceMaps['Workspace'+i] != undefined) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
+            if (Me.session.workspaceMaps['Workspace'+i] != undefined && this._visible) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             thumbnailBox.worksetLabel.set_text(text);
             //thumbnailBox.worksetLabelUnderlay.set_text(text);
 
@@ -109,7 +109,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
             }, this);
 
-            if (thumbnailBox.workset) {
+            if (thumbnailBox.workset && this._visible) {
                 // Action buttons for custom workspaces
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, {icon_size: 170}, {msg: "Edit the custom workspace"});
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, {icon_size: 170}, {msg: "Change the background for custom workspace"})
@@ -122,12 +122,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START}, {msg: "Show the panel indicator menu"})
 
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 170}, {msg: "Create new custom workspace here"})
-                let index = 0;
-                Me.session.Worksets.forEach(function(workset, i) {
-                    if (workset.WorksetName == Me.session.workspaceMaps.Workspace0.currentWorkset)
-                        index = i;
-                }, this);
-                newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
 
             // Prevent excessive recursion but enforce background updates during various events

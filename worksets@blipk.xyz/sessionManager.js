@@ -97,6 +97,7 @@ var SessionManager = class SessionManager {
             this.Worksets = this.activeSession.Worksets;
             this.workspaceMaps = this.activeSession.workspaceMaps;
             this.SessionName = this.activeSession.SessionName;
+            if (utils.isEmpty(this.activeSession.Default)) this.activeSession.Default = this.Worksets[0].WorksetName;
             this._cleanWorksets();
 
             if (!Me.workspaceManager) Me.workspaceManager = new workspaceManager.WorkspaceManager();
@@ -246,20 +247,26 @@ var SessionManager = class SessionManager {
             this.allApps[id] = {'displayName': name, 'icon': icon, 'exec': exec };
         }, this);
     }
-    displayWorkset(workset, loadInNewWorkspace=false) {
-        try {
+    getWorksetActiveIndex(workset) {
+        let name = workset.WorksetName || workset;
         let isActive = -1;
         this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
-            if (workspaceMapValues.currentWorkset == workset.WorksetName) {
+            if (workspaceMapValues.currentWorkset == name) {
                 isActive = parseInt(workspaceMapKey.substr(-1, 1));
                 return;
             }
         }, this);
 
-        if (isActive > -1) { //switch to it if already active
-            if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
+        return isActive;
+    }
+    displayWorkset(workset, loadInNewWorkspace=false, displayOnly=false) {
+        try {
+        let activeIndex = this.getWorksetActiveIndex(workset);
+
+        if (activeIndex > -1 && !displayOnly) { //switch to it if already active
+            if (Me.workspaceManager.activeWorkspaceIndex != activeIndex) Me.workspaceManager.switchToWorkspace(activeIndex);
             if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 1);
-        } else {
+        } else if (!displayOnly) {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
                 Me.workspaceManager._workspaceUpdate();
@@ -275,13 +282,27 @@ var SessionManager = class SessionManager {
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
+    get DefaultWorkset() {
+        let index = 0;
+        this.Worksets.forEach(function(workset, i) {
+            if (workset.WorksetName == this.activeSession.Default)
+                index = i;
+        }, this);
+        return this.Worksets[index];
+    }
     closeWorkset(workset) {
         try {
+            let closing;
             this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
-                if (workspaceMapValues.currentWorkset == workset.WorksetName)
-                    this.workspaceMaps[workspaceMapKey].currentWorkset = '';
+                if (workspaceMapValues.currentWorkset == workset.WorksetName) closing = workspaceMapKey;
             }, this);
+            this.workspaceMaps[closing].currentWorkset = '';
 
+            // Show the default
+            if (parseInt(closing.substr(-1, 1)) == Me.workspaceManager.activeWorkspaceIndex)
+                this.displayWorkset(this.DefaultWorkset, false, true);
+
+            uiUtils.showUserNotification("Environment '" + workset.WorksetName + "' disengaged.", false, 1.4);
             this.saveSession();
         } catch(e) { dev.log(e) }
     }
@@ -478,6 +499,17 @@ var SessionManager = class SessionManager {
         this.Worksets = this.Worksets.filter(item => item !== workset);
         this.saveSession();
         uiUtils.showUserNotification("Environment removed from session and backup saved to "+backupFilename, true);
+        } catch(e) { dev.log(e) }
+    }
+    setDefaultWorkset(workset) {
+        try {
+        let name = workset.WorksetName || workset;
+        Me.session.activeSession.Default = name;
+        if (this.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset == '')
+            Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
+
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        this.saveSession();
         } catch(e) { dev.log(e) }
     }
 
