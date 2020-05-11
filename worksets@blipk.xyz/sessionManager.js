@@ -257,7 +257,7 @@ var SessionManager = class SessionManager {
 
         if (isActive > -1) { //switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != isActive) Me.workspaceManager.switchToWorkspace(isActive);
-            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserFeedbackMessage("Switched to active environment " + workset.WorksetName, false, 0.7);
+            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 0.7);
         } else {
             if (loadInNewWorkspace) { //create and open new workspace before loading workset
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
@@ -265,7 +265,7 @@ var SessionManager = class SessionManager {
                 Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
-            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserFeedbackMessage("Loaded environment " + workset.WorksetName, false, 1.4);
+            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Loaded environment " + workset.WorksetName, false, 1.4);
         }
 
         this.setFavorites(workset.FavApps);
@@ -303,7 +303,7 @@ var SessionManager = class SessionManager {
                 this.saveSession();
             }, this);
 
-            uiUtils.showUserFeedbackMessage("Background Image Changed", true)
+            uiUtils.showUserNotification("Background Image Changed", true)
             if (Me.workspaceManager.activeWorksetName == workset.WorksetName) this.setBackground(resource);
             } catch(e) { dev.log(e) }
         });
@@ -374,7 +374,7 @@ var SessionManager = class SessionManager {
                 this.Worksets.forEach(function (worksetBuffer) {
                     if (worksetBuffer.WorksetName == returnText) {
                         exists = true;
-                        uiUtils.showUserFeedbackMessage("Environment with name '"+returnText+"' already exists.");
+                        uiUtils.showUserNotification("Environment with name '"+returnText+"' already exists.");
                     }
                 }, this);
                 if (exists) return;
@@ -385,7 +385,7 @@ var SessionManager = class SessionManager {
                 this.Worksets.push(worksetObject);
                 this.saveSession();
                 if (activate) this.displayWorkset(this.Worksets[this.Worksets.length-1]);
-                uiUtils.showUserFeedbackMessage("Environment "+returnText+" created.");
+                uiUtils.showUserNotification("Environment "+returnText+" created.");
             }, true, false, [], [], buttonStyles, 'Environment '+timestamp);
         } else {
             worksetObject.WorksetName = name;
@@ -459,7 +459,7 @@ var SessionManager = class SessionManager {
 
             this.applySession();
             Me.workspaceManager.loadDefaultWorksets();
-            uiUtils.showUserFeedbackMessage("Changes saved.");
+            uiUtils.showUserNotification("Changes saved.");
         }, editable, editables, buttonStyles);
         } catch(e) { dev.log(e) }
     }
@@ -476,7 +476,7 @@ var SessionManager = class SessionManager {
 
         this.Worksets = this.Worksets.filter(item => item !== workset);
         this.saveSession();
-        uiUtils.showUserFeedbackMessage("Environment removed from session and backup saved to "+backupFilename, true);
+        uiUtils.showUserNotification("Environment removed from session and backup saved to "+backupFilename, true);
         } catch(e) { dev.log(e) }
     }
 
@@ -490,14 +490,14 @@ var SessionManager = class SessionManager {
                 this.Worksets.forEach(function (worksetBuffer) {
                     if (worksetBuffer.WorksetName == returnObject.WorksetName) {
                         exists = true;
-                        uiUtils.showUserFeedbackMessage("Environment with name '"+returnObject.WorksetName+"' already exists.");
+                        uiUtils.showUserNotification("Environment with name '"+returnObject.WorksetName+"' already exists.");
                     }
                 }, this);
                 if (exists) return;
 
                 this.Worksets.push(returnObject);
                 this.saveSession();
-                uiUtils.showUserFeedbackMessage("Loaded "+returnObject.WorksetName+" from file and added to active session.");
+                uiUtils.showUserNotification("Loaded "+returnObject.WorksetName+" from file and added to active session.");
             }
 
         }, false, true, [worksetsDirectory], [{WorksetName: 'Worksets'}]);
@@ -511,7 +511,7 @@ var SessionManager = class SessionManager {
         let filename = (backup ? 'env-'+workset.WorksetName+'-'+timestamp+'.json' : 'env-'+workset.WorksetName+'.json');
 
         fileUtils.saveJSObjectToFile(workset, filename, fileUtils.CONF_DIR+'/envbackups');
-        if (!backup) uiUtils.showUserFeedbackMessage("Environment saved to "+filename);
+        if (!backup) uiUtils.showUserNotification("Environment saved to "+filename);
 
         return filename;
         } catch(e) { dev.log(e) }

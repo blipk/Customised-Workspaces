@@ -38,21 +38,35 @@ const { dev, utils, fileUtils } = Me.imports;
 
 //Display a short overlay message on the screen for user feedback etc..
 let messages = [];
-function showUserFeedbackMessage(input, overviewMessage=false, fadeTime=2.9 ) {
+function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
     dev.log('Notification', input);
     if (overviewMessage) {
         Main.overview.setMessage(_(input), { forFeedback: true });
     } else {
-        messages.push(new St.Label({ style_class: 'feedback-label', text: _(input) }));
+        var label = new St.Label({ style_class: 'feedback-label', text: _(input) });
+        messages.push(label);
         var lastItem = messages.length-1;
         Main.uiGroup.add_actor(messages[lastItem]);
         messages[lastItem].opacity = 255;
         let monitor = Main.layoutManager.primaryMonitor;
         messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
-        if (fadeTime > 0) tweener.addTween(messages[lastItem], { opacity: 0, time: fadeTime, transition: 'easeOutQuad', onComplete: () => { Main.uiGroup.remove_actor(messages[lastItem]); delete messages[lastItem];} });
+        if (fadeTime > 0) removeUserNotification(label, fadeTime);
     }
-
-    return lastItem;
+    return label;
+}
+function removeUserNotification(widget, fadeTime) {
+    if (!widget) return;
+    if (!fadeTime) {
+        Main.uiGroup.remove_actor(widget);
+        messages = messages.filter(item => item != widget);
+        delete widget;
+    } else {
+        tweener.addTween(widget, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => { 
+            Main.uiGroup.remove_actor(widget);
+            messages = messages.filter(item => item != widget)
+            delete widget;
+        } });
+    }
 }
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
@@ -72,13 +86,18 @@ function createIconButton (parentItem, iconNameURI, callback, options, tooltip) 
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
+    
     parentItem.iconButtons.push(iconButton);
-    parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
-
     if (tooltip) createTooltip(iconButton, tooltip);
+    parentItem.iconsButtonsPressIds.push( 
+        iconButton.connect('button-press-event', () => {
+            if (tooltip && iconButton.notificationLabel) removeUserNotification(iconButton.notificationLabel); 
+            callback();
+        }) );
 
     return iconButton;
 }
+
 
 function createTooltip(widget, tooltip) {
     if (!tooltip) return;
@@ -86,27 +105,19 @@ function createTooltip(widget, tooltip) {
         widget.hovering = true;
         GLib.timeout_add(null, tooltip.delay || 700, ()=> {
             // Ensure any previous tooltips are removed
-            if (messages[widget.msgIndex]) {
-                Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
-                delete messages[widget.msgIndex];
-            }
+            if (widget.notificationLabel) removeUserNotification(widget.notificationLabel);
+
             // Create message
-            if(widget.hovering && !messages[widget.msgIndex] && Me.session.activeSession.Options.ShowHelpers) 
-                widget.msgIndex = showUserFeedbackMessage(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0)
+            if(widget.hovering && !widget.notificationLabel && Me.session.activeSession.Options.ShowHelpers) 
+                widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0)
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, 7000, ()=> {
-                Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
-                delete messages[widget.msgIndex];
-            });
+            GLib.timeout_add(null, 7000, ()=> { removeUserNotification(widget.notificationLabel); });
         });
     });
     widget.connect('leave_event', ()=>{
         widget.hovering = false;
-        if (!messages[widget.msgIndex]) return;
-        tweener.addTween(messages[widget.msgIndex], { opacity: 0, time: 1.4, transition: 'easeOutQuad', onComplete: () => { 
-            Main.uiGroup.remove_actor(messages[widget.msgIndex]); 
-            delete messages[widget.msgIndex];
-        } });
+        if (!widget.notificationLabel) return;
+        removeUserNotification(widget.notificationLabel, 1.4);
     });
     
 }
