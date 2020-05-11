@@ -54,19 +54,26 @@ function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
     }
     return label;
 }
-function removeUserNotification(widget, fadeTime) {
-    if (!widget) return;
+function removeUserNotification(label, fadeTime) {
+    if (!label) return;
     if (!fadeTime) {
-        Main.uiGroup.remove_actor(widget);
-        messages = messages.filter(item => item != widget);
-        delete widget;
+        Main.uiGroup.remove_actor(label);
+        messages = messages.filter(item => item != label);
+        if (label.attachedTo) delete label.attachedTo.notificationLabel;
+        delete label;
     } else {
-        tweener.addTween(widget, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => { 
-            Main.uiGroup.remove_actor(widget);
-            messages = messages.filter(item => item != widget)
-            delete widget;
+        tweener.addTween(label, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
+                Main.uiGroup.remove_actor(label);
+                messages = messages.filter(item => item != label);
+                if (label.attachedTo) delete label.attachedTo.notificationLabel;
+                delete label;
         } });
     }
+}
+function removeAllUserNotifications(fadeTime) {
+    messages.forEach(function(message, i) {
+        removeUserNotification(message, fadeTime)
+    }, this);
 }
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
@@ -86,18 +93,17 @@ function createIconButton (parentItem, iconNameURI, callback, options, tooltip) 
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
-    
+
     parentItem.iconButtons.push(iconButton);
     if (tooltip) createTooltip(iconButton, tooltip);
-    parentItem.iconsButtonsPressIds.push( 
+    parentItem.iconsButtonsPressIds.push(
         iconButton.connect('button-press-event', () => {
-            if (tooltip && iconButton.notificationLabel) removeUserNotification(iconButton.notificationLabel); 
+            if (tooltip && iconButton.notificationLabel) removeUserNotification(iconButton.notificationLabel);
             callback();
         }) );
 
     return iconButton;
 }
-
 
 function createTooltip(widget, tooltip) {
     if (!tooltip) return;
@@ -106,12 +112,12 @@ function createTooltip(widget, tooltip) {
         GLib.timeout_add(null, tooltip.delay || 700, ()=> {
             // Ensure any previous tooltips are removed
             if (widget.notificationLabel) removeUserNotification(widget.notificationLabel);
-
             // Create message
-            if(widget.hovering && !widget.notificationLabel && Me.session.activeSession.Options.ShowHelpers) 
-                widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0)
+            if(widget.hovering && !widget.notificationLabel && Me.session.activeSession.Options.ShowHelpers)
+                widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0);
+                widget.notificationLabel.attachedTo = widget;
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, 7000, ()=> { removeUserNotification(widget.notificationLabel); });
+            GLib.timeout_add(null, 7000, ()=> { removeUserNotification(widget.notificationLabel);});
         });
     });
     widget.connect('leave_event', ()=>{
@@ -119,7 +125,7 @@ function createTooltip(widget, tooltip) {
         if (!widget.notificationLabel) return;
         removeUserNotification(widget.notificationLabel, 1.4);
     });
-    
+
 }
 
 

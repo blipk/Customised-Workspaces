@@ -33,7 +33,7 @@
     </key>
     <key name="show-notifications" type="b">
       <default>true</default>
-      <summary>Show notifications</summary>
+      <summary>Show passive notifications</summary>
       <description>Show or hide notifications for passive actions such as switching between workspaces</description>
     </key>
     <key name="show-helpers" type="b">
