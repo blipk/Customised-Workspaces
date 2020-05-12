@@ -119,7 +119,7 @@ var WorkspaceManager = class WorkspaceManager {
         if (foundActive === false) this.loadDefaultWorksets();
 
         this._workspaceUpdate();
-        Main.overview.show();
+        //Main.overview.show();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets(){

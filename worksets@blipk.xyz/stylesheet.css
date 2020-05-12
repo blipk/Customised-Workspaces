@@ -89,7 +89,7 @@ entry:indeterminate {
     font-variant: unicase slashed-zero no-common-ligatures tabular-nums;
     font-feature-settings: "c2sc", "smcp";
     color: ghostwhite;
-    text-shadow: 9px 12px 5px black;
+    text-shadow: 9px 12px 2px black;
      /*
         -20px 20px 0 red; BOTTOM LEFT
         -20px -20px 0 red; TOP LEFT
@@ -105,4 +105,9 @@ entry:indeterminate {
 .workspace-underlay .workset-label-underlay {
     font-size: 12em;
     color: black;
+}
+
+
+.open-backups-icon {
+    padding-left: 1em;
 }

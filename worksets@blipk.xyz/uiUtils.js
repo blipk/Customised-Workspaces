@@ -36,6 +36,46 @@ const Me = extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
 
+//For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
+function createIconButton (parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
+    if (Array.isArray(iconNames))
+        var [iconNameURI, alternateIconName] = iconNames;
+    else iconNameURI = iconNames;
+    let defaults = {icon_name: iconNameURI,
+                              style_class: 'system-status-icon',
+                              x_expand: false,
+                              x_align: Clutter.ActorAlign.CENTER,
+                              y_expand: true,
+                              y_align: Clutter.ActorAlign.CENTER};
+    options = {...defaults, ...options };
+
+    let icon = new St.Icon(options);
+    let iconButton = new St.Button({
+        child: icon, style_class: 'ci-action-btn', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
+    });
+    iconButton.icon = icon;
+    parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
+    parentItem.iconButtons = parentItem.iconButtons || new Array();
+    parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
+
+    parentItem.iconButtons.push(iconButton);
+    if (tooltip) createTooltip(iconButton, tooltip);
+    
+    iconButton.focus = false;
+    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; });
+    let enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; });
+    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; });
+    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); });
+    parentItem.iconsButtonsPressIds.push( [pressEvent, releaseEvent, leaveEvent ] );
+    parentItem.destroyIconButtons = function() {
+        parentItem.iconButtons.forEach(function(iconButton) {
+            //iconButton.destroy();
+        }, this);
+        parentItem.iconButtons = [];
+        parentItem.iconsButtonsPressIds = [];
+    }
+    return iconButton;
+}
 
 //Display a short overlay message on the screen for user feedback etc..
 let messages = [];
@@ -79,47 +119,6 @@ function removeAllUserNotifications(fadeTime) {
     }, this);
 }
 
-//For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
-function createIconButton (parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
-    if (Array.isArray(iconNames))
-        var [iconNameURI, alternateIconName] = iconNames;
-    else iconNameURI = iconNames;
-    let defaults = {icon_name: iconNameURI,
-                              style_class: 'system-status-icon',
-                              x_expand: false,
-                              x_align: Clutter.ActorAlign.CENTER,
-                              y_expand: true,
-                              y_align: Clutter.ActorAlign.CENTER};
-    options = {...defaults, ...options };
-
-    let icon = new St.Icon(options);
-    let iconButton = new St.Button({
-        child: icon, style_class: 'ci-action-btn', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
-    });
-    iconButton.icon = icon;
-    parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
-    parentItem.iconButtons = parentItem.iconButtons || new Array();
-    parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
-
-    parentItem.iconButtons.push(iconButton);
-    if (tooltip) createTooltip(iconButton, tooltip);
-    
-    iconButton.focus = false;
-    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; });
-    let enterEvent = iconButton.connect('enter-event', ()=>{ iconButton.icon.icon_name = alternateIconName; });
-    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; });
-    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); });
-    parentItem.iconsButtonsPressIds.push( [pressEvent, releaseEvent, leaveEvent ] );
-    parentItem.destroyIconButtons = function() {
-        parentItem.iconButtons.forEach(function(iconButton) {
-            //iconButton.destroy();
-        }, this);
-        parentItem.iconButtons = [];
-        parentItem.iconsButtonsPressIds = [];
-    }
-    return iconButton;
-}
-
 function createTooltip(widget, tooltip) {
     if (!tooltip) return;
     widget.connect('enter_event', ()=>{
@@ -128,17 +127,18 @@ function createTooltip(widget, tooltip) {
             // Ensure there is only one notification per widget
             if (widget.notificationLabel) return;
             // Create message
-            if(widget.hovering && !widget.notificationLabel && Me.session.activeSession.Options.ShowHelpers)
+            if(widget.hovering && !widget.notificationLabel && (Me.session.activeSession.Options.ShowHelpers || tooltip.force)) {
                 widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0);
                 widget.notificationLabel.attachedTo = widget;
+            }
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, 4000, ()=> { removeUserNotification(widget.notificationLabel, 1);});
+            GLib.timeout_add(null, tooltip.disappearTime || 4000, ()=> { removeUserNotification(widget.notificationLabel, 1);});
         });
     });
     widget.connect('leave_event', ()=>{
         widget.hovering = false;
         if (widget.notificationLabel)
-            removeUserNotification(widget.notificationLabel, 1.4);
+            removeUserNotification(widget.notificationLabel, tooltip.leaveFadeTime || 1.4);
     });
 
     widget.connect('button-press-event', ()=>{
@@ -249,7 +249,9 @@ var ObjectInterfaceDialog = GObject.registerClass({
         super._init({ styleClass: 'object-dialog', destroyOnClose: false });
         //Label for our dialog/text field with text about the dialog or a prompt for user text input
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
-        this.contentLayout.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
+        let headerLabelArea = new St.BoxLayout();
+        headerLabelArea.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START })
+        
         //Text field for user input
         this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: defaultText });
         shellEntry.addContextMenu(this.stEntryUText);
@@ -320,19 +322,21 @@ var ObjectInterfaceDialog = GObject.registerClass({
                     jsobjectsSets.push(tmpObjectsSet);
                 }
 
-                let btn = createIconButton(this.contentLayout, 'document-open-symbolic', () => {
+                let btn = createIconButton(headerLabelArea, 'document-open-symbolic', () => {
                     this.close();
                     util.spawn(['xdg-open', jsobjectsSearchDirectories[0]]);
                     btn.destroy();
-                }, {icon_size: 20}, {msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")"});
+                }, {icon_size: 20, style_class: 'open-backups-icon'}, {leaveFadeTime: 0.7, disappearTime: 4400, delay: 400, force: true, msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")"});
             }, this);
+
+            this.contentLayout.add(headerLabelArea, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
 
             if(!jsobjectsSets[0]) {
                 stLabelUText.set_text("No saved objects found on disk.");
                 jsobjectsSets = undefined;
             }
         }
-
+        
         if (jsobjectsSets) {
             //Build an area for each object set
             jsobjectsSets.forEach(function(objectSet, i){
@@ -487,8 +491,10 @@ var ObjectEditorDialog = GObject.registerClass({
         defaults = { style_class: 'object-dialog-label', text: _((dialogInfoTextStyle.text || dialogInfoTextStyle).toString()), x_align: St.Align.START, y_align: St.Align.START } ;
         dialogInfoTextStyle = (typeof dialogInfoTextStyle == 'string') ? defaults : {...defaults, ...dialogInfoTextStyle };
         let stLabelUText = new St.Label(dialogInfoTextStyle);
+        
         dialogInfoTextStyle.x_fill = true;
         if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText, dialogInfoTextStyle);
+        
 
         //*Error box that will appear to prompt for user validation of input //TO DO
         this._errorBox = new St.BoxLayout();
