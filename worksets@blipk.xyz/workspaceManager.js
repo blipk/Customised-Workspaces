@@ -63,7 +63,7 @@ var WorkspaceManager = class WorkspaceManager {
                 currents.push(workspaceMapValues.currentWorkset)
             }
         }, this);
-
+        
         // Minimum workspaces should be one more than the workspace index that the last active workset is on
         let min_workspaces = 1;
         if (!destroyClean) {
@@ -79,7 +79,7 @@ var WorkspaceManager = class WorkspaceManager {
         for(let i = Me.gWorkspaceManager.n_workspaces-1; i >= 0; i--) {
             Me.gWorkspaceManager.get_workspace_by_index(i)._keepAliveId = false;
         }
-
+        
         // If we have less than the minimum workspaces create new ones and make them persistent
         if(Me.gWorkspaceManager.n_workspaces < min_workspaces-1) {
             for(let i = 0; i < min_workspaces-1; i++) {
@@ -114,16 +114,18 @@ var WorkspaceManager = class WorkspaceManager {
                 }
             }, this);
         }, this);
-
+        
         //If there's not any active on the workspace, load any that are set to default here, or just display the background/favourites from the default
         if (foundActive === false) this.loadDefaultWorksets();
+
         this._workspaceUpdate();
+        Main.overview.show();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets(){
         try {
         Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
-
+        
         Me.session.Worksets.forEach(function (workset, worksetIndex) {
             Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {

@@ -29,9 +29,10 @@ const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
 const { modalDialog, shellEntry, tweener, popupMenu } = imports.ui;
+const { extensionUtils, util } = imports.misc;
 
 // Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Me = extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
 
@@ -42,6 +43,7 @@ function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
     dev.log('Notification', input);
     removeAllUserNotifications();
     if (overviewMessage) {
+        var label = null;
         Main.overview.setMessage(_(input), { forFeedback: true });
     } else {
         var label = new St.Label({ style_class: 'feedback-label', text: _(input) });
@@ -60,14 +62,14 @@ function removeUserNotification(label, fadeTime) {
     if (!fadeTime) {
         Main.uiGroup.remove_actor(label);
         messages = messages.filter(item => item != label);
-        if (label.attachedTo) delete label.attachedTo.notificationLabel;
-        delete label;
+        if (label.attachedTo) label.attachedTo.notificationLabel = null;
+        label = null;
     } else {
         tweener.addTween(label, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
                 Main.uiGroup.remove_actor(label);
                 messages = messages.filter(item => item != label);
-                if (label.attachedTo) delete label.attachedTo.notificationLabel;
-                delete label;
+                if (label.attachedTo) label.attachedTo.notificationLabel = null;
+                label = null;
         } });
     }
 }
@@ -78,12 +80,15 @@ function removeAllUserNotifications(fadeTime) {
 }
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
-function createIconButton (parentItem, iconNameURI, callback, options, tooltip) { //St.Side.RIGHT
+function createIconButton (parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
+    if (Array.isArray(iconNames))
+        var [iconNameURI, alternateIconName] = iconNames;
+    else iconNameURI = iconNames;
     let defaults = {icon_name: iconNameURI,
                               style_class: 'system-status-icon',
                               x_expand: false,
                               x_align: Clutter.ActorAlign.CENTER,
-                              y_expand: false,
+                              y_expand: true,
                               y_align: Clutter.ActorAlign.CENTER};
     options = {...defaults, ...options };
 
@@ -91,14 +96,27 @@ function createIconButton (parentItem, iconNameURI, callback, options, tooltip) 
     let iconButton = new St.Button({
         child: icon, style_class: 'ci-action-btn', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
     });
+    iconButton.icon = icon;
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
 
     parentItem.iconButtons.push(iconButton);
     if (tooltip) createTooltip(iconButton, tooltip);
-    parentItem.iconsButtonsPressIds.push( iconButton.connect('button-press-event', callback) );
-
+    
+    iconButton.focus = false;
+    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; });
+    let enterEvent = iconButton.connect('enter-event', ()=>{ iconButton.icon.icon_name = alternateIconName; });
+    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; });
+    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); });
+    parentItem.iconsButtonsPressIds.push( [pressEvent, releaseEvent, leaveEvent ] );
+    parentItem.destroyIconButtons = function() {
+        parentItem.iconButtons.forEach(function(iconButton) {
+            //iconButton.destroy();
+        }, this);
+        parentItem.iconButtons = [];
+        parentItem.iconsButtonsPressIds = [];
+    }
     return iconButton;
 }
 
@@ -136,31 +154,36 @@ function createTooltip(widget, tooltip) {
         });
 }
 
-
+let knownImages = {}; // Save on resources generating these in menu refreshes
 function setImage(imgFilePath, parent) {
     imgFilePath = imgFilePath.replace("file://", "");
-    let img = new Gtk.Image({file: imgFilePath});
-    let pixbuf = img.get_pixbuf()
+    let image;
+    if (knownImages[imgFilePath]) {
+        image = knownImages[imgFilePath];
+    } else {
+        let img = new Gtk.Image({file: imgFilePath});
+        let pixbuf = img.get_pixbuf()
 
-    const {width, height} = pixbuf;
-    if (height == 0) return;
+        const {width, height} = pixbuf;
+        if (height == 0) return;
 
-    const image = new Clutter.Image();
-    const success = image.set_data(
-        pixbuf.get_pixels(),
-        pixbuf.get_has_alpha()
-          ? Cogl.PixelFormat.RGBA_8888
-          : Cogl.PixelFormat.RGB_888,
-        width,
-        height,
-        pixbuf.get_rowstride()
-      );
-    if (!success) throw Error("error creating Clutter.Image()");
-
+        image = new Clutter.Image();
+        let success = image.set_data(
+            pixbuf.get_pixels(),
+            pixbuf.get_has_alpha()
+            ? Cogl.PixelFormat.RGBA_8888
+            : Cogl.PixelFormat.RGB_888,
+            width,
+            height,
+            pixbuf.get_rowstride()
+        );
+        if (!success) throw Error("error creating Clutter.Image()");
+    }
     parent.imgSrc = imgFilePath;
     parent.content = image;
     parent.height = 135;
 
+    knownImages[imgFilePath] = image;
     return image;
 }
 
@@ -296,6 +319,12 @@ var ObjectInterfaceDialog = GObject.registerClass({
                 if (tmpObjectsSet[0]) {
                     jsobjectsSets.push(tmpObjectsSet);
                 }
+
+                let btn = createIconButton(this.contentLayout, 'document-open-symbolic', () => {
+                    this.close();
+                    util.spawn(['xdg-open', jsobjectsSearchDirectories[0]]);
+                    btn.destroy();
+                }, {icon_size: 20}, {msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")"});
             }, this);
 
             if(!jsobjectsSets[0]) {
@@ -314,6 +343,8 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
+                
+
                 //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectSetBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
 
                 let setDisplayName = 'Object Set '+i;

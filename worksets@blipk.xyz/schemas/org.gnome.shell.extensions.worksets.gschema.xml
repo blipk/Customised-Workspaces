@@ -39,7 +39,7 @@
     <key name="show-helpers" type="b">
       <default>true</default>
       <summary>Show help notifications</summary>
-      <description>Show these notifications when hovering over buttons and options.</description>
+      <description>Show or hide these notifications when hovering over buttons and options.</description>
     </key>
      <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>

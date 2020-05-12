@@ -4,7 +4,7 @@
     "url": "https://github.com/blipk/Customised-Workspaces",
     "description": "Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.",
     "original-author": "admin@kronosoul.xyz",
-    "version": 12,
+    "version": 13,
 
     "extension-id": "worksets",
     "application-id": "org.kronosoul.worksets",

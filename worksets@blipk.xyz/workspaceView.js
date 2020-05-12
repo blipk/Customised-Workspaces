@@ -42,6 +42,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.thumbnailBoxes = [];
             this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
 
+            this.menus = [];
+
             if (!this.injections['addThumbnails']) this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
@@ -58,7 +60,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     destroy() {
         try {
             this.cleanupInjections();
-            delete this;
         } catch(e) { dev.log(e) }
     }
     refreshThumbNailsBoxes() {
@@ -98,7 +99,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
-            newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[0].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
             // Find backgrounds for active custom workspaces
             thumbnailBox.workset = null;
@@ -116,12 +117,64 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, {icon_size: 170}, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
             }
 
-            // Image for last empty workspace thumbnail
-            if (Me.workspaceManager.NumGlobalWorkspaces == i+1 && !thumbnailBox.workset) {
+            // Image for empty workspace thumbnail
+            if (!thumbnailBox.workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
                 if (!Me.session.activeSession.Options.ShowPanelIndicator)
                     uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START}, {msg: "Show the panel indicator menu"})
 
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => { Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true); }, {icon_size: 170}, {msg: "Create new custom workspace here"})
+                let btn = uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'go-jump-symbolic', () => {
+                    try {
+                        btn.menu = new popupMenu.PopupMenu(btn, St.Align.START, St.Side.TOP);
+                        this.menus.push(btn.menu)
+                        btn.menu.bye = function() {
+                            Main.uiGroup.remove_actor(btn.menu.actor);
+                            btn.menu.actor.hide();
+                            btn.menu.destroy();
+                            return true;
+                        }
+                        btn.menu.actor.add_style_class_name('panel-menu');
+
+                        let menuItems = [];
+                        let defaultMenuItem;
+                        Me.session.Worksets.forEach(function(workset, ii) {
+                            let activeIndex = Me.session.getWorksetActiveIndex(workset);
+                            if (activeIndex > -1) return;
+
+                            let menuItem = new popupMenu.PopupMenuItem('');
+                            menuItems.push(menuItem);
+                            if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = ii;
+                            menuItem.workset = workset;
+                            menuItem.label.set_text(menuItem.workset.WorksetName);
+
+                            menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
+                                Me.session.displayWorkset(workset, i);
+                                // Something is switching to the last workspace after this menu is destroyed
+                                // This is my hack to make sure we stay on the right one
+                                GLib.timeout_add(null, 230, ()=> { Me.workspaceManager.switchToWorkspace(i); });
+                                btn.menu.bye();
+                            } );
+
+                            (Me.session.activeSession.Default == menuItem.workset.WorksetName)
+                                ? menuItem.setOrnament(popupMenu.Ornament.DOT)
+                                : menuItem.setOrnament(popupMenu.Ornament.NONE);
+                            btn.menu.addMenuItem(menuItem, 0);
+                        }, this);
+
+                        if (!utils.isEmpty(defaultMenuItem)) btn.menu.moveMenuItem(defaultMenuItem, 0);
+                        Main.uiGroup.add_actor(btn.menu.actor);
+
+                        GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
+                        btn.menu.open();
+                    } catch(e) { dev.log(e) }
+                }, {icon_size: 170}, {msg: "Choose a custom workspace to load here"});
+                btn.connect('destroy', () => {
+                    if (!utils.isEmpty(btn.menu)) btn.menu.bye();
+                } );
+                
+
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
+                    Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
+                }, {icon_size: 170}, {msg: "Create new custom workspace here"});
                 newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
 

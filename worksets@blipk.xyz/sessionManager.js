@@ -263,14 +263,17 @@ var SessionManager = class SessionManager {
         try {
         let activeIndex = this.getWorksetActiveIndex(workset);
 
-        if (activeIndex > -1 && !displayOnly) { //switch to it if already active
+        if (activeIndex > -1 && !displayOnly && !loadInNewWorkspace) { // Switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != activeIndex) Me.workspaceManager.switchToWorkspace(activeIndex);
             if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 1);
         } else if (!displayOnly) {
-            if (loadInNewWorkspace) { //create and open new workspace before loading workset
+            if (loadInNewWorkspace) {
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
                 Me.workspaceManager._workspaceUpdate();
-                Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
+                if (typeof loadInNewWorkspace == 'number') 
+                    Me.workspaceManager.switchToWorkspace(loadInNewWorkspace);
+                else 
+                    Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
             if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Loaded environment " + workset.WorksetName, false, 1.4);

@@ -21,6 +21,12 @@
     icon-size:16px;
 }
 
+.popup-menu-icon-ornament {
+    padding-left: 0.3em;
+    padding-right: 0;
+}
+
+
 .ci-history-menu-section {
     max-height:740px;
 }
@@ -77,15 +83,19 @@ entry:indeterminate {
     margin-left: 0.5em;
 }
 .workspace-overlay .workset-label {
-    font: small-caps bold 12em/12em Arial;
+    font: small-caps bold 12em/12em;
+    font-size: 12em;
+    font-weight: bold;
+    font-variant: unicase slashed-zero no-common-ligatures tabular-nums;
+    font-feature-settings: "c2sc", "smcp";
     color: ghostwhite;
-    text-shadow: 20px 20px 5px black;
+    text-shadow: 9px 12px 5px black;
      /*
         -20px 20px 0 red; BOTTOM LEFT
         -20px -20px 0 red; TOP LEFT
         20px 20px 0 red; BOTTOM RIGHT
-        20px -20px 0 red; TOP RIGHT
-        Stacking these seemed to just mix up the offsets somehow and just use the last colour specified
+        20px -20px 0 blue; TOP RIGHT
+        Stacking these seemed to just use the first offsets and the last colour and stacking the blur, on a single shadow
      */
 }
 

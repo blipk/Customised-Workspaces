@@ -56,6 +56,18 @@ var WorksetsIndicator = GObject.registerClass({
         this._buildMenu();
         this._refreshMenu()
 
+        this.popUpMenus = [];
+        this.menu.connect('menu-closed', () => {
+            try {
+            Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
+                //Main.uiGroup.remove_actor(popupMenu.actor);
+                popupMenu.menuItem.isShowing = false;
+                popupMenu.actor.destroy();
+            }, this);
+            Me.worksetsIndicator.popUpMenus = [];
+            } catch(e) { dev.log(e) }
+        });
+
         Main.panel.addToStatusArea('WorksetsIndicator', this, 1);
         } catch(e) { dev.log(e) }
     }
@@ -88,9 +100,16 @@ var WorksetsIndicator = GObject.registerClass({
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
 
         // Menu sections for workset items
+        this.viewSection = new popupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this.viewSection);
+        this.ViewSectionSeperator = new popupMenu.PopupSeparatorMenuItem();
+        this.menu.addMenuItem(this.ViewSectionSeperator);
+        this.ViewSectionSeperator.hide();
+
         // Default
         this.defaultSection = new popupMenu.PopupMenuSection();
         this.menu.addMenuItem(this.defaultSection);
+        
 
         // Favorites
         this.favoritesSection = new popupMenu.PopupMenuSection();
@@ -123,14 +142,15 @@ var WorksetsIndicator = GObject.registerClass({
         this.menu.addMenuItem(sessionMenuItem);
 
         this._worksetMenuItemSetEntryLabel(sessionMenuItem);
-        sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu();});
+        sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); return Clutter.EVENT_STOP;});
 
         uiUtils.createIconButton(sessionMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._refreshMenu();}, {}, {msg: "Load a custom workspace from backups"});
         uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
-        
+
 
         // Add separator
         this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+
         } catch(e) { dev.log(e) }
     }
     //This is run periodically via _refreshMenu()
@@ -142,14 +162,14 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.workset = workSetsArrayBuffer;
         menuItem.nameText = menuItem.workset.WorksetName;
         this._worksetMenuItemSetEntryLabel(menuItem);
-
-        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
-        //menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefreh(menuItem);} );
+        
+        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); } );
+        menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); } );
 
         // Create iconbuttons on MenuItem
         let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
         //let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
-        let icondefault_nameuri = (Me.session.activeSession.Default == menuItem.workset.WorksetName) ? 'starred-symbolic' : 'non-starred-symbolic';
+        let icondefault_nameuri = (Me.session.activeSession.Default == menuItem.workset.WorksetName) ? 'starred-symbolic' : ['non-starred-symbolic', 'starred-symbolic'];
         let iconOpenNew_nameuri = (activeIndex > -1) ? 'window-close-symbolic' : 'list-add-symbolic';
         let iconOpenHere_nameuri = (activeIndex > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
         let openCloseCommand = (activeIndex > -1)
@@ -167,52 +187,101 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openCloseCommand, {}, {msg: openCloseMsg});
-        uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: viewOpenMessage});
+        //uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: viewOpenMessage});
 
         //Decorate with indicator if active
         menuItem.favAppsMenuItems = [];
-        if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {
-            menuItem.setOrnament(popupMenu.Ornament.DOT)
-            menuItem.currentlyActive = true;
-        } else {
-            menuItem.setOrnament(popupMenu.Ornament.NONE)
-            menuItem.currentlyActive = false;
-        }
-
-        //Add to correct list (favorite/not) and 
-        if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
-            this.defaultSection.addMenuItem(menuItem, 0);
-        else (activeIndex > -1) 
-                ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0); 
         
-        //_worksetSubMenuRefreh(menuItem) // Running this on SubMenu button_press_event instead as generating the bg image was causing delays
+            //menuItem.setOrnament(popupMenu.Ornament.CHECK);
+        
+        //if (activeIndex > -1) {
+            menuItem._ornamentLabel.text = '';
+            menuItem._ornamentIcon = new St.BoxLayout({ style_class: 'popup-menu-icon-ornament' });
+            menuItem.replace_child(menuItem._ornamentLabel, menuItem._ornamentIcon);
+            let icon = uiUtils.createIconButton(menuItem._ornamentIcon, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {icon_size: 14}, {msg: viewOpenMessage});
+            icon.translation_x = 3.5;
+        // 
+        //Default and currently active always up the top
+        if (Me.session.activeSession.Default == menuItem.workset.WorksetName) {
+            this.defaultSection.addMenuItem(menuItem, 0);
+            this.defaultMenuItem = menuItem;
+            this.defaultSection.moveMenuItem(this.defaultMenuItem , 0);
+            if (this.activeMenuItem && (this.activeMenuItem instanceof popupMenu.PopupBaseMenuItem)) this.defaultSection.moveMenuItem(this.activeMenuItem , 1);
+        } else if (Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName) {
+            this.defaultSection.addMenuItem(menuItem, 0);  
+            this.activeMenuItem = menuItem;
+            if (this.defaultMenuItem && (this.defaultMenuitem instanceof popupMenu.PopupBaseMenuItem)) this.defaultSection.moveMenuItem(this.defaultMenuItem , 0);
+            this.defaultSection.moveMenuItem(this.activeMenuItem , 1);
+        }else (activeIndex > -1)
+                ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
+
+        //_worksetSubMenuRefresh(menuItem) // Running this on SubMenu button_press_event instead as generating the bg image was causing delays
         } catch(e) { dev.log(e) }
     }
-    _worksetSubMenuRefreh(menuItem) {
+    _worksetSubMenuRefresh(menuItem) {
         try {
-        // Change name and icon to current default
-        //menuItem.icon.icon_name = menuItem.workset.FavApps.icon ? menuItem.workset.FavApps.icon : 'web-browser-symbolic';
+        let firstMenuItem = this.historySection.firstMenuItem;
+        
+        if (!menuItem.isShowing) menuItem.isShowing = false;
+        let isShowing = menuItem.isShowing;
 
-        // Remove all and re-add
-        menuItem.favAppsMenuItems.forEach(function (mItem) { mItem.destroy(); });
-        if (menuItem.infoMenuButton) menuItem.infoMenuButton.destroy();
-        menuItem.favAppsMenuItems = [];
+        // Destroy any previous menus
+        Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
+            if (popupMenu.menuItem.worksetPopupMenu) popupMenu.menuItem.worksetPopupMenu.menu.bye();
+            popupMenu.menuItem.isShowing = false;
+            popupMenu.menuItem._triangle.ease({
+                rotation_angle_z: 0,
+                duration: 250,
+                mode: Clutter.AnimationMode.EASE_OUT_EXPO,
+            });
+        }, this);
+        Me.worksetsIndicator.popUpMenus = [];
+
+        // Area for object info
+        //menuItem.worksetPopupMenu = new popupMenu.PopupMenu(menuItem.actor, St.Align.START, St.Side.BOTTOM);
+        menuItem.worksetPopupMenu = new popupMenu.PopupSubMenuMenuItem("Details for '"+ menuItem.workset.WorksetName +"'", true);
+        menuItem.worksetPopupMenu.actor.add_style_class_name('panel-menu');
+        menuItem.worksetPopupMenu.menuItem = menuItem;
+        menuItem.worksetPopupMenu.menu.bye = function() {
+            Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
+                //Main.uiGroup.remove_actor(popupMenu.actor);
+                popupMenu.menuItem.isShowing = false;
+                popupMenu.menu.close(boxpointer.PopupAnimation.FULL);
+                GLib.timeout_add(null, 100, ()=> { popupMenu.destroy(); } ); // Wait for the close animation
+                Me.worksetsIndicator.ViewSectionSeperator.hide();
+            }, this);
+            Me.worksetsIndicator.popUpMenus = [];
+            return true;
+        }
+        menuItem.worksetPopupMenu.connect('button_press_event', ()=>{
+            menuItem.worksetPopupMenu.menu.bye();
+        });
+        this.optionsMenuItem.connect('button_press_event', ()=>{
+            try {
+            menuItem.isShowing = false;
+            menuItem.worksetPopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
+            //this.viewSection.actor.hide();
+            return Clutter.EVENT_STOP;
+        } catch(e) { dev.log(e) }
+        });
+
+        let viewArea = menuItem.worksetPopupMenu.menu;
+        this.popUpMenus.push(menuItem.worksetPopupMenu);
+        viewArea.lastOpen = menuItem;
 
         // Background info
-        if (menuItem.bgMenuButton == undefined || menuItem.bgMenuButton.imgSrc != menuItem.workset.BackgroundImage) { // Only update if the image has changed
-            if (menuItem.bgMenuButton) menuItem.bgMenuButton.destroy();
-            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
-            menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
-            menuItem.bgMenuButton.connect('activate', () => {
-                //this.menu.close();
-                //menuItem.setSubmenuShown(false);
-                Me.session.setWorksetBackgroundImage(menuItem.workset);
-                this.menu.itemActivated(boxpointer.PopupAnimation.NONE);
-            });
-            uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
-            menuItem.menu.addMenuItem(menuItem.bgMenuButton);
-        }
+        //if (menuItem.bgMenuButton == undefined || menuItem.bgMenuButton.imgSrc != menuItem.workset.BackgroundImage) { // Only update if the image has changed
+        menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
+        menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
+        uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
+        viewArea.addMenuItem(menuItem.bgMenuButton);
+
+        // Event propogation was causing the background menu to open as soon as the view area opened
+        menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
+            Me.session.setWorksetBackgroundImage(menuItem.workset);
+            this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
+        });
 
         // Workset info
         let infoText = "Has these favourites";
@@ -225,7 +294,7 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.infoMenuButton.connect('activate', () => { });
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
         uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {{Me.session.editWorkset(menuItem.workset); this._refreshMenu();}}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
-        menuItem.menu.addMenuItem(menuItem.infoMenuButton);
+        viewArea.addMenuItem(menuItem.infoMenuButton);
 
         // Favorite Apps entries
         menuItem.workset.FavApps.forEach(function(favApp, i){
@@ -234,7 +303,7 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
             menuItem.favAppsMenuItems[i].label.set_x_expand(true);
             menuItem.favAppsMenuItems[i].connect('activate', () => {
-                this._worksetSubMenuRefreh(menuItem)
+                this._worksetSubMenuRefresh(menuItem)
                 menuItem.setSubmenuShown(false);
                 menuItem.menu.itemActivated(boxpointer.PopupAnimation.NONE);
             });
@@ -244,8 +313,30 @@ var WorksetsIndicator = GObject.registerClass({
                 Me.session.removeFavorite(menuItem.workset, name);
                 } catch(e) { dev.log(e) }
             }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
-            menuItem.menu.addMenuItem(menuItem.favAppsMenuItems[i]);
+            viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
         }, this);
+
+        //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);
+        this.viewSection.addMenuItem(menuItem.worksetPopupMenu);
+        if (isShowing) {
+            menuItem.isShowing = false;
+            viewArea.bye();
+            menuItem._triangle.ease({
+                rotation_angle_z: 0,
+                duration: 250,
+                mode: Clutter.AnimationMode.EASE_OUT_EXPO,
+            });
+        } else {
+            menuItem._triangle.ease({
+                rotation_angle_z: -90,
+                duration: 250,
+                mode: Clutter.AnimationMode.EASE_OUT_EXPO,
+            });
+            menuItem.isShowing = true;
+            viewArea.open(boxpointer.PopupAnimation.FULL);
+            menuItem.worksetPopupMenu.show();
+            this.ViewSectionSeperator.show();
+        }
         } catch(e) { dev.log(e) }
     }
     _refreshMenu() {
@@ -256,14 +347,13 @@ var WorksetsIndicator = GObject.registerClass({
         this.optionsMenuItems.forEach(function (menuItem, i) {
             this.optionsMenuItems[i]._switch.state = Me.session.activeSession.Options[this.optionsMenuItems[i].optionName];
         }, this);
-
+        
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
             Me.session.Worksets.forEach(function (worksetBuffer) {
                 this._addWorksetMenuItemEntry(worksetBuffer);
             }, this);
-
             Me.session.saveSession();
         }
         } catch(e) { dev.log(e) }
@@ -279,7 +369,7 @@ var WorksetsIndicator = GObject.registerClass({
         return this.historySection._getMenuItems().concat(this.favoritesSection._getMenuItems()).concat(this.defaultSection._getMenuItems());
     }
     _worksetMenuItemsRemoveAll() {
-        this._worksetMenuItemsGetAll().forEach(function (mItem) { mItem.destroy(); });
+        this._worksetMenuItemsGetAll().forEach(function (mItem) { if (mItem.destroyIconButtons) mItem.destroyIconButtons(); mItem.destroy(); });
     }
     _worksetMenuItemMoveToTop(menuItem) {
         try {
