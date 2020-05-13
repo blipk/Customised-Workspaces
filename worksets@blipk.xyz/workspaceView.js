@@ -124,12 +124,17 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
                 let btn = uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'go-jump-symbolic', () => {
                     try {
+                        if (btn.menu) {
+                            btn.menu.bye();
+                            return;
+                        }
                         btn.menu = new popupMenu.PopupMenu(btn, St.Align.START, St.Side.TOP);
                         this.menus.push(btn.menu)
                         btn.menu.bye = function() {
                             Main.uiGroup.remove_actor(btn.menu.actor);
                             btn.menu.actor.hide();
                             btn.menu.destroy();
+                            btn.menu = null;
                             return true;
                         }
                         btn.menu.actor.add_style_class_name('panel-menu');
@@ -142,33 +147,46 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
                             let menuItem = new popupMenu.PopupMenuItem('');
                             menuItems.push(menuItem);
-                            if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = ii;
+                            if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = menuItem;
                             menuItem.workset = workset;
                             menuItem.label.set_text(menuItem.workset.WorksetName);
 
                             menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
-                                Me.session.displayWorkset(workset, i);
+                                Me.workspaceManager.loadDefaults = false;
+                                Me.workspaceManager.noUpdate = true;
+                                Me.workspaceManager.switchToWorkspace(i);
+                                Me.session.displayWorkset(workset);
                                 // Something is switching to the last workspace after this menu is destroyed
                                 // This is my hack to make sure we stay on the right one
-                                GLib.timeout_add(null, 230, ()=> { Me.workspaceManager.switchToWorkspace(i); });
+                                GLib.timeout_add(null, 230, ()=> { 
+                                    Me.workspaceManager.switchToWorkspace(i);
+                                    Me.workspaceManager.loadDefaults = true;
+                                    Me.workspaceManager.noUpdate = false;
+                                    Me.workspaceManager._workspaceUpdate();
+                                });
+                                
                                 btn.menu.bye();
                             } );
 
-                            (Me.session.activeSession.Default == menuItem.workset.WorksetName)
-                                ? menuItem.setOrnament(popupMenu.Ornament.DOT)
-                                : menuItem.setOrnament(popupMenu.Ornament.NONE);
+                            if (Me.session.activeSession.Default == menuItem.workset.WorksetName) 
+                                btn.menu.defaultItem = menuItem.workset.WorksetName
+
+                            menuItem.setOrnament(popupMenu.Ornament.NONE);
                             btn.menu.addMenuItem(menuItem, 0);
                         }, this);
 
-                        if (!utils.isEmpty(defaultMenuItem)) btn.menu.moveMenuItem(defaultMenuItem, 0);
+                        if (!utils.isEmpty(defaultMenuItem)) {
+                            btn.menu.moveMenuItem(defaultMenuItem, 0);
+                            defaultMenuItem.setOrnament(popupMenu.Ornament.DOT);
+                        }
+                        
                         Main.uiGroup.add_actor(btn.menu.actor);
-
                         GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
                         btn.menu.open();
                     } catch(e) { dev.log(e) }
                 }, {icon_size: 170}, {msg: "Choose a custom workspace to load here"});
                 btn.connect('destroy', () => {
-                    if (!utils.isEmpty(btn.menu)) btn.menu.bye();
+                    if (btn.menu) btn.menu.bye();
                 } );
                 
 

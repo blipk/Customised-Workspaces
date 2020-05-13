@@ -39,6 +39,9 @@ var WorkspaceManager = class WorkspaceManager {
         try {
         Me.workspaceManager = this;
         this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
+        
+        this.loadDefaults = true;
+        this.noUpdate = false;
 
         this._workspaceUpdate();
         this.loadDefaultWorksets();
@@ -53,6 +56,7 @@ var WorkspaceManager = class WorkspaceManager {
         } catch(e) { dev.log(e) }
     }
     _workspaceUpdate(destroyClean=false) {
+        if (this.noUpdate) return;
         try {
         // Remove any worksets that are set to current on more than one workspace
         let currents = [];
@@ -124,6 +128,8 @@ var WorkspaceManager = class WorkspaceManager {
     }
     loadDefaultWorksets(){
         try {
+        if (!this.loadDefaults) return;
+
         Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
         
         Me.session.Worksets.forEach(function (workset, worksetIndex) {

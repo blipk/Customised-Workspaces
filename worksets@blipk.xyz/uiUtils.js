@@ -62,10 +62,10 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
     if (tooltip) createTooltip(iconButton, tooltip);
     
     iconButton.focus = false;
-    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; });
-    let enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; });
-    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; });
-    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); });
+    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP;});
+    let enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP;});
+    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; return Clutter.EVENT_STOP;});
+    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); return Clutter.EVENT_STOP;});
     parentItem.iconsButtonsPressIds.push( [pressEvent, releaseEvent, leaveEvent ] );
     parentItem.destroyIconButtons = function() {
         parentItem.iconButtons.forEach(function(iconButton) {
@@ -134,23 +134,28 @@ function createTooltip(widget, tooltip) {
             // Make sure they're eventually removed for any missed cases
             GLib.timeout_add(null, tooltip.disappearTime || 4000, ()=> { removeUserNotification(widget.notificationLabel, 1);});
         });
+
+        //return Clutter.EVENT_STOP;
     });
     widget.connect('leave_event', ()=>{
         widget.hovering = false;
         if (widget.notificationLabel)
             removeUserNotification(widget.notificationLabel, tooltip.leaveFadeTime || 1.4);
+        //return Clutter.EVENT_STOP;
     });
 
     widget.connect('button-press-event', ()=>{
         widget.hovering = false;
         if (widget.notificationLabel)
             removeUserNotification(widget.notificationLabel, 0.7);
+        //return Clutter.EVENT_STOP;
     });
     if (widget instanceof popupMenu.PopupSwitchMenuItem)
         widget.connect('toggled', ()=>{
             widget.hovering = false;
             if (widget.notificationLabel)
                 removeUserNotification(widget.notificationLabel, 0.7);
+                //return Clutter.EVENT_STOP;
         });
 }
 
@@ -267,7 +272,6 @@ var ObjectInterfaceDialog = GObject.registerClass({
             this.stEntryUText.clutter_text.set_editable(false);
             this.stEntryUText.clutter_text.set_selectable(false);
         }
-        this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
 
         //Error box that will appear to prompt for user validation of input
         this._errorBox = new St.BoxLayout({ style_class: 'object-dialog-error-box' });
@@ -329,13 +333,14 @@ var ObjectInterfaceDialog = GObject.registerClass({
                 }, {icon_size: 20, style_class: 'open-backups-icon'}, {leaveFadeTime: 0.7, disappearTime: 4400, delay: 400, force: true, msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")"});
             }, this);
 
-            this.contentLayout.add(headerLabelArea, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
-
             if(!jsobjectsSets[0]) {
                 stLabelUText.set_text("No saved objects found on disk.");
                 jsobjectsSets = undefined;
             }
         }
+
+        this.contentLayout.add(headerLabelArea, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
+        this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
         
         if (jsobjectsSets) {
             //Build an area for each object set

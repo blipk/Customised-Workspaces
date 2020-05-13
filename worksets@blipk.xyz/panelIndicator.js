@@ -65,15 +65,19 @@ var WorksetsIndicator = GObject.registerClass({
                 popupMenu.actor.destroy();
             }, this);
             Me.worksetsIndicator.popUpMenus = [];
+            Me.worksetsIndicator.optionsMenuItem.show();
+            return Clutter.EVENT_STOP;
+            } catch(e) { dev.log(e) }
+        });
+
+        this.menu.connect('open-state-changed', () => {
+            try {
+            this._refreshMenu();
             } catch(e) { dev.log(e) }
         });
 
         Main.panel.addToStatusArea('WorksetsIndicator', this, 1);
         } catch(e) { dev.log(e) }
-    }
-    _onOpenStateChanged(menu, open) {/*Override from parent class to handle menuitem refresh*/
-        this._refreshMenu();
-        super._onOpenStateChanged(menu, open);
     }
     //main UI builder
     _buildMenu() {
@@ -87,9 +91,10 @@ var WorksetsIndicator = GObject.registerClass({
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
             let apply = (optionName == 'IsolateWorkspaces')
-                ? function() {Me.workspaceManager.activateIsolater(); return Clutter.EVENT_STOP;}
-                : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); return Clutter.EVENT_STOP; }
-            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', apply);
+                ? function() {Me.workspaceManager.activateIsolater(); }
+                : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
+            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{apply(); return Clutter.EVENT_STOP;});
+            //optionMenuItem.pressHandler = optionMenuItem.connect('button_press_event', ()=>{ return Clutter.EVENT_STOP;});
             uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description()});
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
@@ -160,8 +165,8 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.nameText = menuItem.workset.WorksetName;
         this._worksetMenuItemSetEntryLabel(menuItem);
 
-        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); } );
-        menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); } );
+        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); return Clutter.EVENT_STOP; } );
+        menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); return Clutter.EVENT_STOP; } );
 
         // Create iconbuttons on MenuItem
         let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
@@ -226,10 +231,10 @@ var WorksetsIndicator = GObject.registerClass({
         let isShowing = menuItem.isShowing;
 
         // Destroy any previous menus
-        Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
-            if (popupMenu.menuItem.worksetPopupMenu) popupMenu.menuItem.worksetPopupMenu.menu.bye();
-            popupMenu.menuItem.isShowing = false;
-            popupMenu.menuItem._triangle.ease({
+        Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
+            if (wspopupMenu.menuItem.worksetPopupMenu) wspopupMenu.menuItem.worksetPopupMenu.menu.bye();
+            wspopupMenu.menuItem.isShowing = false;
+            wspopupMenu.menuItem._triangle.ease({
                 rotation_angle_z: 0,
                 duration: 250,
                 mode: Clutter.AnimationMode.EASE_OUT_EXPO,
@@ -245,21 +250,22 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.worksetPopupMenu.menuItem = menuItem;
         menuItem.worksetPopupMenu.menu.bye = function() {
             try {
-            Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
-                //Main.uiGroup.remove_actor(popupMenu.actor);
-                popupMenu.menuItem.isShowing = false;
-                popupMenu.menuItem._triangle.ease({
+            Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
+                //Main.uiGroup.remove_actor(wspopupMenu.actor);
+                wspopupMenu.menuItem.isShowing = false;
+                wspopupMenu.menuItem._triangle.ease({
                     rotation_angle_z: 0,
                     duration: 250,
                     mode: Clutter.AnimationMode.EASE_OUT_EXPO,
                 });
-                popupMenu.menu.close(boxpointer.PopupAnimation.FULL);
-                GLib.timeout_add(null, 100, ()=> { popupMenu.destroy(); } ); // Wait for the close animation
-                //Me.worksetsIndicator.ViewSectionSeperator.hide();
+                wspopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
+                GLib.timeout_add(null, 100, ()=> { wspopupMenu.destroy(); } ); // Wait for the close animation
                 Me.worksetsIndicator.optionsMenuItem.show();
+                wspopupMenu.menuItem.worksetPopupMenu = null;
             }, this);
+            
             Me.worksetsIndicator.popUpMenus = [];
-            return Clutter.EVENT_STOP;
+            return true;
             } catch(e) { dev.log(e) }
         }
         menuItem.worksetPopupMenu.connect('button_press_event', ()=>{
@@ -280,14 +286,12 @@ var WorksetsIndicator = GObject.registerClass({
         viewArea.lastOpen = menuItem;
 
         // Background info
-        //if (menuItem.bgMenuButton == undefined || menuItem.bgMenuButton.imgSrc != menuItem.workset.BackgroundImage) { // Only update if the image has changed
         menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
         menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
         uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
         viewArea.addMenuItem(menuItem.bgMenuButton);
 
-        // Event propogation was causing the background menu to open as soon as the view area opened
         menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
             Me.session.setWorksetBackgroundImage(menuItem.workset);
             this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
@@ -301,7 +305,7 @@ var WorksetsIndicator = GObject.registerClass({
         }, this);
         menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
         menuItem.infoMenuButton.label.set_x_expand(true);
-        menuItem.infoMenuButton.connect('activate', () => { });
+        menuItem.infoMenuButton.connect('button_press_event', () => { return Clutter.EVENT_STOP;});
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
         uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {{Me.session.editWorkset(menuItem.workset); this._refreshMenu();}}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         viewArea.addMenuItem(menuItem.infoMenuButton);
@@ -316,6 +320,7 @@ var WorksetsIndicator = GObject.registerClass({
                 this._worksetSubMenuRefresh(menuItem)
                 menuItem.setSubmenuShown(false);
                 menuItem.menu.itemActivated(boxpointer.PopupAnimation.NONE);
+                return Clutter.EVENT_STOP;
             });
             uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
                 try {
