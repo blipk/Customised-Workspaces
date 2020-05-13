@@ -263,7 +263,7 @@ var WorksetsIndicator = GObject.registerClass({
                 Me.worksetsIndicator.optionsMenuItem.show();
                 wspopupMenu.menuItem.worksetPopupMenu = null;
             }, this);
-            
+
             Me.worksetsIndicator.popUpMenus = [];
             return true;
             } catch(e) { dev.log(e) }

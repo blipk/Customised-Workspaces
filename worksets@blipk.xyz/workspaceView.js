@@ -158,17 +158,17 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                                 Me.session.displayWorkset(workset);
                                 // Something is switching to the last workspace after this menu is destroyed
                                 // This is my hack to make sure we stay on the right one
-                                GLib.timeout_add(null, 230, ()=> { 
+                                GLib.timeout_add(null, 230, ()=> {
                                     Me.workspaceManager.switchToWorkspace(i);
                                     Me.workspaceManager.loadDefaults = true;
                                     Me.workspaceManager.noUpdate = false;
                                     Me.workspaceManager._workspaceUpdate();
                                 });
-                                
+
                                 btn.menu.bye();
                             } );
 
-                            if (Me.session.activeSession.Default == menuItem.workset.WorksetName) 
+                            if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
                                 btn.menu.defaultItem = menuItem.workset.WorksetName
 
                             menuItem.setOrnament(popupMenu.Ornament.NONE);
@@ -179,7 +179,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             btn.menu.moveMenuItem(defaultMenuItem, 0);
                             defaultMenuItem.setOrnament(popupMenu.Ornament.DOT);
                         }
-                        
+
                         Main.uiGroup.add_actor(btn.menu.actor);
                         GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
                         btn.menu.open();
@@ -188,7 +188,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 btn.connect('destroy', () => {
                     if (btn.menu) btn.menu.bye();
                 } );
-                
+
 
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);

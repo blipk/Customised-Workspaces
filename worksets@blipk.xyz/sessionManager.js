@@ -83,7 +83,7 @@ var SessionManager = class SessionManager {
                 Me.settings.set_boolean(utils.textToKebabCase(optionName), this.activeSession.Options[optionName]);
         }, this);
         // This has to be last or the signal callback will change the other options
-        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator); 
+        Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator);
     }
     loadOptions() {
         this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
@@ -270,9 +270,9 @@ var SessionManager = class SessionManager {
             if (loadInNewWorkspace) {
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
                 Me.workspaceManager._workspaceUpdate();
-                if (typeof loadInNewWorkspace == 'number') 
+                if (typeof loadInNewWorkspace == 'number')
                     Me.workspaceManager.switchToWorkspace(loadInNewWorkspace);
-                else 
+                else
                     Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;

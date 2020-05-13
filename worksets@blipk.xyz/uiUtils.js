@@ -60,7 +60,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
 
     parentItem.iconButtons.push(iconButton);
     if (tooltip) createTooltip(iconButton, tooltip);
-    
+
     iconButton.focus = false;
     let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP;});
     let enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP;});
@@ -256,7 +256,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
         let headerLabelArea = new St.BoxLayout();
         headerLabelArea.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START })
-        
+
         //Text field for user input
         this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: defaultText });
         shellEntry.addContextMenu(this.stEntryUText);
@@ -341,7 +341,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
         this.contentLayout.add(headerLabelArea, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
         this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
-        
+
         if (jsobjectsSets) {
             //Build an area for each object set
             jsobjectsSets.forEach(function(objectSet, i){
@@ -352,7 +352,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
-                
+
 
                 //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectSetBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
 
@@ -496,10 +496,10 @@ var ObjectEditorDialog = GObject.registerClass({
         defaults = { style_class: 'object-dialog-label', text: _((dialogInfoTextStyle.text || dialogInfoTextStyle).toString()), x_align: St.Align.START, y_align: St.Align.START } ;
         dialogInfoTextStyle = (typeof dialogInfoTextStyle == 'string') ? defaults : {...defaults, ...dialogInfoTextStyle };
         let stLabelUText = new St.Label(dialogInfoTextStyle);
-        
+
         dialogInfoTextStyle.x_fill = true;
         if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText, dialogInfoTextStyle);
-        
+
 
         //*Error box that will appear to prompt for user validation of input //TO DO
         this._errorBox = new St.BoxLayout();
