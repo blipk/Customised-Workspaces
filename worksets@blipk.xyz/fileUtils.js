@@ -41,6 +41,7 @@ var SYS_DATA_DIRS = GLib.get_system_data_dirs();
 var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
 var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
 var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
+var APP_CHOOSER_EXEC = GLib.build_filenamev([INSTALL_DIR, 'appChooser.js']);
 
 function checkExists(path) {
     let result = false;

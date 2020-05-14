@@ -299,6 +299,9 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Workset info
         let infoText = "Has these favourites";
+        
+
+
         Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
                 infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
@@ -307,7 +310,23 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.infoMenuButton.label.set_x_expand(true);
         menuItem.infoMenuButton.connect('button_press_event', () => { return Clutter.EVENT_STOP;});
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {{Me.session.editWorkset(menuItem.workset); this._refreshMenu();}}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
+        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {
+            this.menu.toggle();
+            utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], fileUtils.GLib.get_environ(), 0, null,
+                (resource) => {
+                    try {
+                    if (!resource) return;
+                    let newFav = JSON.parse(resource);
+                    Me.session.Worksets.forEach(function(workset, i) {
+                        if (workset.WorksetName == menuItem.workset.WorksetName) {
+                            Me.session.Worksets[i].FavApps.push(newFav);
+                            Me.session.setFavorites(Me.session.Worksets[i].FavApps);
+                            Me.session.saveSession();
+                        }
+                    }, this);
+                    } catch(e) { dev.log(e) }
+                });
+        }, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
         viewArea.addMenuItem(menuItem.infoMenuButton);
 
         // Favorite Apps entries

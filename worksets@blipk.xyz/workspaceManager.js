@@ -264,31 +264,15 @@ var WorkspaceManager = class WorkspaceManager {
         try {
         Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces;
 
-        let findExtensionCompat = function (uuid) {
-            if (extensionUtils.extensions)
-                uuid = extensionUtils.extensions[uuid]
-            else
-                uuid = Main.extensionManager.lookup(uuid)
-            return uuid;
-        };
-
-        // Other extensions that implement this behaviours
-        let dash2panel = findExtensionCompat('dash-to-panel@jderose9.github.com');
-        let dash2dock = findExtensionCompat('dash-to-dock@micxgx.gmail.com');
-        let dash2panelSettings, dash2dockSettings;
-
-        if (dash2panel) dash2panelSettings = dash2panel.imports.extension.settings || dash2panel.settings;
-        if (dash2dock) dash2dockSettings = dash2dock.imports.extension.dockManager._settings || dash2dock.dockManager._settings;
-
         if (Me.session.activeSession.Options.IsolateWorkspaces) {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
-            if (dash2panel && dash2panelSettings && dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
-                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-                dash2panelSettings.set_boolean('isolate-workspaces', true);
-            } else if (dash2dock && dash2dockSettings && dash2dock.state === extensionSystem.ExtensionState.ENABLED) {
-                if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-                dash2dockSettings.set_boolean('isolate-workspaces', true);
+            if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
+                if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
+                Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', true);
+            } else if (Me.gExtensions.dash2dock.settings && Me.gExtensions.dash2dock.state === extensionSystem.ExtensionState.ENABLED) {
+                if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
+                Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', true);
             } else {
                 Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
                 //workspaceIsolater.WorkspaceIsolator.refresh();
@@ -296,9 +280,14 @@ var WorkspaceManager = class WorkspaceManager {
         } else {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
-            if (dash2panel && dash2panelSettings) dash2panelSettings.set_boolean('isolate-workspaces', false);
-            if (dash2dock && dash2dockSettings) dash2dockSettings.set_boolean('isolate-workspaces', false);
-            if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
+            if (Me.gExtensions.dash2panel.settings)
+                Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', false);
+            if (Me.gExtensions.dash2dock.settings)
+                Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', false);
+            if (Me.workspaceIsolater) {
+                Me.workspaceIsolater.destroy();
+                delete Me.workspaceIsolater;
+            }
         }
         } catch(e) { dev.log(e) }
 

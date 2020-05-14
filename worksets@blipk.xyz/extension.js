@@ -64,6 +64,15 @@ function enable() {
     Me.gScreen = global.screen || global.display;
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
     Me.gMonitorManager = global.screen || Meta.MonitorManager.get();
+    Me.gExtensionManager = (uuid)=>{var x = (extensionUtils.extensions) 
+                                            ? extensionUtils.extensions[uuid].imports.extension || 0 
+                                            : Main.extensionManager.lookup(uuid) || 0;
+                                    return x};
+
+    // To tune behaviour based on other extensions
+    Me.gExtensions = new Object();
+    Me.gExtensions.dash2panel = Me.gExtensionManager('dash-to-panel@jderose9.github.com');
+    Me.gExtensions.dash2dock = Me.gExtensionManager('dash-to-dock@micxgx.gmail.com');
 
     if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
     Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
