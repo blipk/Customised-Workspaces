@@ -66,7 +66,7 @@ var WorksetsIndicator = GObject.registerClass({
             }, this);
             Me.worksetsIndicator.popUpMenus = [];
             Me.worksetsIndicator.optionsMenuItem.show();
-            return Clutter.EVENT_STOP;
+            
             } catch(e) { dev.log(e) }
         });
 
@@ -91,10 +91,10 @@ var WorksetsIndicator = GObject.registerClass({
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
             let apply = (optionName == 'IsolateWorkspaces')
-                ? function() {Me.workspaceManager.activateIsolater(); }
+                ? function() { Me.workspaceManager.activateIsolater(); }
                 : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
-            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{apply(); return Clutter.EVENT_STOP;});
-            //optionMenuItem.pressHandler = optionMenuItem.connect('button_press_event', ()=>{ return Clutter.EVENT_STOP;});
+            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{  apply();});
+            //optionMenuItem.pressHandler = optionMenuItem.connect('button_release_event', ()=>{  apply();  });
             uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description()});
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
@@ -138,13 +138,11 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Management menu button menu
         let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
-        sessionMenuItem.nameText = "New Environment";
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
         this.menu.addMenuItem(sessionMenuItem);
 
-        this._worksetMenuItemSetEntryLabel(sessionMenuItem);
-        sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); return Clutter.EVENT_STOP;});
+        sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); });
 
         uiUtils.createIconButton(sessionMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._refreshMenu();}, {}, {msg: "Load a custom workspace from backups"});
         uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
@@ -159,14 +157,11 @@ var WorksetsIndicator = GObject.registerClass({
     _addWorksetMenuItemEntry(workSetsArrayBuffer) {
         try {
         let menuItem = new popupMenu.PopupSubMenuMenuItem('', true);
+        menuItem.buttonPressId = menuItem.connect('button_release_event', () => {this._worksetSubMenuRefresh(menuItem); } );
 
         // Connect menu items to worksets array
         menuItem.workset = workSetsArrayBuffer;
-        menuItem.nameText = menuItem.workset.WorksetName;
-        this._worksetMenuItemSetEntryLabel(menuItem);
-
-        menuItem.buttonPressId = menuItem.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); return Clutter.EVENT_STOP; } );
-        menuItem._triangle.connect('button_press_event', () => {this._worksetSubMenuRefresh(menuItem); return Clutter.EVENT_STOP; } );
+        menuItem.label.text = menuItem.workset.WorksetName;
 
         // Create iconbuttons on MenuItem
         let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
@@ -220,7 +215,6 @@ var WorksetsIndicator = GObject.registerClass({
             this.defaultSection.moveMenuItem(activeMenuItem , 1);
         if (defaultMenuItem)
             this.defaultSection.moveMenuItem(defaultMenuItem , 0);
-        //_worksetSubMenuRefresh(menuItem) // Running this on SubMenu button_press_event instead as generating the bg image was causing delays
         } catch(e) { dev.log(e) }
     }
     _worksetSubMenuRefresh(menuItem) {
@@ -252,6 +246,7 @@ var WorksetsIndicator = GObject.registerClass({
             try {
             Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
                 //Main.uiGroup.remove_actor(wspopupMenu.actor);
+                
                 wspopupMenu.menuItem.isShowing = false;
                 wspopupMenu.menuItem._triangle.ease({
                     rotation_angle_z: 0,
@@ -259,26 +254,27 @@ var WorksetsIndicator = GObject.registerClass({
                     mode: Clutter.AnimationMode.EASE_OUT_EXPO,
                 });
                 wspopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
-                GLib.timeout_add(null, 100, ()=> { wspopupMenu.destroy(); } ); // Wait for the close animation
-                Me.worksetsIndicator.optionsMenuItem.show();
+                GLib.timeout_add(null, 100, ()=> { // Wait for the close animation
+                    wspopupMenu.destroy(); 
+                } ); 
+                
                 wspopupMenu.menuItem.worksetPopupMenu = null;
             }, this);
-
             Me.worksetsIndicator.popUpMenus = [];
-            return true;
+            Me.worksetsIndicator.optionsMenuItem.show();
             } catch(e) { dev.log(e) }
         }
-        menuItem.worksetPopupMenu.connect('button_press_event', ()=>{
+        menuItem.worksetPopupMenu.connect('button_release_event', ()=>{
             menuItem.worksetPopupMenu.menu.bye();
-            return Clutter.EVENT_STOP;
+            //return Clutter.EVENT_STOP;
         });
         menuItem.worksetPopupMenu.menu.connect('menu-closed', ()=>{
-            menuItem.worksetPopupMenu.menu.bye();
-            return Clutter.EVENT_STOP;
+            //menuItem.worksetPopupMenu.menu.bye();
+            //return Clutter.EVENT_STOP;
         });
         menuItem.worksetPopupMenu.menu.connect('destroy', ()=>{
             //menuItem.worksetPopupMenu.menu.bye();
-            return Clutter.EVENT_STOP;
+            //return Clutter.EVENT_STOP;
         });
 
         let viewArea = menuItem.worksetPopupMenu.menu;
@@ -292,25 +288,23 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
         viewArea.addMenuItem(menuItem.bgMenuButton);
 
+        // The click from opening the submenu was hitting this item too, this hack seems to work
         menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
             Me.session.setWorksetBackgroundImage(menuItem.workset);
             this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
         });
+        uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to select a new desktop background for '"+menuItem.workset.WorksetName+"'"});
 
         // Workset info
         let infoText = "Has these favourites";
-        
-
-
         Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
             if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
                 infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
         }, this);
         menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
         menuItem.infoMenuButton.label.set_x_expand(true);
-        menuItem.infoMenuButton.connect('button_press_event', () => { return Clutter.EVENT_STOP;});
         menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', () => {
+        let addApps = () => {
             this.menu.toggle();
             utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], fileUtils.GLib.get_environ(), 0, null,
                 (resource) => {
@@ -326,7 +320,10 @@ var WorksetsIndicator = GObject.registerClass({
                     }, this);
                     } catch(e) { dev.log(e) }
                 });
-        }, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
+        }
+        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', addApps, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
+        menuItem.infoMenuButton.connect('button_release_event', addApps);
+        uiUtils.createTooltip(menuItem.infoMenuButton, {msg: "Click to select an application to add to '"+menuItem.workset.WorksetName+"' favourites"});
         viewArea.addMenuItem(menuItem.infoMenuButton);
 
         // Favorite Apps entries
@@ -335,11 +332,11 @@ var WorksetsIndicator = GObject.registerClass({
             icon = icon || 'web-browser-sybmolic';
             menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
             menuItem.favAppsMenuItems[i].label.set_x_expand(true);
+            uiUtils.createTooltip(menuItem.favAppsMenuItems[i], {msg: "Click to launch '"+displayName+"'"});
             menuItem.favAppsMenuItems[i].connect('activate', () => {
-                this._worksetSubMenuRefresh(menuItem)
-                menuItem.setSubmenuShown(false);
-                menuItem.menu.itemActivated(boxpointer.PopupAnimation.NONE);
-                return Clutter.EVENT_STOP;
+                let [success, argv] = GLib.shell_parse_argv(exec.replace('%u', ' ').replace('%U', ' '))
+                util.spawn(argv);
+                // To do get pid and use AppSystem to focus window - same with the bgmenu editor
             });
             uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
                 try {
@@ -349,6 +346,7 @@ var WorksetsIndicator = GObject.registerClass({
             }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
             viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
         }, this);
+        
 
         //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);
         this.viewSection.addMenuItem(menuItem.worksetPopupMenu);
@@ -372,6 +370,7 @@ var WorksetsIndicator = GObject.registerClass({
             this.optionsMenuItem.hide();
         }
         } catch(e) { dev.log(e) }
+
     }
     _refreshMenu() {
         try {
@@ -395,9 +394,6 @@ var WorksetsIndicator = GObject.registerClass({
     _findRawWorksetByMenuItem(menuItem) {
         let tmpWorkset = Me.session.Worksets.filter(item => item === menuItem.workset)[0];
         return tmpWorkset;
-    }
-    _worksetMenuItemSetEntryLabel(menuItem) {
-        menuItem.label.set_text(utils.truncateString(menuItem.nameText));
     }
     _worksetMenuItemsGetAll(text) {
         return this.historySection._getMenuItems().concat(this.favoritesSection._getMenuItems()).concat(this.defaultSection._getMenuItems());

@@ -83,8 +83,10 @@ class worksetsAppChooser  {
 
     _buildUI() {
         this.dialog = new Gtk.AppChooserDialog({ title: "Select an application", 
-                                                    heading: "Will be added to '"+this.WorksetName+"' favourites", 
-                                                    icon_name: 'bowser', type: 0, content_type: "any"});
+                                                    heading: "Will be added to '"+this.WorksetName+"' favourites",
+                                                    content_type: "any",
+                                                    icon_name: 'xapp-prefs-toolbar-symbolic', 
+                                                    type: 0});
         this.dialog.get_widget().default_text = '';
         this.dialog.get_widget().show_all = true;
         this.dialog.get_widget().show_default = true;
@@ -96,6 +98,8 @@ class worksetsAppChooser  {
     }
 
     vfunc_activate() {
+        this.dialog.show();
+        this.dialog.present();
         if (this.dialog.run() == Gtk.ResponseType.OK) {
             let app = this.dialog.get_app_info();
             if (app != null) {

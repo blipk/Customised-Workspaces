@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const AppFavorites = imports.ui.appFavorites;
+const { extensionSystem, appFavorites } = imports.ui;
 const { extensionUtils, util } = imports.misc;
 const { GObject, Gio, Clutter, Shell } = imports.gi;
 
@@ -43,7 +43,7 @@ var SessionManager = class SessionManager {
         this.allApps = {};
 
         // Set up our bindings
-        this.favoritesChangeHandler = AppFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
+        this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
         this.watchOptions();
 
         // Make sure our GTK App chooser is executable
@@ -62,7 +62,7 @@ var SessionManager = class SessionManager {
     destroy() {
         try {
         this.saveSession();
-        if (this.favoritesChangeHandler) AppFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler);
+        if (this.favoritesChangeHandler) appFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler);
         if (this.showWorkspaceOverlayHandler) Me.settings.disconnect(this.showWorkspaceOverlayHandler);
         if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
         if (this.newFavouriteWatcher) Me.settings.disconnect(this.newFavouriteWatcher);
@@ -73,12 +73,11 @@ var SessionManager = class SessionManager {
         this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean('isolate-workspaces');
         });
-        if (Me.gExtensions.dash2panel.settings) {
+        if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED)
             this.dash2panelSettingsWatcher = Me.gExtensions.dash2panel.settings.connect('changed::isolate-workspaces', () => {
                 Me.settings.set_boolean('isolate-workspaces', Me.gExtensions.dash2panel.settings.get_boolean('isolate-workspaces'));
                 Me.session.saveSession();
             });
-        }
         
         this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
                 if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()

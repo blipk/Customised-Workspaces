@@ -43,6 +43,7 @@ var WorkspaceManager = class WorkspaceManager {
         this.loadDefaults = true;
         this.noUpdate = false;
 
+        this.activateIsolater(true);
         this._workspaceUpdate();
         this.loadDefaultWorksets();
         this._workspaceUpdate();
@@ -260,9 +261,10 @@ var WorkspaceManager = class WorkspaceManager {
     _moveWindowsToWorkspace() {
         //TO DO
     }
-    activateIsolater() {
+    activateIsolater(init=false) {
         try {
-        Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces;
+        if (!init)
+            Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces;
 
         if (Me.session.activeSession.Options.IsolateWorkspaces) {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
@@ -275,7 +277,7 @@ var WorkspaceManager = class WorkspaceManager {
                 Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', true);
             } else {
                 Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator();
-                //workspaceIsolater.WorkspaceIsolator.refresh();
+                workspaceIsolater.WorkspaceIsolator.refresh();
             }
         } else {
             util.spawn(['dconf' ,'write' ,'/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
