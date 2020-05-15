@@ -40,7 +40,7 @@
 const Main = imports.ui.main;
 const ExtensionSystem = imports.ui.extensionSystem;
 const { extensionUtils } = imports.misc;
-const { Meta, GLib, Gio } = imports.gi;
+const { Meta, GLib, Gio, Shell } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();

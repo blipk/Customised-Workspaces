@@ -66,7 +66,7 @@ var WorksetsIndicator = GObject.registerClass({
             }, this);
             Me.worksetsIndicator.popUpMenus = [];
             Me.worksetsIndicator.optionsMenuItem.show();
-            
+
             } catch(e) { dev.log(e) }
         });
 
@@ -99,19 +99,16 @@ var WorksetsIndicator = GObject.registerClass({
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
         }, this);
-        this.menu.addMenuItem(this.optionsMenuItem);
-
+        
         // Menu sections for workset items
         this.viewSection = new popupMenu.PopupMenuSection();
-        this.menu.addMenuItem(this.viewSection);
-
         // Add separator
         this.ViewSectionSeperator = new popupMenu.PopupSeparatorMenuItem();
-        this.menu.addMenuItem(this.ViewSectionSeperator);
+        
 
         // Default
         this.defaultSection = new popupMenu.PopupMenuSection();
-        this.menu.addMenuItem(this.defaultSection);
+        
 
         // Favorites
         this.favoritesSection = new popupMenu.PopupMenuSection();
@@ -121,7 +118,7 @@ var WorksetsIndicator = GObject.registerClass({
         });
         favoritesScrollView.add_actor(this.favoritesSection.actor);
         this.scrollViewFavoritesMenuSection.actor.add_actor(favoritesScrollView);
-        this.menu.addMenuItem(this.scrollViewFavoritesMenuSection);
+        
 
         // History
         this.historySection = new popupMenu.PopupMenuSection();
@@ -131,16 +128,12 @@ var WorksetsIndicator = GObject.registerClass({
         });
         historyScrollView.add_actor(this.historySection.actor);
         this.scrollViewHistoryMenuSection.actor.add_actor(historyScrollView);
-        this.menu.addMenuItem(this.scrollViewHistoryMenuSection);
-
-        // Add separator
-        this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
 
         // Management menu button menu
         let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
-        this.menu.addMenuItem(sessionMenuItem);
+        
 
         sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); });
 
@@ -148,8 +141,32 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
 
 
-        // Add separator
-        this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+        // Orient menu
+        if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
+            this.menu.addMenuItem(this.viewSection);
+            this.menu.addMenuItem(this.optionsMenuItem);
+            this.menu.addMenuItem(this.ViewSectionSeperator);
+
+            this.menu.addMenuItem(this.defaultSection);
+            this.menu.addMenuItem(this.scrollViewFavoritesMenuSection);
+            this.menu.addMenuItem(this.scrollViewHistoryMenuSection);
+            this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+
+            this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+            this.menu.addMenuItem(sessionMenuItem);
+        } else {
+            this.menu.addMenuItem(sessionMenuItem);
+            this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+            
+            this.menu.addMenuItem(this.defaultSection);
+            this.menu.addMenuItem(this.scrollViewFavoritesMenuSection);
+            this.menu.addMenuItem(this.scrollViewHistoryMenuSection);
+            this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
+
+            this.menu.addMenuItem(this.ViewSectionSeperator);
+            this.menu.addMenuItem(this.optionsMenuItem);
+            this.menu.addMenuItem(this.viewSection);
+        }
 
         } catch(e) { dev.log(e) }
     }
@@ -226,7 +243,7 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Destroy any previous menus
         Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
-            if (wspopupMenu.menuItem.worksetPopupMenu) wspopupMenu.menuItem.worksetPopupMenu.menu.bye();
+            if (wspopupMenu.menuItem.worksetPopupMenu) wspopupMenu.menuItem.worksetPopupMenu.menu.bye(true);
             wspopupMenu.menuItem.isShowing = false;
             wspopupMenu.menuItem._triangle.ease({
                 rotation_angle_z: 0,
@@ -242,30 +259,30 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.worksetPopupMenu.icon.icon_name = 'org.gnome.tweaks'
         menuItem.worksetPopupMenu.actor.add_style_class_name('panel-menu');
         menuItem.worksetPopupMenu.menuItem = menuItem;
-        menuItem.worksetPopupMenu.menu.bye = function() {
+        menuItem.worksetPopupMenu.menu.bye = function(pass=false) {
             try {
+
             Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
                 //Main.uiGroup.remove_actor(wspopupMenu.actor);
-                
                 wspopupMenu.menuItem.isShowing = false;
                 wspopupMenu.menuItem._triangle.ease({
                     rotation_angle_z: 0,
                     duration: 250,
                     mode: Clutter.AnimationMode.EASE_OUT_EXPO,
                 });
-                wspopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
-                GLib.timeout_add(null, 100, ()=> { // Wait for the close animation
-                    wspopupMenu.destroy(); 
-                } ); 
-                
+                if (pass) menuItem.worksetPopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
+                GLib.timeout_add(null, 100, ()=> { wspopupMenu.destroy(); } ); // Wait for the close animation
                 wspopupMenu.menuItem.worksetPopupMenu = null;
             }, this);
+
             Me.worksetsIndicator.popUpMenus = [];
-            Me.worksetsIndicator.optionsMenuItem.show();
+            if (!pass) GLib.timeout_add(null, 100, ()=> { Me.worksetsIndicator.optionsMenuItem.show(); } ); // Wait for the close animation, only if a new view area menu has not been requested
+
             } catch(e) { dev.log(e) }
         }
         menuItem.worksetPopupMenu.connect('button_release_event', ()=>{
             menuItem.worksetPopupMenu.menu.bye();
+            return Clutter.SOURCE_REMOVE;
             //return Clutter.EVENT_STOP;
         });
         menuItem.worksetPopupMenu.menu.connect('menu-closed', ()=>{
@@ -288,7 +305,6 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
         viewArea.addMenuItem(menuItem.bgMenuButton);
 
-        // The click from opening the submenu was hitting this item too, this hack seems to work
         menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
             Me.session.setWorksetBackgroundImage(menuItem.workset);
             this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
@@ -346,7 +362,7 @@ var WorksetsIndicator = GObject.registerClass({
             }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
             viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
         }, this);
-        
+
 
         //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);
         this.viewSection.addMenuItem(menuItem.worksetPopupMenu);
@@ -359,8 +375,10 @@ var WorksetsIndicator = GObject.registerClass({
                 mode: Clutter.AnimationMode.EASE_OUT_EXPO,
             });
         } else {
+            let angle = (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED)
+                    ? -90 : 90;
             menuItem._triangle.ease({
-                rotation_angle_z: -90,
+                rotation_angle_z: angle,
                 duration: 250,
                 mode: Clutter.AnimationMode.EASE_OUT_EXPO,
             });
