@@ -88,12 +88,11 @@ class worksetsAppChooser  {
                                                     icon_name: 'xapp-prefs-toolbar-symbolic', 
                                                     type: 0});
         this.dialog.get_widget().default_text = '';
-        this.dialog.get_widget().show_all = true;
-        this.dialog.get_widget().show_default = true;
-        this.dialog.get_widget().show_fallback = true;
-        this.dialog.get_widget().show_other = true;
+        //this.dialog.get_widget().show_default = true;
+        //this.dialog.get_widget().show_fallback = true;
+        //this.dialog.get_widget().show_other = true;
         this.dialog.get_widget().show_recommended = true;
-
+        this.dialog.get_widget().show_all = true;
         this.dialog.connect('destroy', Gtk.main_quit);
     }
 

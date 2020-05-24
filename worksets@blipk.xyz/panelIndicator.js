@@ -59,14 +59,9 @@ var WorksetsIndicator = GObject.registerClass({
         this.popUpMenus = [];
         this.menu.connect('menu-closed', () => {
             try {
-            Me.worksetsIndicator.popUpMenus.forEach(function(popupMenu) {
-                //Main.uiGroup.remove_actor(popupMenu.actor);
-                popupMenu.menuItem.isShowing = false;
-                popupMenu.actor.destroy();
-            }, this);
+            Me.worksetsIndicator.popUpMenus.forEach(pm => {pm.menuItem.isShowing = false; pm.actor.destroy()});
             Me.worksetsIndicator.popUpMenus = [];
             Me.worksetsIndicator.optionsMenuItem.show();
-
             } catch(e) { dev.log(e) }
         });
 
@@ -86,7 +81,8 @@ var WorksetsIndicator = GObject.registerClass({
         this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Extension Options', true);
         this.optionsMenuItem.icon.icon_name = 'org.gnome.tweaks';
         this.optionsMenuItems = [];
-        Me.session.activeSession.Options.forEachEntry(function (optionName, optionValue) {
+
+        Me.session.activeSession.Options.forEachEntry(function (optionName) {
             let settingsKeyName = utils.textToKebabCase(optionName)
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
@@ -99,16 +95,16 @@ var WorksetsIndicator = GObject.registerClass({
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
         }, this);
-        
+
         // Menu sections for workset items
         this.viewSection = new popupMenu.PopupMenuSection();
         // Add separator
         this.ViewSectionSeperator = new popupMenu.PopupSeparatorMenuItem();
-        
+
 
         // Default
         this.defaultSection = new popupMenu.PopupMenuSection();
-        
+
 
         // Favorites
         this.favoritesSection = new popupMenu.PopupMenuSection();
@@ -118,7 +114,7 @@ var WorksetsIndicator = GObject.registerClass({
         });
         favoritesScrollView.add_actor(this.favoritesSection.actor);
         this.scrollViewFavoritesMenuSection.actor.add_actor(favoritesScrollView);
-        
+
 
         // History
         this.historySection = new popupMenu.PopupMenuSection();
@@ -133,7 +129,7 @@ var WorksetsIndicator = GObject.registerClass({
         let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
-        
+
 
         sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); });
 
@@ -157,7 +153,7 @@ var WorksetsIndicator = GObject.registerClass({
         } else {
             this.menu.addMenuItem(sessionMenuItem);
             this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
-            
+
             this.menu.addMenuItem(this.defaultSection);
             this.menu.addMenuItem(this.scrollViewFavoritesMenuSection);
             this.menu.addMenuItem(this.scrollViewHistoryMenuSection);
@@ -171,20 +167,21 @@ var WorksetsIndicator = GObject.registerClass({
         } catch(e) { dev.log(e) }
     }
     //This is run periodically via _refreshMenu()
-    _addWorksetMenuItemEntry(workSetsArrayBuffer) {
+    _addWorksetMenuItemEntry(workSetsArrayBuffer, worksetIndex) {
         try {
         let menuItem = new popupMenu.PopupSubMenuMenuItem('', true);
         menuItem.buttonPressId = menuItem.connect('button_release_event', () => {this._worksetSubMenuRefresh(menuItem); } );
 
         // Connect menu items to worksets array
         menuItem.workset = workSetsArrayBuffer;
+        menuItem.worksetIndex = worksetIndex;
         menuItem.label.text = menuItem.workset.WorksetName;
 
         // Create iconbuttons on MenuItem
         let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
         //let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
         let icondefault_nameuri = (Me.session.activeSession.Default == menuItem.workset.WorksetName) ? 'starred-symbolic' : ['non-starred-symbolic', 'starred-symbolic'];
-        let iconOpenNew_nameuri = (activeIndex > -1) ? 'window-close-symbolic' : 'list-add-symbolic';
+        let iconOpenNew_nameuri = (activeIndex > -1) ? 'window-close-symbolic' : 'window-new-symbolic';
         let iconOpenHere_nameuri = (activeIndex > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
         let openCloseCommand = (activeIndex > -1)
              ? () => {Me.session.closeWorkset(menuItem.workset); this._refreshMenu();}
@@ -197,8 +194,6 @@ var WorksetsIndicator = GObject.registerClass({
              : "Load '"+menuItem.workset.WorksetName+"' in this workspace";
         //uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true, {msg: "Pin '"+menuItem.workset.WorksetName+"' to the top of the list"});
         uiUtils.createIconButton(menuItem, icondefault_nameuri, () => {Me.session.setDefaultWorkset(menuItem.workset); this._refreshMenu();}, true, {msg: "Set '"+menuItem.workset.WorksetName+"' as the default"});
-        uiUtils.createIconButton(menuItem, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
-        uiUtils.createIconButton(menuItem, 'edit-delete-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openCloseCommand, {}, {msg: openCloseMsg});
         //uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: viewOpenMessage});
@@ -242,7 +237,7 @@ var WorksetsIndicator = GObject.registerClass({
         let isShowing = menuItem.isShowing;
 
         // Destroy any previous menus
-        Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
+        Me.worksetsIndicator.popUpMenus.forEach(wspopupMenu => {
             if (wspopupMenu.menuItem.worksetPopupMenu) wspopupMenu.menuItem.worksetPopupMenu.menu.bye(true);
             wspopupMenu.menuItem.isShowing = false;
             wspopupMenu.menuItem._triangle.ease({
@@ -258,11 +253,12 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.worksetPopupMenu = new popupMenu.PopupSubMenuMenuItem("Details for '"+ menuItem.workset.WorksetName +"'", true);
         menuItem.worksetPopupMenu.icon.icon_name = 'org.gnome.tweaks'
         menuItem.worksetPopupMenu.actor.add_style_class_name('panel-menu');
+        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
+        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'user-trash-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
         menuItem.worksetPopupMenu.menuItem = menuItem;
         menuItem.worksetPopupMenu.menu.bye = function(pass=false) {
             try {
-
-            Me.worksetsIndicator.popUpMenus.forEach(function(wspopupMenu) {
+            Me.worksetsIndicator.popUpMenus.forEach(wspopupMenu => {
                 //Main.uiGroup.remove_actor(wspopupMenu.actor);
                 wspopupMenu.menuItem.isShowing = false;
                 wspopupMenu.menuItem._triangle.ease({
@@ -311,58 +307,81 @@ var WorksetsIndicator = GObject.registerClass({
         });
         uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to select a new desktop background for '"+menuItem.workset.WorksetName+"'"});
 
-        // Workset info
-        let infoText = "Has these favourites";
-        Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
-            if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
-                infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
-        }, this);
-        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
-        menuItem.infoMenuButton.label.set_x_expand(true);
-        menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-        let addApps = () => {
-            this.menu.toggle();
-            utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], fileUtils.GLib.get_environ(), 0, null,
-                (resource) => {
-                    try {
-                    if (!resource) return;
-                    let newFav = JSON.parse(resource);
-                    Me.session.Worksets.forEach(function(workset, i) {
-                        if (workset.WorksetName == menuItem.workset.WorksetName) {
-                            Me.session.Worksets[i].FavApps.push(newFav);
-                            Me.session.setFavorites(Me.session.Worksets[i].FavApps);
-                            Me.session.saveSession();
-                        }
-                    }, this);
-                    } catch(e) { dev.log(e) }
+        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
+            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+        let updateBackgroundStyle = (style, menuItem) => {
+            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
+            Me.session.saveSession();
+            if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName)
+                Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
+
+                backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+                    if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
                 });
         }
-        uiUtils.createIconButton(menuItem.infoMenuButton, 'document-edit-symbolic', addApps, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
-        menuItem.infoMenuButton.connect('button_release_event', addApps);
-        uiUtils.createTooltip(menuItem.infoMenuButton, {msg: "Click to select an application to add to '"+menuItem.workset.WorksetName+"' favourites"});
-        viewArea.addMenuItem(menuItem.infoMenuButton);
+        
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
+        backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
+        });
+        menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
 
-        // Favorite Apps entries
-        menuItem.workset.FavApps.forEach(function(favApp, i){
-            let {name, displayName, exec, icon} = favApp;
-            icon = icon || 'web-browser-sybmolic';
-            menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
-            menuItem.favAppsMenuItems[i].label.set_x_expand(true);
-            uiUtils.createTooltip(menuItem.favAppsMenuItems[i], {msg: "Click to launch '"+displayName+"'"});
-            menuItem.favAppsMenuItems[i].connect('activate', () => {
-                let [success, argv] = GLib.shell_parse_argv(exec.replace('%u', ' ').replace('%U', ' '))
-                util.spawn(argv);
-                // To do get pid and use AppSystem to focus window - same with the bgmenu editor
-            });
-            uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
-                try {
-                menuItem.favAppsMenuItems[i].destroy();
-                Me.session.removeFavorite(menuItem.workset, name);
-                } catch(e) { dev.log(e) }
-            }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
-            viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
-        }, this);
+        if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
+            // Workset info
+            let infoText = "Has these favourites";
+            Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
+                if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
+                    infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
+            }, this);
+            menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
+            menuItem.infoMenuButton.label.set_x_expand(true);
+            menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
+            let addApps = () => {
+                this.menu.toggle();
+                utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], fileUtils.GLib.get_environ(), 0, null,
+                    (resource) => {
+                        try {
+                        if (!resource) return;
+                        let newFav = JSON.parse(resource);
+                        Me.session.Worksets
+                            .filter(w => w.WorksetName == menuItem.workset.WorksetName)[0]
+                            .FavApps.push(newFav);
+                        Me.session.setFavorites();
+                        } catch(e) { dev.log(e) }
+                    });
+            }
+            uiUtils.createIconButton(menuItem.infoMenuButton, 'list-add-symbolic', addApps, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
+            menuItem.infoMenuButton.connect('button_release_event', addApps);
+            uiUtils.createTooltip(menuItem.infoMenuButton, {msg: "Click to select an application to add to '"+menuItem.workset.WorksetName+"' favourites"});
+            viewArea.addMenuItem(menuItem.infoMenuButton);
 
+            // Favorite Apps entries
+            menuItem.workset.FavApps.forEach(function(favApp, i){
+                let {name, displayName, exec, icon} = favApp;
+                icon = icon || 'web-browser-sybmolic';
+                menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
+                menuItem.favAppsMenuItems[i].label.set_x_expand(true);
+                uiUtils.createTooltip(menuItem.favAppsMenuItems[i], {msg: "Click to launch '"+displayName+"'"});
+                menuItem.favAppsMenuItems[i].connect('activate', () => {
+                    let [success, argv] = GLib.shell_parse_argv(exec.replace('%u', ' ').replace('%U', ' '))
+                    util.spawn(argv);
+                    // To do get pid and use AppSystem to focus window - same with the bgmenu editor
+                });
+                uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
+                    try {
+                    menuItem.favAppsMenuItems[i].destroy();
+                    Me.session.removeFavorite(menuItem.workset, name);
+                    } catch(e) { dev.log(e) }
+                }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
+                viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
+            }, this);
+        }
 
         //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);
         this.viewSection.addMenuItem(menuItem.worksetPopupMenu);
@@ -402,8 +421,8 @@ var WorksetsIndicator = GObject.registerClass({
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
-            Me.session.Worksets.forEach(function (worksetBuffer) {
-                this._addWorksetMenuItemEntry(worksetBuffer);
+            Me.session.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                this._addWorksetMenuItemEntry(worksetBuffer, worksetIndex);
             }, this);
             Me.session.saveSession();
         }
@@ -421,9 +440,9 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _worksetMenuItemMoveToTop(menuItem) {
         try {
-        Me.session.Worksets.forEach(function (worksetBuffer) {
+        Me.session.Worksets.forEach(function (worksetBuffer, worksetIndex) {
             if (worksetBuffer === menuItem.workspace) {
-                this._addWorksetMenuItemEntry(worksetBuffer);
+                this._addWorksetMenuItemEntry(worksetBuffer, worksetIndex);
             }
         }, this);
         this._refreshMenu();

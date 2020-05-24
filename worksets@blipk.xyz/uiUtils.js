@@ -42,7 +42,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
         var [iconNameURI, alternateIconName] = iconNames;
     else iconNameURI = iconNames;
     let defaults = {icon_name: iconNameURI,
-                              style_class: 'system-status-icon',
+                              style_class: 'icon-button',
                               x_expand: false,
                               x_align: Clutter.ActorAlign.CENTER,
                               y_expand: true,
@@ -51,15 +51,17 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        child: icon, style_class: 'ci-action-btn', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
+        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
     });
     iconButton.icon = icon;
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
     parentItem.iconButtons = parentItem.iconButtons || new Array();
     parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array();
-
+    if (tooltip) {
+        iconButton.tooltip = tooltip;
+        createTooltip(iconButton, tooltip);
+    }
     parentItem.iconButtons.push(iconButton);
-    if (tooltip) createTooltip(iconButton, tooltip);
 
     iconButton.focus = false;
     let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP;});
@@ -121,6 +123,7 @@ function removeAllUserNotifications(fadeTime) {
 
 function createTooltip(widget, tooltip) {
     if (!tooltip) return;
+    widget.tooltip = tooltip;
     widget.connect('enter_event', ()=>{
         widget.hovering = true;
         GLib.timeout_add(null, tooltip.delay || 700, ()=> {

@@ -43,12 +43,12 @@ var SessionManager = class SessionManager {
         this.allApps = {};
 
         // Set up our bindings
-        this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()})
+        this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()});
         this.watchOptions();
 
         // Make sure our GTK App chooser is executable
         util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC]);
-        
+
         // Create sesion or initialize from session file if it exists
         if (fileUtils.checkExists(fileUtils.CONF_DIR + '/session.json')) {
             let obj = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
@@ -78,7 +78,7 @@ var SessionManager = class SessionManager {
                 Me.settings.set_boolean('isolate-workspaces', Me.gExtensions.dash2panel.settings.get_boolean('isolate-workspaces'));
                 Me.session.saveSession();
             });
-        
+
         this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
                 if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
             });
@@ -90,6 +90,16 @@ var SessionManager = class SessionManager {
                 }
             });
     }
+    initOptions(){
+        let keys = Me.settings.list_keys();
+        keys.forEach((key) => {
+            let k = Me.settings.settings_schema.get_key(key);
+            if (k.get_default_value().toString().includes('"b"')) {  // GLib Variant Boolean
+                this.activeSession.Options[utils.textToPascalCase(key)] = Me.settings.get_boolean(key);
+            }
+        }, this)
+        this.saveOptions();
+    }
     saveOptions() {
         this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
             if (optionName != 'ShowPanelIndicator')
@@ -100,7 +110,7 @@ var SessionManager = class SessionManager {
     }
     loadOptions() {
         this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
-            this.activeSession.Options[optionName] =  Me.settings.get_boolean(utils.textToKebabCase(optionName));
+            this.activeSession.Options[optionName] = Me.settings.get_boolean(utils.textToKebabCase(optionName));
         }, this);
     }
     _setup(sessionObject) {
@@ -118,6 +128,7 @@ var SessionManager = class SessionManager {
             if (!Me.worksetsIndicator) Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
             this.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.show() : Me.worksetsIndicator.hide();
 
+            this.initOptions();
             this.saveSession();
         }
         } catch(e) { dev.log(e) }
@@ -197,13 +208,15 @@ var SessionManager = class SessionManager {
         return bgURI.replace("file://", "");
         } catch(e) { dev.log(e) }
     }
-    setBackground(bgPath) {
+    setBackground(bgPath, style = 'ZOOM') {
         bgPath = bgPath.replace("file://", "");
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
+        dSettings.set_string('picture-options', style.toLowerCase());
     }
     setFavorites(favArray) {
         try {
+        favArray = favArray || this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].FavApps;
         let outFavorites = []
         favArray.forEach(function(favorite, i) {
             outFavorites.push(favorite.name)
@@ -293,7 +306,7 @@ var SessionManager = class SessionManager {
         }
 
         this.setFavorites(workset.FavApps);
-        this.setBackground(workset.BackgroundImage);
+        this.setBackground(workset.BackgroundImage, workset.BackgroundStyle);
 
         this.saveSession();
         } catch(e) { dev.log(e) }
@@ -363,6 +376,7 @@ var SessionManager = class SessionManager {
             sessionObject.Worksets[0].WorksetName = "Primary";
             sessionObject.Worksets[0].Favorite = true;
             sessionObject.Worksets[0].BackgroundImage = this.getBackground();
+            sessionObject.Worksets[0].BackgroundStyle = 'ZOOM';
             sessionObject.workspaceMaps = workspaceMaps;
             sessionObject.workspaceMaps['Workspace0'].defaultWorkset = "Primary";
             sessionObject.workspaceMaps['Workspace0'].currentWorkset = "Primary";

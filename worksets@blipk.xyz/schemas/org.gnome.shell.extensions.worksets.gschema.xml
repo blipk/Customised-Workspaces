@@ -21,6 +21,11 @@
       <summary>Isolate running applications</summary>
       <description>When enabled applications are only shown on the dash/panel in their workspace</description>
     </key>
+    <key name="only-background-details" type="b">
+      <default>true</default>
+      <summary>Only show background in details</summary>
+      <description>Hides the favourite application list in the environment details.</description>
+    </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
       <summary>Show panel indicator</summary>

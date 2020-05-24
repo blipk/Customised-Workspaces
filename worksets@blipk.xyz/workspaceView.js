@@ -99,13 +99,13 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
-            newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
             // Find backgrounds for active custom workspaces
             thumbnailBox.workset = null;
             Me.session.Worksets.forEach(function (worksetBuffer, index) {
                 if (worksetBuffer.WorksetName == Me.session.workspaceMaps['Workspace'+i].currentWorkset) {
-                    newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                    newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle[Me.session.Worksets[index].BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
                     thumbnailBox.workset = Me.session.Worksets[index];
                 }
             }, this);
@@ -193,7 +193,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
                 }, {icon_size: 170}, {msg: "Create new custom workspace here"});
-                newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
 
             // Prevent excessive recursion but enforce background updates during various events

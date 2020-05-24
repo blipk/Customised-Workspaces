@@ -110,3 +110,16 @@ entry:indeterminate {
 .open-backups-icon {
     padding-left: 1em;
 }
+
+
+.icon-button StIcon {
+    icon-size:16px;
+}
+
+.active-icon StIcon {
+    icon-size:16px;
+    color: green;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 3px hidden black;
+    border-radius: 40px;
+}
