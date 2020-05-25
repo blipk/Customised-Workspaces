@@ -131,16 +131,18 @@ var WorkspaceManager = class WorkspaceManager {
         try {
         if (!this.loadDefaults) return;
 
-        Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
-
+        let found = false;
         Me.session.Worksets.forEach(function (workset, worksetIndex) {
             Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
                 if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
                     Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                     Me.session.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
+                    found = true;
                 }
             }, this);
         }, this);
+
+        if (!found) Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
         } catch(e) { dev.log(e) }
     }
     getWorkspaceWindows(workspaceIndex) {

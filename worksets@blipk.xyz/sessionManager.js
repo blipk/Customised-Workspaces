@@ -351,6 +351,7 @@ var SessionManager = class SessionManager {
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != workset.WorksetName) return;
                 this.Worksets[worksetIndex].BackgroundImage = resource;
+                this.Worksets[worksetIndex].BackgroundStyle = this.Worksets[worksetIndex].BackgroundStyle || 'ZOOM';
                 this.saveSession();
             }, this);
 
@@ -504,6 +505,9 @@ var SessionManager = class SessionManager {
             // Update workset name and favorite state
             this.Worksets.forEach(function (workset, worksetIndex) {
                 if (workset.WorksetName == worksetIn.WorksetName) {
+                    // Update if default
+                    if (this.activeSession.Default == this.Worksets[worksetIndex].WorksetName)
+                        this.activeSession.Default = returnObject.WorksetName;
                     this.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
                     this.Worksets[worksetIndex].Favorite = returnObject.Favorite;
                 }

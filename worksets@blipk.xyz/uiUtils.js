@@ -135,7 +135,7 @@ function createTooltip(widget, tooltip) {
                 widget.notificationLabel.attachedTo = widget;
             }
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, tooltip.disappearTime || 4000, ()=> { removeUserNotification(widget.notificationLabel, 1);});
+            GLib.timeout_add(null, tooltip.disappearTime || 4000, ()=> { if (widget.notificationLabel) removeUserNotification(widget.notificationLabel, 1);});
         });
 
         //return Clutter.EVENT_STOP;
@@ -572,6 +572,7 @@ var ObjectEditorDialog = GObject.registerClass({
                         this.propertyBoxClickCallbacks[i] = boxClickCallback || (()=>{ dev.log("Clicked on " + this.propertyDisplayName[i]); });
                     }
                 }, this);
+                if (utils.isEmpty(this.propertyDisplayName[i])) return;
                 if (this.propertyHidden[i]) return;
                 if (value === undefined) return;
                 if (value === null) return;

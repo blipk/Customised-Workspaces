@@ -253,8 +253,6 @@ var WorksetsIndicator = GObject.registerClass({
         menuItem.worksetPopupMenu = new popupMenu.PopupSubMenuMenuItem("Details for '"+ menuItem.workset.WorksetName +"'", true);
         menuItem.worksetPopupMenu.icon.icon_name = 'org.gnome.tweaks'
         menuItem.worksetPopupMenu.actor.add_style_class_name('panel-menu');
-        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
-        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'user-trash-symbolic', () => {Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
         menuItem.worksetPopupMenu.menuItem = menuItem;
         menuItem.worksetPopupMenu.menu.bye = function(pass=false) {
             try {
@@ -289,6 +287,9 @@ var WorksetsIndicator = GObject.registerClass({
             //menuItem.worksetPopupMenu.menu.bye();
             //return Clutter.EVENT_STOP;
         });
+        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
+        uiUtils.createIconButton(menuItem.worksetPopupMenu, 'user-trash-symbolic', () => {menuItem.worksetPopupMenu.menu.bye(); Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
+
 
         let viewArea = menuItem.worksetPopupMenu.menu;
         this.popUpMenus.push(menuItem.worksetPopupMenu);
@@ -310,16 +311,17 @@ var WorksetsIndicator = GObject.registerClass({
         let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
             track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
         let updateBackgroundStyle = (style, menuItem) => {
+            backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
+            });
+
             Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
             Me.session.saveSession();
-            if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName)
-                Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
-
-                backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-                    if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
-                });
+            if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
+                || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
+                    Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
         }
-        
+
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
