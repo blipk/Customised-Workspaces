@@ -87,9 +87,12 @@ var WorksetsIndicator = GObject.registerClass({
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
             let apply = (optionName == 'IsolateWorkspaces')
-                ? function() { Me.workspaceManager.activateIsolater(); }
-                : function() { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
-            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{  apply();});
+                ? () => { Me.workspaceManager.activateIsolater(); }
+                : () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
+            if (optionName == 'ReverseMenu') 
+                apply = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession();
+                                Me.session.resetIndicator() } ;
+            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{  apply(); });
             //optionMenuItem.pressHandler = optionMenuItem.connect('button_release_event', ()=>{  apply();  });
             uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description()});
             this.optionsMenuItems.push(optionMenuItem)
@@ -138,7 +141,7 @@ var WorksetsIndicator = GObject.registerClass({
 
 
         // Orient menu
-        if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED) {
+        if (Me.gExtensions.dash2panel || Me.session.activeSession.Options.ReverseMenu) { //&& Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED
             this.menu.addMenuItem(this.viewSection);
             this.menu.addMenuItem(this.optionsMenuItem);
             this.menu.addMenuItem(this.ViewSectionSeperator);
@@ -423,8 +426,8 @@ var WorksetsIndicator = GObject.registerClass({
         //Remove all and re-add with any changes
         if (!utils.isEmpty(Me.session.activeSession)) {
             this._worksetMenuItemsRemoveAll();
-            Me.session.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-                this._addWorksetMenuItemEntry(worksetBuffer, worksetIndex);
+            Me.session.Worksets.forEach((workset, index) => {
+                this._addWorksetMenuItemEntry(workset, index);
             }, this);
             Me.session.saveSession();
         }
@@ -442,23 +445,18 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _worksetMenuItemMoveToTop(menuItem) {
         try {
-        Me.session.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-            if (worksetBuffer === menuItem.workspace) {
-                this._addWorksetMenuItemEntry(worksetBuffer, worksetIndex);
-            }
-        }, this);
+        let index = Me.session.Worksets.findIndex(w => w === menuItem.workset);
+        if (index == -1) return;
+        this._addWorksetMenuItemEntry(Me.session.Worksets[index], index);
         this._refreshMenu();
         } catch(e) { dev.log(e) }
     }
     _worksetMenuItemToggleFavorite(menuItem) {
         try {
-        Me.session.Worksets.forEach(function (worksetBuffer, i) {
-            if (worksetBuffer.WorksetName == menuItem.workset.WorksetName) {
-                Me.session.Worksets[i].Favorite = !Me.session.Worksets[i].Favorite;
-            }
-        }, this);
+        let index = Me.session.Worksets.findIndex(w => w.WorksetName == menuItem.workset.WorksetName);
+        if (index == -1) return;
+        Me.session.Worksets[index].Favorite = !Me.session.Worksets[index].Favorite;
         Me.session.saveSession();
-
         this._worksetMenuItemMoveToTop(menuItem);
         } catch(e) { dev.log(e) }
     }

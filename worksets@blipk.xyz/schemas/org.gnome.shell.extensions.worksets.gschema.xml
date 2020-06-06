@@ -46,6 +46,11 @@
       <summary>Show help notifications</summary>
       <description>Show or hide these notifications when hovering over buttons and options.</description>
     </key>
+    <key name="reverse-menu" type="b">
+      <default>false</default>
+      <summary>Reverse menu order</summary>
+      <description>Reverse the menu order if you have your panel on the top or the bottom of the screen.</description>
+    </key>
      <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
       <summary>Object represting the current favorite apps on the panel</summary>

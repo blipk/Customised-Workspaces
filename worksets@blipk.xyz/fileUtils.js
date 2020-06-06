@@ -50,7 +50,7 @@ function checkExists(path) {
         result = directoryFile.query_exists(null);
     } else if (typeof path == 'object') {
         result = true;
-        path.forEach(function(path) {
+        path.forEach((path) => {
             if (!checkExists(path)) result = false;
         }, this)
     }

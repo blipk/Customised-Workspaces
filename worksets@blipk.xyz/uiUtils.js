@@ -171,6 +171,8 @@ function setImage(imgFilePath, parent) {
     } else {
         let img = new Gtk.Image({file: imgFilePath});
         let pixbuf = img.get_pixbuf()
+        if (pixbuf === null) // file doesnt exist
+            return (imgFilePath = '');
 
         const {width, height} = pixbuf;
         if (height == 0) return;

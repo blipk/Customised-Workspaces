@@ -4,7 +4,7 @@
     "url": "https://github.com/blipk/Customised-Workspaces",
     "description": "Customised Workspaces adds the following features to Gnome Shell workspace usage:\n\n* Set up customised workspaces that each have their own favourite applications on the dash\n* Optionally isolate running applications to only be shown on the on their workspace dash\n* Choose a different desktop background for each custom workspace\n* Name and save each customisation, set them to autoload on specific workspaces\n* Hide the extension once you've configured your preferences to enjoy seamlessly upgraded workspaces in gnome shell\n* Compatible with dash-to-dock and dash-to-panel\n\nEach functionality can be turned off so can be used just as a wallpaper manager or as a workspace isolater.",
     "original-author": "admin@kronosoul.xyz",
-    "version": 14,
+    "version": 17,
 
     "extension-id": "worksets",
     "application-id": "org.kronosoul.worksets",

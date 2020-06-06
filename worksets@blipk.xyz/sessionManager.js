@@ -133,6 +133,14 @@ var SessionManager = class SessionManager {
         }
         } catch(e) { dev.log(e) }
     }
+    resetIndicator() {
+        Me.worksetsIndicator.destroy();
+        delete Me.worksetsIndicator;
+        delete Main.panel.statusArea['WorksetsIndicator'];
+
+        Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
+        Me.worksetsIndicator.show();
+    }
     _cleanWorksets() {
         try {
         if (typeof this.SessionName !== 'string') this.SessionName = 'Default';
@@ -158,11 +166,11 @@ var SessionManager = class SessionManager {
 
         // Clean workspace maps
         let worksetNames = [];
-        this.Worksets.forEach(function (workset) {
+        this.Worksets.forEach((workset) => {
             worksetNames.push(workset.WorksetName);
         }, this);
 
-        this.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues, i) {
+        this.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
             if (!worksetNames.includes(workspaceMapValues.currentWorkset))
                 this.workspaceMaps[workspaceMapKey].currentWorkset = '';
         }, this);
@@ -311,12 +319,8 @@ var SessionManager = class SessionManager {
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
-    get DefaultWorkset() {
-        let index = 0;
-        this.Worksets.forEach(function(workset, i) {
-            if (workset.WorksetName == this.activeSession.Default)
-                index = i;
-        }, this);
+    get DefaultWorkset() { // Returns the object from the WorksetName
+        let index = this.Worksets.findIndex(w => w.WorksetName == this.activeSession.Default);
         return this.Worksets[index];
     }
     closeWorkset(workset) {
