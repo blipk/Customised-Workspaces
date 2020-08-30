@@ -2,7 +2,7 @@
 
 Create customised workspaces that are isolated from each other, each with their own favourite applications and desktop background.
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/deltadevelopments)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)]()
 [![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
 
 ### Usage

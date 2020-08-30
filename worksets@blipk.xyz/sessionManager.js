@@ -274,7 +274,7 @@ var SessionManager = class SessionManager {
         let installedApps = Shell.AppSystem.get_default().get_installed();
         installedApps.forEach(function(app){
             let id = app.get_id();
-            let name = app.get_name() || app.get_display_name() || 'Unkown App Name';
+            let name = app.get_name() || app.get_display_name() || 'Unknown App Name';
             let exec = app.get_string("Exec");
             let icon = '';
             if (app.get_icon()) icon = app.get_icon().to_string();
