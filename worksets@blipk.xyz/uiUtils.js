@@ -51,7 +51,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_fill: false, y_fill: false, x_expand: false, y_expand: false
+        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_expand: false, y_expand: false
     });
     iconButton.icon = icon;
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
@@ -260,7 +260,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         //Label for our dialog/text field with text about the dialog or a prompt for user text input
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
         let headerLabelArea = new St.BoxLayout();
-        headerLabelArea.add(stLabelUText, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START })
+        headerLabelArea.add(stLabelUText, { x_align: St.Align.START, y_align: St.Align.START })
 
         //Text field for user input
         this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: defaultText });
@@ -285,7 +285,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         this._errorBox.add(errorIcon, { y_align: St.Align.MIDDLE });
         this._errorMessage = new St.Label({ style_class: 'object-dialog-error-label' });
         this._errorMessage.clutter_text.line_wrap = true;
-        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
+        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, y_align: St.Align.MIDDLE });
         this._inputError = false;
         this._errorBox.hide();
 
@@ -344,7 +344,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
             }
         }
 
-        this.contentLayout.add(headerLabelArea, { x_fill: false, x_align: St.Align.START, y_align: St.Align.START });
+        this.contentLayout.add(headerLabelArea, { x_align: St.Align.START, y_align: St.Align.START });
         this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
 
         if (jsobjectsSets) {
@@ -358,8 +358,6 @@ var ObjectInterfaceDialog = GObject.registerClass({
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
 
-
-                //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectSetBoxMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
 
                 let setDisplayName = 'Object Set '+i;
 
@@ -387,7 +385,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
                     //Labelled button to select the object
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button({
-                        style_class: 'ci-action-btn', x_fill: true, can_focus: true,
+                        style_class: 'ci-action-btn', can_focus: true,
                         child: this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon
                     });
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_align(Clutter.ActorAlign.START);
@@ -501,7 +499,6 @@ var ObjectEditorDialog = GObject.registerClass({
         dialogInfoTextStyle = (typeof dialogInfoTextStyle == 'string') ? defaults : {...defaults, ...dialogInfoTextStyle };
         let stLabelUText = new St.Label(dialogInfoTextStyle);
 
-        dialogInfoTextStyle.x_fill = true;
         if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText, dialogInfoTextStyle);
 
 
@@ -513,7 +510,7 @@ var ObjectEditorDialog = GObject.registerClass({
         this._inputError = false;
         this._errorMessage = new St.Label({ style_class: 'object-dialog-error-label' });
         this._errorMessage.clutter_text.line_wrap = true;
-        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, x_fill: false, y_align: St.Align.MIDDLE, y_fill: false });
+        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, y_align: St.Align.MIDDLE });
         this._errorBox.hide();
 
         //Action buttons
