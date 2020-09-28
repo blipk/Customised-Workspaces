@@ -68,7 +68,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
-            if (thumbnailBox.worksetOverlayBox) thumbnailBox.worksetOverlayBox.destroy();
             if (!thumbnailBox._bgManager) return;
 
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
