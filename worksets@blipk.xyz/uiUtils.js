@@ -96,8 +96,8 @@ function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
         let monitor = Main.layoutManager.primaryMonitor;
         messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
         if (fadeTime > 0) removeUserNotification(label, fadeTime);
+        return label;
     }
-    return label;
 }
 function removeUserNotification(label, fadeTime) {
     if (!label) return;
