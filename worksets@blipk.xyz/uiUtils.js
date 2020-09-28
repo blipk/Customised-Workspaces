@@ -28,7 +28,7 @@
 const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
 const Main = imports.ui.main;
 const CheckBox  = imports.ui.checkBox.CheckBox;
-const { modalDialog, shellEntry, tweener, popupMenu } = imports.ui;
+const { modalDialog, shellEntry, popupMenu } = imports.ui;
 const { extensionUtils, util } = imports.misc;
 
 // Internal imports
@@ -107,7 +107,7 @@ function removeUserNotification(label, fadeTime) {
         if (label.attachedTo) label.attachedTo.notificationLabel = null;
         label = null;
     } else {
-        tweener.addTween(label, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
+        label.ease({ opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
                 Main.uiGroup.remove_actor(label);
                 messages = messages.filter(item => item != label);
                 if (label.attachedTo) label.attachedTo.notificationLabel = null;
@@ -457,8 +457,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         if (!this._errorBox.visible) {
             let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height(-1);
             let parentActor = this._errorBox.get_parent();
-            Tweener.addTween(parentActor,
-                             { height: parentActor.height + errorBoxNaturalHeight, time: DIALOG_GROW_TIME, transition: 'easeOutQuad',
+            parentActor.ease({ height: parentActor.height + errorBoxNaturalHeight, time: DIALOG_GROW_TIME, transition: 'easeOutQuad',
                                onComplete: () => {
                                    parentActor.set_height(-1);
                                    this._errorBox.show();
@@ -757,8 +756,7 @@ var ObjectEditorDialog = GObject.registerClass({
         if (!this._errorBox.visible) {
             let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height(-1);
             let parentActor = this._errorBox.get_parent();
-            tweener.addTween(parentActor,
-                             { height: parentActor.height + errorBoxNaturalHeight, time: DIALOG_GROW_TIME, transition: 'easeOutQuad',
+            parentActor.ease({ height: parentActor.height + errorBoxNaturalHeight, time: DIALOG_GROW_TIME, transition: 'easeOutQuad',
                                onComplete: () => {
                                    parentActor.set_height(-1);
                                    this._errorBox.show();
