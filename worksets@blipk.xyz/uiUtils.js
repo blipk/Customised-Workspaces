@@ -358,7 +358,6 @@ var ObjectInterfaceDialog = GObject.registerClass({
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
 
-
                 let setDisplayName = 'Object Set '+i;
 
                 //Build area for each object
@@ -385,7 +384,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
                     //Labelled button to select the object
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button({
-                        style_class: 'ci-action-btn', can_focus: true,
+                        style_class: 'ci-action-btn', x_align: Clutter.ActorAllign.FILL, can_focus: true,
                         child: this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon
                     });
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_align(Clutter.ActorAlign.START);
@@ -499,6 +498,7 @@ var ObjectEditorDialog = GObject.registerClass({
         dialogInfoTextStyle = (typeof dialogInfoTextStyle == 'string') ? defaults : {...defaults, ...dialogInfoTextStyle };
         let stLabelUText = new St.Label(dialogInfoTextStyle);
 
+        dialogInfoTextStyle.x_align = Clutter.ActorAlign.FILL;
         if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText, dialogInfoTextStyle);
 
 
