@@ -68,7 +68,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
-            if (thumbnailBox.worksetOverlayBox) thumbnailBox.worksetOverlayBox.destroy();
             if (!thumbnailBox._bgManager) return;
 
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
@@ -76,7 +75,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             //thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
 
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
-            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {x_fill: false, y_fill: false, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {});
 
             // Faster than setting text-shadows in CSS
             //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
