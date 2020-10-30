@@ -35,6 +35,7 @@ const { extensionUtils, util } = imports.misc;
 const Me = extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
+const tweener = imports.tweener.tweener || imports.ui.tweener;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
 function createIconButton (parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
@@ -107,7 +108,7 @@ function removeUserNotification(label, fadeTime) {
         if (label.attachedTo) label.attachedTo.notificationLabel = null;
         label = null;
     } else {
-        label.ease({ opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
+        tweener.addTween(label, { opacity: 0, time: fadeTime || 1.4, transition: 'easeOutQuad', onComplete: () => {
                 Main.uiGroup.remove_actor(label);
                 messages = messages.filter(item => item != label);
                 if (label.attachedTo) label.attachedTo.notificationLabel = null;
@@ -260,7 +261,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
         //Label for our dialog/text field with text about the dialog or a prompt for user text input
         let stLabelUText = new St.Label({ style_class: 'object-dialog-label', text: _(dialogText) });
         let headerLabelArea = new St.BoxLayout();
-        headerLabelArea.add(stLabelUText, { x_align: St.Align.START, y_align: St.Align.START })
+        headerLabelArea.add(stLabelUText)
 
         //Text field for user input
         this.stEntryUText = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: defaultText });
@@ -280,12 +281,12 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
         //Error box that will appear to prompt for user validation of input
         this._errorBox = new St.BoxLayout({ style_class: 'object-dialog-error-box' });
-        this.contentLayout.add(this._errorBox, { expand: true });
+        this.contentLayout.add(this._errorBox);
         let errorIcon = new St.Icon({ icon_name: 'dialog-error-symbolic', icon_size: 24, style_class: 'object-dialog-error-icon' });
-        this._errorBox.add(errorIcon, { y_align: St.Align.MIDDLE });
+        this._errorBox.add(errorIcon);
         this._errorMessage = new St.Label({ style_class: 'object-dialog-error-label' });
         this._errorMessage.clutter_text.line_wrap = true;
-        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, y_align: St.Align.MIDDLE });
+        this._errorBox.add(this._errorMessage);
         this._inputError = false;
         this._errorBox.hide();
 
@@ -344,8 +345,8 @@ var ObjectInterfaceDialog = GObject.registerClass({
             }
         }
 
-        this.contentLayout.add(headerLabelArea, { x_align: St.Align.START, y_align: St.Align.START });
-        this.contentLayout.add(this.stEntryUText, { y_align: St.Align.START });
+        this.contentLayout.add(headerLabelArea);
+        this.contentLayout.add(this.stEntryUText);
 
         if (jsobjectsSets) {
             //Build an area for each object set
@@ -353,7 +354,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                 this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
                 this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 18, style_class: 'object-dialog-error-icon' });
                 //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: St.Align.MIDDLE });
-                this.contentLayout.add(this._objectsSetBoxes[i], { expand: true });
+                this.contentLayout.add(this._objectsSetBoxes[i]);
 
                 this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
                 this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
@@ -369,18 +370,18 @@ var ObjectInterfaceDialog = GObject.registerClass({
                         i++;
                         count = 0;
                         this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
-                        this.contentLayout.add(this._objectsSetBoxes[i], { expand: true });
+                        this.contentLayout.add(this._objectsSetBoxes[i]);
                         this._objectsSetBoxes[i]._objectBoxes = [];
                     }
                     count++;
                     //Box base
                     this._objectsSetBoxes[i]._objectBoxes[ii] = new St.BoxLayout({ style_class: 'object-dialog-item' });
                     //this._objectsSetBoxes[i]._objectBoxes[ii].set_vertical(true);
-                    this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectBoxes[ii], { expand: true });
+                    this._objectsSetBoxes[i].add(this._objectsSetBoxes[i]._objectBoxes[ii]);
 
                     //State/type icon
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 14, style_class: 'object-dialog-item-icon' });
-                    this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon, { y_align: St.Align.MIDDLE });
+                    this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon);
 
                     //Labelled button to select the object
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button({
@@ -393,7 +394,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.connect('button-press-event', ()=>{
                             this.popModal(); this.close(object); return object;
                     });
-                    this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton, { y_align: St.Align.MIDDLE });
+                    this._objectsSetBoxes[i]._objectBoxes[ii].add(this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton);
 
                     let objectDisplayName = 'Object '+ii;
                     Object.keys(object).forEach(function(objectkey, objectkeyIndex){
@@ -499,18 +500,18 @@ var ObjectEditorDialog = GObject.registerClass({
         let stLabelUText = new St.Label(dialogInfoTextStyle);
 
         dialogInfoTextStyle.x_align = Clutter.ActorAlign.FILL;
-        if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText, dialogInfoTextStyle);
+        if (dialogInfoTextStyle.text != '') this.contentLayout.add(stLabelUText);
 
 
         //*Error box that will appear to prompt for user validation of input //TO DO
         this._errorBox = new St.BoxLayout();
-        this.contentLayout.add(this._errorBox, { expand: true });
+        this.contentLayout.add(this._errorBox);
         let errorIcon = new St.Icon({ icon_name: 'dialog-error-symbolic', icon_size: 24, style_class: 'object-dialog-error-icon' });
-        this._errorBox.add(errorIcon, { y_align: St.Align.MIDDLE });
+        this._errorBox.add(errorIcon);
         this._inputError = false;
         this._errorMessage = new St.Label({ style_class: 'object-dialog-error-label' });
         this._errorMessage.clutter_text.line_wrap = true;
-        this._errorBox.add(this._errorMessage, { expand: true, x_align: St.Align.START, y_align: St.Align.MIDDLE });
+        this._errorBox.add(this._errorMessage);
         this._errorBox.hide();
 
         //Action buttons
@@ -600,7 +601,7 @@ var ObjectEditorDialog = GObject.registerClass({
                 this._propertyBoxes[i]._propertyBoxMessageButton.connect('button-press-event', () => {
                     this.propertyBoxClickCallbacks[i].call(this, i);
                 });
-                this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxMessageButton, {x_align: St.Align.START, expand: true});
+                this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxMessageButton);
 
                 //Property value editor element
                 if (this.propertyLabelOnly[i]) return;
@@ -608,7 +609,7 @@ var ObjectEditorDialog = GObject.registerClass({
                     this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox('');
                     this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked = editableObject[key];
                     this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect('clicked', () => {editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked});
-                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement.actor, { expand: true });
+                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement.actor);
                 } else if (typeof value === 'string' || typeof value === 'number') {
                     this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry({ style_class: 'object-dialog-label', can_focus: true, text: '', x_align: Clutter.ActorAlign.FILL, x_expand: true});
                     this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.min_width = 200;
@@ -619,7 +620,7 @@ var ObjectEditorDialog = GObject.registerClass({
                         this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.set_max_length(value.length);
                     }
                     this._propertyBoxes[i]._propertyBoxEditorElement.set_text(value.toString());
-                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement, { y_align: St.Align.END });
+                    this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement);
 
                     this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.get_buffer().connect('inserted-text', (o, position, new_text, new_text_length, e) => {
                         if (typeof value !== 'number') return Clutter.EVENT_PROPAGATE;
@@ -668,8 +669,8 @@ var ObjectEditorDialog = GObject.registerClass({
                         //Vertical box area for each subobject property
                         this._propertyBoxes[i]._boolBox[n] = new St.BoxLayout({ vertical: true, reactive: true,
                             track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL});
-                        this._propertyBoxes[i].add(this._propertyBoxes[i]._boolBox[n], { expand: true, reactive: true,
-                            track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL });
+                        this._propertyBoxes[i].add(this._propertyBoxes[i]._boolBox[n]);
+                        //, { expand: true, reactive: true, track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL }
 
                         // Label
                         this._propertyBoxes[i]._boolBox[n]._boolBoxMessage = new St.Label();
@@ -678,7 +679,7 @@ var ObjectEditorDialog = GObject.registerClass({
 
                         this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.add_style_class_name('uri-element-label')
                         //this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.clutter_text.set_line_wrap(false);
-                        this._propertyBoxes[i]._boolBox[n].add(this._propertyBoxes[i]._boolBox[n]._boolBoxMessage, { expand: true });
+                        this._propertyBoxes[i]._boolBox[n].add(this._propertyBoxes[i]._boolBox[n]._boolBoxMessage);
                         this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.set_text(subObjectPropertyDisplayName);
 
                         // Toggling Function
