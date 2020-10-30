@@ -39,7 +39,7 @@ function get_datadir() {
     return Gio.File.new_for_path(m[1]).get_parent().get_parent().get_path();
 }
 
-window.worksets = {extdatadir: GLib.build_filenamev([get_datadir(), 'worksets@kronosoul.xyz'])};
+window.worksets = {extdatadir: GLib.build_filenamev([get_datadir(), 'worksets@blipk.xyz'])};
 imports.searchPath.unshift(worksets.extdatadir);
 
 worksets.metadata = (() => {
