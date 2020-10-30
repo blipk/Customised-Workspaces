@@ -384,7 +384,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 
                     //Labelled button to select the object
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button({
-                        style_class: 'ci-action-btn', x_align: Clutter.ActorAllign.FILL, can_focus: true,
+                        style_class: 'ci-action-btn', x_align: Clutter.ActorAlign.FILL, can_focus: true,
                         child: this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon
                     });
                     this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_align(Clutter.ActorAlign.START);
