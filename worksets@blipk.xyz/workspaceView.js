@@ -65,6 +65,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     refreshThumbNailsBoxes() {
         try {
         this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
+        if (!this._visible) return;
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
@@ -76,25 +77,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
             thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {});
-
-            // Faster than setting text-shadows in CSS
-            //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
-            //thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
-
-            /*
-            thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
-            thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
-            thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
-            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: true, x_align: St.Align.START, y_align: St.Align.END, expand: true});
-            thumbnailBox.worksetLabelUnderlay.clutter_text.set_scale(1.1, 1.1);
-            */
-
-            // Set text for any custom workspaces
-
-            let text = '';
-            if (Me.session.workspaceMaps['Workspace'+i] != undefined && this._visible) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
-            thumbnailBox.worksetLabel.set_text(text);
-            //thumbnailBox.worksetLabelUnderlay.set_text(text);
 
             // Default background
             let newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -109,8 +91,27 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
             }, this);
 
-            if (thumbnailBox.workset && this._visible) {
-                // Action buttons for custom workspaces
+
+            // Faster than setting text-shadows in CSS
+            //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
+            //thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
+
+            /*
+            thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
+            thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
+            thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
+            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: true, x_align: St.Align.START, y_align: St.Align.END, expand: true});
+            thumbnailBox.worksetLabelUnderlay.clutter_text.set_scale(1.1, 1.1);
+            */
+
+            // Set text for any custom workspaces
+            let text = '';
+            if (Me.session.workspaceMaps['Workspace'+i] != undefined) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
+            thumbnailBox.worksetLabel.set_text(text);
+            //thumbnailBox.worksetLabelUnderlay.set_text(text);
+
+            // Action buttons for custom workspaces
+            if (thumbnailBox.workset) {   
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, {icon_size: 170}, {msg: "Edit '"+thumbnailBox.workset.WorksetName+"'"});
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, {icon_size: 170}, {msg: "Change the background for '"+thumbnailBox.workset.WorksetName+"'"})
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, {icon_size: 170}, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
