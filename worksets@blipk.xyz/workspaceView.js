@@ -73,13 +73,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
-            //thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
-
-            thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label'});
-            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {});
-
-            // New background for thumbnail box
-            thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
+            thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
 
             // Find active workset for thumbnailbox
             thumbnailBox.workset = null;
@@ -91,41 +85,33 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             }, this);
             dev.log(thumbnailBox.workset ? thumbnailBox.workset.WorksetName : "DEFAULT")
 
-            //Selecct background
+            // New background for thumbnail box
+            thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
+            //Select background
             if (thumbnailBox.workset) {
-                thumbnailBox.newbg.set_file(Gio.file_new_for_path(thumbnailBox.workset.BackgroundImage), 
+                thumbnailBox.newbg.set_file(Gio.file_new_for_path(thumbnailBox.workset.BackgroundImage),
                     imports.gi.GDesktopEnums.BackgroundStyle[thumbnailBox.workset.BackgroundImage.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                dev.log(thumbnailBox.workset.BackgroundImage)
+                //dev.log(thumbnailBox.workset.BackgroundImage)
             } else {
-                thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), 
+                thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage),
                     imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                dev.log(Me.session.DefaultWorkset.BackgroundImage)
+                //dev.log(Me.session.DefaultWorkset.BackgroundImage)
             }
-            dev.log(thumbnailBox.newbg)
-
-            // Faster than setting text-shadows in CSS
-            //let fx = new uiUtils.TextOutlineEffect({ shader_type: Clutter.ShaderType.FRAGMENT_SHADER });
-            //thumbnailBox.worksetLabel.clutter_text.add_effect_with_name('text-outline', fx);
-
-            /*
-            thumbnailBox.worksetUnderlayBox = new St.BoxLayout({style_class: 'workspace-underlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
-            thumbnailBox.worksetUnderlayBox.width = thumbnailBox._contents.width;
-            thumbnailBox.worksetLabelUnderlay = new St.Label({style_class: 'workset-label-underlay'});
-            thumbnailBox.worksetUnderlayBox.add(thumbnailBox.worksetLabelUnderlay, {x_fill: true, y_fill: true, x_align: St.Align.START, y_align: St.Align.END, expand: true});
-            thumbnailBox.worksetLabelUnderlay.clutter_text.set_scale(1.1, 1.1);
-            */
 
             // Set text for any custom workspaces
-            let text = '';
-            if (Me.session.workspaceMaps['Workspace'+i] != undefined) text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
+            thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label', x_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.END, y_expand: true});
+            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {});
+            let text='';
+            if (Me.session.workspaceMaps['Workspace'+i] != undefined)
+                text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             thumbnailBox.worksetLabel.set_text(text);
-            //thumbnailBox.worksetLabelUnderlay.set_text(text);
 
             // Action buttons for custom workspaces
-            if (thumbnailBox.workset) { 
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, {icon_size: 140}, {msg: "Edit '"+thumbnailBox.workset.WorksetName+"'"});
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, {icon_size: 140}, {msg: "Change the background for '"+thumbnailBox.workset.WorksetName+"'"})
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, {icon_size: 140}, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
+            if (thumbnailBox.workset) {
+                let icon_options = {icon_size: 140, x_align: Clutter.ActorAlign.END, x_expand: true, y_expand: true};
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, icon_options, {msg: "Edit '"+thumbnailBox.workset.WorksetName+"'"});
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox.workset.WorksetName+"'"})
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, icon_options, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail

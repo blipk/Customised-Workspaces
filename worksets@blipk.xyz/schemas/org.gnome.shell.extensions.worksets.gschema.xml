@@ -11,11 +11,6 @@
   </enum>
 
   <schema id="org.gnome.shell.extensions.worksets" path="/org/gnome/shell/extensions/worksets/">
-    <key name="panel-position" enum="org.gnome.shell.extensions.worksets.test">
-      <default>'DOTS'</default>
-      <summary>test</summary>
-      <description>test</description>
-    </key>
     <key name="isolate-workspaces" type="b">
       <default>true</default>
       <summary>Isolate running applications</summary>

@@ -46,7 +46,7 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Set up menu box to build into
         let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
-        this.icon = new St.Icon({ icon_name: 'tab-new-symbolic', style_class: 'system-status-icon worksets-indicator-icon' });
+        this.icon = new St.Icon({ icon_name: 'preferences-desktop-workspaces', style_class: 'system-status-icon worksets-indicator-icon' });
         hbox.add_child(this.icon);
         //let buttonText = new St.Label(    {text: (''), y_align: Clutter.ActorAlign.CENTER }   );
         //hbox.add_child(buttonText);
