@@ -44,15 +44,15 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
     else iconNameURI = iconNames;
     let defaults = {icon_name: iconNameURI,
                               style_class: 'icon-button',
-                              x_expand: true,
-                              x_align: Clutter.ActorAlign.END,
+                              x_expand: false,
+                              x_align: Clutter.ActorAlign.CENTER,
                               y_expand: true,
                               y_align: Clutter.ActorAlign.CENTER};
     options = {...defaults, ...options };
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_expand: false, y_expand: false, x_align: Clutter.ActorAlign.END
+        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_expand: false, y_expand: false
     });
     iconButton.icon = icon;
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);

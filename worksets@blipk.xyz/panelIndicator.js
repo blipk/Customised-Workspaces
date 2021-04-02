@@ -89,7 +89,7 @@ var WorksetsIndicator = GObject.registerClass({
             let apply = (optionName == 'IsolateWorkspaces')
                 ? () => { Me.workspaceManager.activateIsolater(); }
                 : () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
-            if (optionName == 'ReverseMenu') 
+            if (optionName == 'ReverseMenu')
                 apply = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession();
                                 Me.session.resetIndicator() } ;
             optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{  apply(); });
@@ -132,12 +132,10 @@ var WorksetsIndicator = GObject.registerClass({
         let sessionMenuItem = new popupMenu.PopupImageMenuItem('New Environment', 'document-new-symbolic');
         sessionMenuItem.label.set_x_expand(true);
         this.menu.sessionMenuItem = sessionMenuItem;
-
-
         sessionMenuItem.connect('activate', ()=>{Me.session.newWorkset(); this._refreshMenu(); });
 
-        uiUtils.createIconButton(sessionMenuItem, 'document-open-symbolic', () => {Me.session.loadObject(); this._refreshMenu();}, {}, {msg: "Load a custom workspace from backups"});
-        uiUtils.createIconButton(sessionMenuItem, 'tab-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
+        uiUtils.createIconButton(sessionMenuItem, 'document-save-symbolic', () => {Me.session.loadObject(); this._refreshMenu();}, {}, {msg: "Load a custom workspace from backups"});
+        //uiUtils.createIconButton(sessionMenuItem, 'document-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
 
 
         // Orient menu

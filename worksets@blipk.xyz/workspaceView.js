@@ -134,11 +134,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             btn.menu = null;
                             return true;
                         }
-                        btn.menu.actor.add_style_class_name('panel-menu');
+                        //btn.menu.actor.add_style_class_name('panel-menu');
 
                         let menuItems = [];
                         let defaultMenuItem;
                         Me.session.Worksets.forEach(function(workset, ii) {
+                            // Don't show active worksets
                             let activeIndex = Me.session.getWorksetActiveIndex(workset);
                             if (activeIndex > -1) return;
 
