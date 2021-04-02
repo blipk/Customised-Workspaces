@@ -65,35 +65,40 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     refreshThumbNailsBoxes() {
         try {
         this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
-        if (!this._visible) return;
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
+            // Find active workset for thumbnailbox
+            thumbnailBox.workset = null;
+            Me.session.Worksets.forEach(function (worksetBuffer, index) {
+                if (worksetBuffer.WorksetName == Me.session.workspaceMaps['Workspace'+i].currentWorkset) {
+                    thumbnailBox.workset = Me.session.Worksets[index];
+                }
+            }, this);
+
+            // New background for thumbnail box
+            if (thumbnailBox._bgManager) {
+                // Prevent excessive recursion but enforce background updates during various events
+                thumbnailBox._updated = false;
+                thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+                thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
+                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
+                let bg;
+                if (thumbnailBox.workset) bg = thumbnailBox.workset;
+                else bg = Me.session.DefaultWorkset
+                thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
+                        imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            }
+
+            // Stop after background change if overlay box is not enabled
+            if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
+
+            // Delete old overlay box and rebuild
             if (thumbnailBox.worksetOverlayBox)
                 thumbnailBox.worksetOverlayBox.destroy_all_children();
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
             thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
-
-            // Find active workset for thumbnailbox
-            thumbnailBox.workset = null;
-            Me.session.Worksets.forEach(function (worksetBuffer, index) {
-                if (worksetBuffer.WorksetName == Me.session.workspaceMaps['Workspace'+i].currentWorkset) {
-                    //thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.Worksets[index].BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle[Me.session.Worksets[index].BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                    thumbnailBox.workset = Me.session.Worksets[index];
-                }
-            }, this);
-            //dev.log(thumbnailBox.workset ? thumbnailBox.workset.WorksetName : "DEFAULT")
-
-            // New background for thumbnail box
-            thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
-            if (thumbnailBox.workset) {
-                thumbnailBox.newbg.set_file(Gio.file_new_for_path(thumbnailBox.workset.BackgroundImage),
-                    imports.gi.GDesktopEnums.BackgroundStyle[thumbnailBox.workset.BackgroundImage.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-            } else {
-                thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage),
-                    imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-            }
 
             // Set text for any custom workspaces
             thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label', x_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.END, y_expand: true});
@@ -202,15 +207,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }, {icon_size: 170}, {msg: "Create new custom workspace here"});
             }
 
-            // Prevent excessive recursion but enforce background updates during various events
-            //thumbnailBox._updated = false;
-            //thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
-            if (thumbnailBox._bgManager)
-                thumbnailBox._bgManager.backgroundActor.background = thumbnailBox.newbg;
-
             // Apply changes
             thumbnailBox._contents.add_child(thumbnailBox.worksetOverlayBox);
-
             } catch(e) { dev.log(e) }
         }, this)
 

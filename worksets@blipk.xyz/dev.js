@@ -43,7 +43,14 @@ function log(context, message) {
         out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name +" "+ message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
-        out += JSON.stringify(message, null, 2) + '\r\n\r\n';
+        var seen = [];
+        out += JSON.stringify(message, function(key, val) {
+            if (val != null && typeof val == "object") {
+                if (seen.indexOf(val) >= 0) return;
+                seen.push(val);
+            }
+            return val;
+        }, 2) + '\r\n\r\n';
     } else {
         out += ":Info    | " + context.toString() + " | " + message.toString() + '\r\n';
     }
@@ -51,3 +58,5 @@ function log(context, message) {
     global.log(out);
     fileUtils.saveRawToFile(out, 'debug.log', fileUtils.CONF_DIR, true);
 }
+
+
