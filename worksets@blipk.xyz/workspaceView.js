@@ -69,7 +69,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
-            //if (!thumbnailBox._bgManager) return;
             if (thumbnailBox.worksetOverlayBox)
                 thumbnailBox.worksetOverlayBox.destroy_all_children();
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
@@ -84,7 +83,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     thumbnailBox.workset = Me.session.Worksets[index];
                 }
             }, this);
-            dev.log(thumbnailBox.workset ? thumbnailBox.workset.WorksetName : "DEFAULT")
+            //dev.log(thumbnailBox.workset ? thumbnailBox.workset.WorksetName : "DEFAULT")
 
             // New background for thumbnail box
             thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -206,9 +205,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Prevent excessive recursion but enforce background updates during various events
             //thumbnailBox._updated = false;
             //thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+            if (thumbnailBox._bgManager)
+                thumbnailBox._bgManager.backgroundActor.background = thumbnailBox.newbg;
 
             // Apply changes
-            thumbnailBox._bgManager.backgroundActor.background = thumbnailBox.newbg;
             thumbnailBox._contents.add_child(thumbnailBox.worksetOverlayBox);
 
             } catch(e) { dev.log(e) }
