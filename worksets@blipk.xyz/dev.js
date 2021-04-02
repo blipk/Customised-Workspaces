@@ -27,9 +27,9 @@
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { utils, fileUtils } = Me.imports;
-const _debug_ = true;
 
 function log(context, message) {
+    const _debug_ = Me.session ? Me.session.activeSession.Options.DebugMode : true;
     if (!_debug_) return;
     if (message === undefined) {message = context; context = "() =>";}
     if (message === undefined) {message = "UNDEFINED value"}

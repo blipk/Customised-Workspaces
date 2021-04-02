@@ -41,10 +41,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.injections = {}
             this.thumbnailBoxes = [];
             this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
-
             this.menus = [];
 
-            if (!this.injections['addThumbnails']) this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
+            if (!this.injections['addThumbnails'])
+                this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
                 Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
@@ -59,7 +59,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     }
     destroy() {
         try {
-            this.cleanupInjections();
+        this.cleanupInjections();
         } catch(e) { dev.log(e) }
     }
     refreshThumbNailsBoxes() {
@@ -69,8 +69,9 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
-            if (!thumbnailBox._bgManager) return;
-
+            //if (!thumbnailBox._bgManager) return;
+            if (thumbnailBox.worksetOverlayBox)
+                thumbnailBox.worksetOverlayBox.destroy_all_children();
             thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.END, x_align: Clutter.ActorAlign.END});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
             thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
@@ -87,15 +88,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // New background for thumbnail box
             thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
-            //Select background
             if (thumbnailBox.workset) {
                 thumbnailBox.newbg.set_file(Gio.file_new_for_path(thumbnailBox.workset.BackgroundImage),
                     imports.gi.GDesktopEnums.BackgroundStyle[thumbnailBox.workset.BackgroundImage.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                //dev.log(thumbnailBox.workset.BackgroundImage)
             } else {
                 thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage),
                     imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-                //dev.log(Me.session.DefaultWorkset.BackgroundImage)
             }
 
             // Set text for any custom workspaces
@@ -111,7 +109,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 let icon_options = {icon_size: 140, x_align: Clutter.ActorAlign.END, x_expand: true, y_expand: true};
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, icon_options, {msg: "Edit '"+thumbnailBox.workset.WorksetName+"'"});
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox.workset.WorksetName+"'"})
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset) }, icon_options, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
+                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset); Me.workspaceViewManager.refreshThumbNailsBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail
@@ -162,7 +160,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                                     Me.workspaceManager.noUpdate = false;
                                     Me.workspaceManager._workspaceUpdate();
                                 });
-
                                 btn.menu.bye();
                             } );
 
@@ -173,9 +170,23 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             btn.menu.addMenuItem(menuItem, 0);
                         }, this);
 
+                        // Move the active workset to the top
                         if (!utils.isEmpty(defaultMenuItem)) {
                             btn.menu.moveMenuItem(defaultMenuItem, 0);
                             defaultMenuItem.setOrnament(popupMenu.Ornament.DOT);
+                        }
+
+                        // If no inactive worksets to add to the menu
+                        if (menuItems.length == 0) {
+                            let menuItem = new popupMenu.PopupMenuItem('');
+                            menuItems.push(menuItem);
+                            menuItem.label.set_text("Create New Workspace Here");
+                            menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
+                                Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
+                                btn.menu.bye();
+                            } );
+                            menuItem.setOrnament(popupMenu.Ornament.NONE);
+                            btn.menu.addMenuItem(menuItem, 0);
                         }
 
                         Main.uiGroup.add_actor(btn.menu.actor);
@@ -187,11 +198,9 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     if (btn.menu) btn.menu.bye();
                 } );
 
-
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
                 }, {icon_size: 170}, {msg: "Create new custom workspace here"});
-                //thumbnailBox.newbg.set_file(Gio.file_new_for_path(Me.session.DefaultWorkset.BackgroundImage), imports.gi.GDesktopEnums.BackgroundStyle[Me.session.DefaultWorkset.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             }
 
             // Prevent excessive recursion but enforce background updates during various events

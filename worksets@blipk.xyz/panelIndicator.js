@@ -137,7 +137,6 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(sessionMenuItem, 'document-save-symbolic', () => {Me.session.loadObject(); this._refreshMenu();}, {}, {msg: "Load a custom workspace from backups"});
         //uiUtils.createIconButton(sessionMenuItem, 'document-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
 
-
         // Orient menu
         if (Me.gExtensions.dash2panel || Me.session.activeSession.Options.ReverseMenu) { //&& Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED
             this.menu.addMenuItem(this.viewSection);
