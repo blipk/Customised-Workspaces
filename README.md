@@ -32,7 +32,7 @@ This has only been thoroughly tested on Gnome Shell versions 3.22, 3.30 and 3.36
 
 ```
 This file is part of the Customised Workspaces Gnome Extension for Gnome 3
-Copyright (C) 2020 A.D. - http://kronosoul.xyz
+Copyright (C) 2021 A.D. - http://kronosoul.xyz
 ```
 
 ```
