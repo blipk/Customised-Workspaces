@@ -201,15 +201,13 @@ var WorksetsIndicator = GObject.registerClass({
         //Decorate with indicator if active
         menuItem.favAppsMenuItems = [];
 
-            //menuItem.setOrnament(popupMenu.Ornament.CHECK);
-
         //if (activeIndex > -1) {
-            menuItem._ornamentLabel.text = '';
-            menuItem._ornamentIcon = new St.BoxLayout({ style_class: 'popup-menu-icon-ornament' });
-            menuItem.replace_child(menuItem._ornamentLabel, menuItem._ornamentIcon);
-            let icon = uiUtils.createIconButton(menuItem._ornamentIcon, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {icon_size: 14}, {msg: viewOpenMessage});
-            icon.translation_x = 3.5;
-        //
+        menuItem._ornamentLabel.text = '';
+        menuItem._ornamentIcon = new St.BoxLayout({ style_class: 'popup-menu-icon-ornament' });
+        menuItem.replace_child(menuItem._ornamentLabel, menuItem._ornamentIcon);
+        let icon = uiUtils.createIconButton(menuItem._ornamentIcon, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {icon_size: 14}, {msg: viewOpenMessage});
+        icon.translation_x = 3.5;
+
         //Default and currently active always up the top
         let defaultMenuItem, activeMenuItem;
         if (Me.session.activeSession.Default == menuItem.workset.WorksetName) {
@@ -220,7 +218,7 @@ var WorksetsIndicator = GObject.registerClass({
             activeMenuItem = menuItem;
             this.defaultSection.addMenuItem(menuItem, 0);
             this.defaultSection.moveMenuItem(activeMenuItem , 1);
-        }else (activeIndex > -1)
+        } else (activeIndex > -1)
                 ? this.favoritesSection.addMenuItem(menuItem, 0) : this.historySection.addMenuItem(menuItem, 0);
 
         if (activeMenuItem)
@@ -231,8 +229,6 @@ var WorksetsIndicator = GObject.registerClass({
     }
     _worksetSubMenuRefresh(menuItem) {
         try {
-        let firstMenuItem = this.historySection.firstMenuItem;
-
         if (!menuItem.isShowing) menuItem.isShowing = false;
         let isShowing = menuItem.isShowing;
 
@@ -289,7 +285,6 @@ var WorksetsIndicator = GObject.registerClass({
         });
         uiUtils.createIconButton(menuItem.worksetPopupMenu, 'document-save-symbolic', () => {Me.session.saveWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Save a backup of '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem.worksetPopupMenu, 'user-trash-symbolic', () => {menuItem.worksetPopupMenu.menu.bye(); Me.session.deleteWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Delete '"+menuItem.workset.WorksetName+"' and save a backup"});
-
 
         let viewArea = menuItem.worksetPopupMenu.menu;
         this.popUpMenus.push(menuItem.worksetPopupMenu);

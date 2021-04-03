@@ -26,7 +26,7 @@ chmod +x install.sh && ./install.sh
 
 ### Support
 
-This has only been thoroughly tested on Gnome Shell versions 3.22, 3.30 and 3.36, although it should work on any version from 3.00 to 3.36.
+This has only been thoroughly tested on Gnome Shell versions 3.22, 3.30, 3.36 and 3.38, although it should work on any version from 3.00 to 3.38.
 
 ### Licence
 

@@ -235,7 +235,6 @@ var TextOutlineEffect = GObject.registerClass({
 var ObjectInterfaceDialog = GObject.registerClass({
     GTypeName: 'Worksets_ObjectInterfaceDialog'
 }, class ObjectInterfaceDialog extends modalDialog.ModalDialog {
-
     _init(dialogText=null, callback=null,
         showTextInput=true, disableTextInput=false,
         jsobjectsSets=[], /*array of js objects or of strings to valid directories with .json files*/

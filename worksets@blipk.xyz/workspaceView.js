@@ -42,9 +42,20 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.thumbnailBoxes = [];
             this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
             this.menus = [];
+            this._runCount = 0;
 
             if (!this.injections['addThumbnails'])
                 this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
+            if (!this.injections['syncStacking'])
+                this.injections['syncStacking'] = workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking;
+
+            workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = function(stackIndices) {
+                // Disabling this prevents the thumbnail window clones from restacking
+                // During the succseive updates of refreshThumbNailsBoxes() to maintain the background state
+                // This causes the windows to flash as it rebuilds when switching workspaces
+                return;
+                Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
+            };
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
                 Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
@@ -55,6 +66,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     }
     cleanupInjections() {
         workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
+        workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
         delete this.injections;
     }
     destroy() {
@@ -62,7 +74,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         this.cleanupInjections();
         } catch(e) { dev.log(e) }
     }
-    refreshThumbNailsBoxes() {
+    refreshThumbNailsBoxes() {       
         try {
         this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
 
@@ -81,13 +93,16 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false;
                 thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+                // Create new background and assign to the BackgroundActor in the BackgroundManager
+                if (thumbnailBox.newbg) thumbnailBox.newbg.unref()
                 thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
                 thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
-                let bg;
-                if (thumbnailBox.workset) bg = thumbnailBox.workset;
-                else bg = Me.session.DefaultWorkset
+
+                let bg = thumbnailBox.workset || Me.session.DefaultWorkset;
                 thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
                         imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            } else {
+                // Will need to be created in 3.40
             }
 
             // Stop after background change if overlay box is not enabled
@@ -123,84 +138,80 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
                 let btn = uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'go-jump-symbolic', () => {
                     try {
-                        if (btn.menu) {
-                            btn.menu.bye();
-                            return;
-                        }
-                        btn.menu = new popupMenu.PopupMenu(btn, St.Align.START, St.Side.TOP);
-                        this.menus.push(btn.menu)
-                        btn.menu.bye = function() {
-                            Main.uiGroup.remove_actor(btn.menu.actor);
-                            btn.menu.actor.hide();
-                            btn.menu.destroy();
-                            btn.menu = null;
-                            return true;
-                        }
-                        //btn.menu.actor.add_style_class_name('panel-menu');
+                    if (btn.menu)
+                        return btn.menu.bye();
 
-                        let menuItems = [];
-                        let defaultMenuItem;
-                        Me.session.Worksets.forEach(function(workset, ii) {
-                            // Don't show active worksets
-                            let activeIndex = Me.session.getWorksetActiveIndex(workset);
-                            if (activeIndex > -1) return;
+                    btn.menu = new popupMenu.PopupMenu(btn, St.Align.START, St.Side.TOP);
+                    this.menus.push(btn.menu)
+                    btn.menu.bye = function() {
+                        Main.uiGroup.remove_actor(btn.menu.actor);
+                        btn.menu.actor.hide();
+                        btn.menu.destroy();
+                        btn.menu = null;
+                        return true;
+                    }
 
-                            let menuItem = new popupMenu.PopupMenuItem('');
-                            menuItems.push(menuItem);
-                            if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = menuItem;
-                            menuItem.workset = workset;
-                            menuItem.label.set_text(menuItem.workset.WorksetName);
+                    let menuItems = [];
+                    let defaultMenuItem;
+                    Me.session.Worksets.forEach(function(workset, ii) {
+                        // Don't show active worksets
+                        let activeIndex = Me.session.getWorksetActiveIndex(workset);
+                        if (activeIndex > -1) return;
 
-                            menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
-                                Me.workspaceManager.loadDefaults = false;
-                                Me.workspaceManager.noUpdate = true;
+                        let menuItem = new popupMenu.PopupMenuItem('');
+                        menuItems.push(menuItem);
+                        if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = menuItem;
+                        menuItem.workset = workset;
+                        menuItem.label.set_text(menuItem.workset.WorksetName);
+
+                        menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
+                            Me.workspaceManager.loadDefaults = false;
+                            Me.workspaceManager.noUpdate = true;
+                            Me.workspaceManager.switchToWorkspace(i);
+                            Me.session.displayWorkset(workset);
+                            // Something is switching to the last workspace after this menu is destroyed
+                            // This is my hack to make sure we stay on the right one
+                            GLib.timeout_add(null, 230, ()=> {
                                 Me.workspaceManager.switchToWorkspace(i);
-                                Me.session.displayWorkset(workset);
-                                // Something is switching to the last workspace after this menu is destroyed
-                                // This is my hack to make sure we stay on the right one
-                                GLib.timeout_add(null, 230, ()=> {
-                                    Me.workspaceManager.switchToWorkspace(i);
-                                    Me.workspaceManager.loadDefaults = true;
-                                    Me.workspaceManager.noUpdate = false;
-                                    Me.workspaceManager._workspaceUpdate();
-                                });
-                                btn.menu.bye();
-                            } );
+                                Me.workspaceManager.loadDefaults = true;
+                                Me.workspaceManager.noUpdate = false;
+                                Me.workspaceManager._workspaceUpdate();
+                            });
+                            btn.menu.bye();
+                        } );
 
-                            if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
-                                btn.menu.defaultItem = menuItem.workset.WorksetName
+                        if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
+                            btn.menu.defaultItem = menuItem.workset.WorksetName
 
-                            menuItem.setOrnament(popupMenu.Ornament.NONE);
-                            btn.menu.addMenuItem(menuItem, 0);
-                        }, this);
+                        menuItem.setOrnament(popupMenu.Ornament.NONE);
+                        btn.menu.addMenuItem(menuItem, 0);
+                    }, this);
 
-                        // Move the active workset to the top
-                        if (!utils.isEmpty(defaultMenuItem)) {
-                            btn.menu.moveMenuItem(defaultMenuItem, 0);
-                            defaultMenuItem.setOrnament(popupMenu.Ornament.DOT);
-                        }
+                    // Move the active workset to the top
+                    if (!utils.isEmpty(defaultMenuItem)) {
+                        btn.menu.moveMenuItem(defaultMenuItem, 0);
+                        defaultMenuItem.setOrnament(popupMenu.Ornament.DOT);
+                    }
 
-                        // If no inactive worksets to add to the menu
-                        if (menuItems.length == 0) {
-                            let menuItem = new popupMenu.PopupMenuItem('');
-                            menuItems.push(menuItem);
-                            menuItem.label.set_text("Create New Workspace Here");
-                            menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
-                                Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
-                                btn.menu.bye();
-                            } );
-                            menuItem.setOrnament(popupMenu.Ornament.NONE);
-                            btn.menu.addMenuItem(menuItem, 0);
-                        }
+                    // If no inactive worksets for the menu, add an option to create
+                    if (menuItems.length == 0) {
+                        let menuItem = new popupMenu.PopupMenuItem('');
+                        menuItems.push(menuItem);
+                        menuItem.label.set_text("Create New Workspace Here");
+                        menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
+                            Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
+                            btn.menu.bye();
+                        } );
+                        menuItem.setOrnament(popupMenu.Ornament.NONE);
+                        btn.menu.addMenuItem(menuItem, 0);
+                    }
 
-                        Main.uiGroup.add_actor(btn.menu.actor);
-                        GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
-                        btn.menu.open();
+                    Main.uiGroup.add_actor(btn.menu.actor);
+                    GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
+                    btn.menu.open();
                     } catch(e) { dev.log(e) }
                 }, {icon_size: 170}, {msg: "Choose a custom workspace to load here"});
-                btn.connect('destroy', () => {
-                    if (btn.menu) btn.menu.bye();
-                } );
+                btn.connect('destroy', () => { if (btn.menu) btn.menu.bye(); } );
 
                 uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
