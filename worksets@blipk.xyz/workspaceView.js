@@ -54,7 +54,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // During the succseive updates of refreshThumbNailsBoxes() to maintain the background state
                 // This causes the windows to flash as it rebuilds when switching workspaces
                 return;
-                Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
+                //Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
             };
 
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
