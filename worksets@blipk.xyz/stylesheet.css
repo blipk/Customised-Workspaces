@@ -71,7 +71,7 @@ entry:indeterminate {
 
 
 .workspace-overlay {
-    padding-top: 55em;
+    padding-top: 0em;
 }
 .workspace-overlay StIcon {
     color: ghostwhite;
@@ -80,7 +80,8 @@ entry:indeterminate {
     border: 3px hidden black;
     border-radius: 40px;
     padding: 1.3em;
-    margin-left: 0.5em;
+    margin-right: 0.5em;
+    margin-bottom: 2.1em;
 }
 .workspace-overlay .workset-label {
     font: small-caps bold 12em/12em;
@@ -99,13 +100,7 @@ entry:indeterminate {
      */
 }
 
-.workspace-underlay {
-    padding-top: 52em;
-}
-.workspace-underlay .workset-label-underlay {
-    font-size: 12em;
-    color: black;
-}
+
 
 .open-backups-icon {
     padding-left: 1em;
