@@ -109,7 +109,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             } else if (workspace.WorkspaceBackground) {
                 // Gnome 40
                 this.bgManagers.forEachEntry(function(_workareasChangedId, bgManager, ii) {
-                    dev.log(i, bgManager)
                     if (ii = i)
                         this.bgManagers[_workareasChangedId].backgroundActor.content.background = thumbnailBox.newbg;
                 }, this);
