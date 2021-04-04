@@ -64,14 +64,11 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             };
         } catch(e) { dev.log(e) }
     }
-    cleanupInjections() {
+    destroy() {
+        try {
         workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
         workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
         delete this.injections;
-    }
-    destroy() {
-        try {
-        this.cleanupInjections();
         } catch(e) { dev.log(e) }
     }
     refreshThumbNailsBoxes() {       

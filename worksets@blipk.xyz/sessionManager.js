@@ -184,7 +184,7 @@ var SessionManager = class SessionManager {
             sessionsObject = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
         this._setup(sessionsObject)
 
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     saveSession(backup=false) {
@@ -545,8 +545,6 @@ var SessionManager = class SessionManager {
         Me.session.activeSession.Default = name;
         if (this.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset == '')
             Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
-
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         this.saveSession();
         } catch(e) { dev.log(e) }
     }
