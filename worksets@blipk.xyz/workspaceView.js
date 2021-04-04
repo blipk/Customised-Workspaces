@@ -111,7 +111,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 this.bgManagers.forEachEntry(function(_workareasChangedId, bgManager, ii) {
                     dev.log(i, bgManager)
                     if (ii = i)
-                        this.bgManagers[ii].backgroundActor.content.background = thumbnailBox.newbg;
+                        this.bgManagers[_workareasChangedId].backgroundActor.content.background = thumbnailBox.newbg;
                 }, this);
             }
 
