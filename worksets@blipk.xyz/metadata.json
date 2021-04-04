@@ -12,5 +12,5 @@
     "settings-schema": "org.gnome.shell.extensions.worksets",
     "settings-path": "/org/gnome/shell/extensions/worksets/",
     "gettext-domain": "worksets",
-    "shell-version": ["3.32", "3.34", "3.36", "3.38"]
+    "shell-version": ["3.32", "3.34", "3.36", "3.38", "40"]
 }

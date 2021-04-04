@@ -43,6 +43,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
             this.menus = [];
             this._runCount = 0;
+            this.bgManagers = {};
 
             if (!this.injections['addThumbnails'])
                 this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
@@ -56,11 +57,19 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 return;
                 //Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
             };
-
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
                 Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
                 Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
                 Me.workspaceViewManager.refreshThumbNailsBoxes();
+            };
+
+            if (!workspace.WorkspaceBackground) return;
+            if (!this.injections['WorkspaceBackground_init'])
+                this.injections['WorkspaceBackground_init'] = workspace.WorkspaceBackground.prototype._init;
+            workspace.WorkspaceBackground.prototype._init = function(monitorIndex, stateAdjustment) {
+                Me.workspaceViewManager.injections['WorkspaceBackground_init'].call(this, monitorIndex, stateAdjustment); // Call parent
+                Me.workspaceViewManager.bgManagers[this._workareasChangedId] = this._bgManager;
+                this.connect('destroy', () => delete Me.workspaceViewManager.bgManagers[this._workareasChangedId]);
             };
         } catch(e) { dev.log(e) }
     }
@@ -68,6 +77,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         try {
         workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
         workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
+        workspace.WorkspaceBackground.prototype._init = this.injections['WorkspaceBackground_init'];
         delete this.injections;
         } catch(e) { dev.log(e) }
     }
@@ -86,20 +96,24 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             }, this);
 
             // New background for thumbnail box
+            if (thumbnailBox.newbg) thumbnailBox.newbg.unref()
+            thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
+            let bg = thumbnailBox.workset || Me.session.DefaultWorkset;
+            thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
+                imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             if (thumbnailBox._bgManager) {
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false;
                 thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
-                // Create new background and assign to the BackgroundActor in the BackgroundManager
-                if (thumbnailBox.newbg) thumbnailBox.newbg.unref()
-                thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
                 thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
+            } else if (workspace.WorkspaceBackground) {
+                // Gnome 40
+                this.bgManagers.forEach(function(bgManager, ii) {
+                    dev.log(i, bgManager)
+                    if (ii = i)
+                        this.bgManagers[i].backgroundActor.content.background = thumbnailBox.newbg;
+                }, this);
 
-                let bg = thumbnailBox.workset || Me.session.DefaultWorkset;
-                thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
-                        imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-            } else {
-                // Will need to be created in 3.40
             }
 
             // Stop after background change if overlay box is not enabled

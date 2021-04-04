@@ -40,10 +40,11 @@ function init () {
 function buildPrefsWidget() {
     let prefsWidget = new Gtk.Label({label: 'Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.',  visible: true });
 
+    if (!prefsWidget.get_toplevel) return prefsWidget;
     GLib.timeout_add(0, null, () => {
-                 let window = prefsWidget.get_toplevel();
-                 let hb = window.get_titlebar();
-                 hb.title = `${Me.metadata.name} Preferences`;
+        let window = prefsWidget.get_toplevel();
+        let hb = window.get_titlebar();
+        hb.title = `${Me.metadata.name} Preferences`;
     });
     return prefsWidget;
 }
