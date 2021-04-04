@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { workspace, workspacesView, workspaceThumbnail, popupMenu } = imports.ui;
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background } = imports.ui;
 const { GObject, Meta, Wnck, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 const Config = imports.misc.config;
 const [major] = Config.PACKAGE_VERSION.split('.');
@@ -57,8 +57,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // Disabling this prevents the thumbnail window clones from restacking
                 // During the succseive updates of refreshThumbNailsBoxes() to maintain the background state
                 // This causes the windows to flash as it rebuilds when switching workspaces
-                return;
-                //Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
+                if (shellVersion < 40) return;
+                else Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
             };
             workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
                 Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
@@ -88,7 +88,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             };
             if (!this.injections['Workspace_init'])
                 this.injections['Workspace_init'] = workspace.WorkspaceBackground.prototype._init;
-            workspace.Workspace.prototype._init = function(metaWorkspace, monitorIndex, overviewAdjustmentt) {
+            workspace.Workspace.prototype._init = function(metaWorkspace, monitorIndex, overviewAdjustment) {
                 Me.workspaceViewManager.injections['Workspace_init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
                 Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
                 this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
@@ -99,8 +99,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         try {
         workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
         workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
-        workspace.WorkspaceBackground.prototype._init = this.injections['Workspace_init'];
         workspaceThumbnail.WorkspaceThumbnail.prototype._addWindowClone = this.injections['_addWindowClone'];
+        workspace.WorkspaceBackground.prototype._init = this.injections['Workspace_init'];
         delete this.injections;
         } catch(e) { dev.log(e) }
     }
@@ -125,15 +125,15 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             if (shellVersion >= 40) {
+                // For thumbnails on the overview
                 if (!thumbnailBox._bgManager)
-                    thumbnailBox._bgManager = new Background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
+                    thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
                                                                                     container: thumbnailBox._contents,
                                                                                     vignette: false });
-
+                // For larger workspace view and app grid workspace preview
                 this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
                     if (thumbnailBox.metaWorkspace == metaWorkspace)
                         this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
-                        //this.gsWorkspaces[metaWorkspace]._layoutManager._bgManagers[0].backgroundActor.content.background = thumbnailBox.newbg;
                 }, this);
             }
             if (thumbnailBox._bgManager) {
