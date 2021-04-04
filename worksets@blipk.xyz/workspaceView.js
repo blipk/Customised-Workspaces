@@ -108,12 +108,11 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
             } else if (workspace.WorkspaceBackground) {
                 // Gnome 40
-                this.bgManagers.forEach(function(bgManager, ii) {
+                this.bgManagers.forEachEntry(function(_workareasChangedId, bgManager, ii) {
                     dev.log(i, bgManager)
                     if (ii = i)
-                        this.bgManagers[i].backgroundActor.content.background = thumbnailBox.newbg;
+                        this.bgManagers[ii].backgroundActor.content.background = thumbnailBox.newbg;
                 }, this);
-
             }
 
             // Stop after background change if overlay box is not enabled
