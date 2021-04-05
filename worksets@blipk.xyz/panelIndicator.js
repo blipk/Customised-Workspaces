@@ -349,6 +349,7 @@ var WorksetsIndicator = GObject.registerClass({
                         Me.session.Worksets
                             .filter(w => w.WorksetName == menuItem.workset.WorksetName)[0]
                             .FavApps.push(newFav);
+                        Me.session.saveSession();
                         Me.session.setFavorites();
                         } catch(e) { dev.log(e) }
                     });

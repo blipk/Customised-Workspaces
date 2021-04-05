@@ -19,7 +19,7 @@ Each functionality can be turned off so can be used just as a wallpaper manager 
 
 ### Installation
 
-Requires `gnome-shell` and `libwnck`
+Requires `gnome-shell` and `libwnck` to be already installed.
 
 ###### Gnome extensions website
 <https://extensions.gnome.org/extension/1583/worksets/>
@@ -37,7 +37,7 @@ chmod +x install.sh && ./install.sh
 
 ### Support
 
-There are versions of the extension for Gnome Shell versions 3.00++
+There are versions of the extension for Gnome Shell versions 3.00+
 
 This has only been thoroughly tested on Gnome Shell versions 3.32 to 3.38, and on Gnome 40 (3.40)
 
