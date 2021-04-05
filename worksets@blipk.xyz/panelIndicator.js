@@ -104,10 +104,8 @@ var WorksetsIndicator = GObject.registerClass({
         // Add separator
         this.ViewSectionSeperator = new popupMenu.PopupSeparatorMenuItem();
 
-
         // Default
         this.defaultSection = new popupMenu.PopupMenuSection();
-
 
         // Favorites
         this.favoritesSection = new popupMenu.PopupMenuSection();

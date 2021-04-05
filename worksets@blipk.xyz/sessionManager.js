@@ -201,7 +201,7 @@ var SessionManager = class SessionManager {
         let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
         fileUtils.saveJSObjectToFile(sessionCopy, filename, fileUtils.CONF_DIR);
 
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     applySession(callback) {

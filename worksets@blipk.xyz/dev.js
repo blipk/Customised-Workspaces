@@ -29,7 +29,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { utils, fileUtils } = Me.imports;
 
 function log(context, message) {
-    const _debug_ = Me.session ? Me.session.activeSession.Options.DebugMode : true;
+    let _debug_ = Me.session ? Me.session.activeSession.Options.DebugMode : true;
     if (!_debug_) return;
     if (message === undefined) {message = context; context = "() =>";}
     if (message === undefined) {message = "UNDEFINED value"}
@@ -41,6 +41,8 @@ function log(context, message) {
 
     if (message instanceof Error) {
         out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name +" "+ message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
+        global.log(out);
+        if (logError) logError(message)
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
         var seen = [];
@@ -53,10 +55,8 @@ function log(context, message) {
         }, 2) + '\r\n\r\n';
     } else {
         out += ":Info    | " + context.toString() + " | " + message.toString() + '\r\n';
+        global.log(out);
     }
 
-    global.log(out);
     fileUtils.saveRawToFile(out, 'debug.log', fileUtils.CONF_DIR, true);
 }
-
-

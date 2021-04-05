@@ -16,6 +16,7 @@ Each functionality can be turned off so can be used just as a wallpaper manager 
 
 ### Usage
 ![User Interface Guide](doc/CustomisedWorkspacesUserInterfaceGuide.png?raw=true "Customised Workspaces User Interface Guide")
+![Usage Example](doc/example.png?raw=true "Customised Workspaces Usage Example")
 
 ### Installation
 
