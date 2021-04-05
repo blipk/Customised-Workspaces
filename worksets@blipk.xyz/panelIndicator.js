@@ -136,7 +136,7 @@ var WorksetsIndicator = GObject.registerClass({
         //uiUtils.createIconButton(sessionMenuItem, 'document-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
 
         // Orient menu
-        if (Me.gExtensions.dash2panel || Me.session.activeSession.Options.ReverseMenu) { //&& Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED
+        if (Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED || Me.session.activeSession.Options.ReverseMenu) {
             this.menu.addMenuItem(this.viewSection);
             this.menu.addMenuItem(this.optionsMenuItem);
             this.menu.addMenuItem(this.ViewSectionSeperator);
@@ -403,7 +403,6 @@ var WorksetsIndicator = GObject.registerClass({
             this.optionsMenuItem.hide();
         }
         } catch(e) { dev.log(e) }
-
     }
     _refreshMenu() {
         try {

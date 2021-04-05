@@ -114,23 +114,24 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     }
     refreshThumbNailsBoxes() {
         try {
+        if (!Main.overview._visible) return;
         this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
             // Find active workset for thumbnailbox
-            thumbnailBox.workset = null;
+            thumbnailBox._workset = null;
             Me.session.Worksets.forEach(function (worksetBuffer, index) {
                 if (worksetBuffer.WorksetName == Me.session.workspaceMaps['Workspace'+i].currentWorkset) {
-                    thumbnailBox.workset = Me.session.Worksets[index];
+                    thumbnailBox._workset = Me.session.Worksets[index];
                 }
             }, this);
 
             // New background for thumbnail box
-            if (thumbnailBox.newbg) thumbnailBox.newbg.unref()
-            thumbnailBox.newbg = new Meta.Background({ meta_display: Me.gScreen });
-            let bg = thumbnailBox.workset || Me.session.DefaultWorkset;
-            thumbnailBox.newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
+            if (thumbnailBox._newbg) delete thumbnailBox._newbg;
+            thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
+            let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
+            thumbnailBox._newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
             if (shellVersion >= 40) {
                 // For thumbnails on the overview
@@ -141,50 +142,50 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // For larger workspace view and app grid workspace preview
                 this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
                     if (thumbnailBox.metaWorkspace == metaWorkspace)
-                        this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
+                        this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
                 }, this);
             }
             if (thumbnailBox._bgManager) {
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false;
                 thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
-                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox.newbg;
+                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
             }
 
             // Stop after background change if overlay box is not enabled
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
             // Delete old overlay box and rebuild
-            if (thumbnailBox.worksetOverlayBox) {
-                thumbnailBox.worksetOverlayBox.destroy_all_children();
-                thumbnailBox.worksetOverlayBox.destroy();
+            if (thumbnailBox._worksetOverlayBox) {
+                thumbnailBox._worksetOverlayBox.destroy_all_children();
+                thumbnailBox._worksetOverlayBox.destroy();
             }
-            thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START});
-            thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
-            thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
+            thumbnailBox._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START});
+            thumbnailBox._worksetOverlayBox.width = thumbnailBox._contents.width;
+            thumbnailBox._worksetOverlayBox.height = thumbnailBox._contents.height;
 
             // Set text for any custom workspaces
-            thumbnailBox.worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.END, y_expand: true, x_expand: true,});
-            thumbnailBox.worksetOverlayBox.add(thumbnailBox.worksetLabel, {});
+            thumbnailBox._worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.END, y_expand: true, x_expand: true,});
+            thumbnailBox._worksetOverlayBox.add(thumbnailBox._worksetLabel, {});
             let text='';
             if (Me.session.workspaceMaps['Workspace'+i] != undefined)
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
-            thumbnailBox.worksetLabel.set_text(text);
+            thumbnailBox._worksetLabel.set_text(text);
 
             // Action buttons for custom workspaces
-            if (thumbnailBox.workset) {
+            if (thumbnailBox._workset) {
                 let icon_options = {icon_size: 140, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.END, x_expand: true, y_expand: true};
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox.workset); }, icon_options, {msg: "Edit '"+thumbnailBox.workset.WorksetName+"'"});
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox.workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox.workset.WorksetName+"'"})
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox.workset); Me.workspaceViewManager.refreshThumbNailsBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox.workset.WorksetName+"'"})
+                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
+                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbNailsBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail
-            if (!thumbnailBox.workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
+            if (!thumbnailBox._workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
                 if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                    uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START, y_align: Clutter.ActorAlign.END}, {msg: "Show the panel indicator menu"})
+                    uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, {icon_size: 170, x_align: St.Align.START, y_align: Clutter.ActorAlign.END}, {msg: "Show the panel indicator menu"})
 
-                let btn = uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'go-jump-symbolic', () => {
+                let btn = uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'go-jump-symbolic', () => {
                     try {
                     if (btn.menu)
                         return btn.menu.bye();
@@ -209,8 +210,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                         let menuItem = new popupMenu.PopupMenuItem('');
                         menuItems.push(menuItem);
                         if (workset.WorksetName == Me.session.DefaultWorkset.WorksetName) defaultMenuItem = menuItem;
-                        menuItem.workset = workset;
-                        menuItem.label.set_text(menuItem.workset.WorksetName);
+                        menuItem._workset = workset;
+                        menuItem.label.set_text(menuItem._workset.WorksetName);
 
                         menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
                             Me.workspaceManager.loadDefaults = false;
@@ -228,8 +229,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             btn.menu.bye();
                         } );
 
-                        if (Me.session.activeSession.Default == menuItem.workset.WorksetName)
-                            btn.menu.defaultItem = menuItem.workset.WorksetName
+                        if (Me.session.activeSession.Default == menuItem._workset.WorksetName)
+                            btn.menu.defaultItem = menuItem._workset.WorksetName
 
                         menuItem.setOrnament(popupMenu.Ornament.NONE);
                         btn.menu.addMenuItem(menuItem, 0);
@@ -261,13 +262,13 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }, {icon_size: 170, y_align: Clutter.ActorAlign.END}, {msg: "Choose a custom workspace to load here"});
                 btn.connect('destroy', () => { if (btn.menu) btn.menu.bye(); } );
 
-                uiUtils.createIconButton(thumbnailBox.worksetOverlayBox, 'document-new-symbolic', () => {
+                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
                 }, {icon_size: 170, y_align: Clutter.ActorAlign.END}, {msg: "Create new custom workspace here"});
             }
 
             // Apply changes
-            thumbnailBox._contents.add_child(thumbnailBox.worksetOverlayBox);
+            thumbnailBox._contents.add_child(thumbnailBox._worksetOverlayBox);
             } catch(e) { dev.log(e) }
         }, this)
 
