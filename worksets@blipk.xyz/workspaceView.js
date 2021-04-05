@@ -87,7 +87,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 return clone;        
             };
             if (!this.injections['Workspace_init'])
-                this.injections['Workspace_init'] = workspace.WorkspaceBackground.prototype._init;
+                this.injections['Workspace_init'] = workspace.Workspace.prototype._init;
             workspace.Workspace.prototype._init = function(metaWorkspace, monitorIndex, overviewAdjustment) {
                 Me.workspaceViewManager.injections['Workspace_init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
                 Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
@@ -100,7 +100,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
         workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
         workspaceThumbnail.WorkspaceThumbnail.prototype._addWindowClone = this.injections['_addWindowClone'];
-        workspace.WorkspaceBackground.prototype._init = this.injections['Workspace_init'];
+        workspace.Workspace.prototype._init = this.injections['Workspace_init'];
         delete this.injections;
         } catch(e) { dev.log(e) }
     }
