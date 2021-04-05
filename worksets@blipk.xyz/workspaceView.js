@@ -45,62 +45,70 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.thumbnailBoxes = [];
             this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
             this.menus = [];
-            this._runCount = 0;
             this.gsWorkspaces = {};
 
-            if (!this.injections['addThumbnails'])
-                this.injections['addThumbnails'] = workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails;
-            if (!this.injections['syncStacking'])
-                this.injections['syncStacking'] = workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking;
-
-            workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = function(stackIndices) {
-                // Disabling this prevents the thumbnail window clones from restacking
-                // During the succseive updates of refreshThumbNailsBoxes() to maintain the background state
-                // This causes the windows to flash as it rebuilds when switching workspaces
-                if (shellVersion < 40) return;
-                else Me.workspaceViewManager.injections['syncStacking'].call(this, stackIndices); // Call parent
-            };
-            workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = function(start, count) {
-                Me.workspaceViewManager.injections['addThumbnails'].call(this, start, count); // Call parent
-                this.connect('destroy', () => {
-                    if (this._bgManager) { this._bgManager.destroy(); this._bgManager = null; }
+            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails', 
+                function(start, count) {
+                    Me.workspaceViewManager.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails'].call(this, start, count); // Call parent
+                    this.connect('destroy', () => {
+                        if (this._bgManager) { this._bgManager.destroy(); this._bgManager = null; }
+                    });
+                    Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
+                    Me.workspaceViewManager.refreshThumbNailsBoxes();
                 });
-                Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
-                Me.workspaceViewManager.refreshThumbNailsBoxes();
-            };
+
+            if (shellVersion < 40)
+                this.addInjection('workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking', 
+                    function(stackIndices) {
+                        // Using the Gnome-Shell 40 version of this function on all previous Gnome-Shell versions
+                        // Prevents window clones in the workspace thumbnails from flashing
+                        // During the succesive updates of refreshThumbNailsBoxes() that maintain the background state
+                        this._windows.sort((a, b) => {
+                            let indexA = stackIndices[a.metaWindow.get_stable_sequence()];
+                            let indexB = stackIndices[b.metaWindow.get_stable_sequence()];
+                            return indexA - indexB;
+                        });
+                        for (let i = 1; i < this._windows.length; i++) {
+                            let clone = this._windows[i];
+                            const previousClone = this._windows[i - 1];
+                            clone.setStackAbove(previousClone);
+                        }            
+                    });
 
             if (shellVersion < 40) return;
-            if (!this.injections['_addWindowClone'])
-            this.injections['_addWindowClone'] = workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone;
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
-            workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone = function(win) {
-                let clone = new workspaceThumbnail.ThumbnailsBox.WindowClone(win);
-                clone.connect('selected', (o, time) => { this.activate(time); });
-                clone.connect('drag-begin', () => { Main.overview.beginWindowDrag(clone.metaWindow); });
-                clone.connect('drag-cancelled', () => { Main.overview.cancelledWindowDrag(clone.metaWindow); });
-                clone.connect('drag-end', () => { Main.overview.endWindowDrag(clone.metaWindow); });
-                clone.connect('destroy', () => { this._removeWindowClone(clone.metaWindow); });
-                this._contents.add_actor(clone);
-                if (this._windows.length == 0) clone.setStackAbove(this._bgManager.backgroundActor);
-                else clone.setStackAbove(this._windows[this._windows.length - 1]);
-                this._windows.push(clone);
-                return clone;        
-            };
-            if (!this.injections['Workspace_init'])
-                this.injections['Workspace_init'] = workspace.Workspace.prototype._init;
-            workspace.Workspace.prototype._init = function(metaWorkspace, monitorIndex, overviewAdjustment) {
-                Me.workspaceViewManager.injections['Workspace_init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
-                Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
-                this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
-            };
+            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
+                function(win) {
+                    let clone = new workspaceThumbnail.ThumbnailsBox.WindowClone(win);
+                    clone.connect('selected', (o, time) => { this.activate(time); });
+                    clone.connect('drag-begin', () => { Main.overview.beginWindowDrag(clone.metaWindow); });
+                    clone.connect('drag-cancelled', () => { Main.overview.cancelledWindowDrag(clone.metaWindow); });
+                    clone.connect('drag-end', () => { Main.overview.endWindowDrag(clone.metaWindow); });
+                    clone.connect('destroy', () => { this._removeWindowClone(clone.metaWindow); });
+                    this._contents.add_actor(clone);
+                    if (this._windows.length == 0) clone.setStackAbove(this._bgManager.backgroundActor);
+                    else clone.setStackAbove(this._windows[this._windows.length - 1]);
+                    this._windows.push(clone);
+                    return clone;        
+                });
+            // Keep track of the new workspace views so their background can be changed in refreshThumbNailsBoxes()
+            this.addInjection('workspace.Workspace.prototype._init',
+                function(metaWorkspace, monitorIndex, overviewAdjustment) {
+                    Me.workspaceViewManager.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
+                    Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
+                    this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
+                });
         } catch(e) { dev.log(e) }
+    }
+    addInjection(srcName, dstFunc) {
+        this.injections[srcName] = eval(srcName);
+        eval(srcName + '= dstFunc');
     }
     destroy() {
         try {
-        workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails = this.injections['addThumbnails'];
-        workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking = this.injections['syncStacking'];
-        workspaceThumbnail.WorkspaceThumbnail.prototype._addWindowClone = this.injections['_addWindowClone'];
-        workspace.Workspace.prototype._init = this.injections['Workspace_init'];
+        this.injections.forEachEntry(function(srcName, srcObject){
+            eval(srcName + '= srcObject');
+        }, this);
         delete this.injections;
         } catch(e) { dev.log(e) }
     }
@@ -147,9 +155,11 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
             // Delete old overlay box and rebuild
-            if (thumbnailBox.worksetOverlayBox)
+            if (thumbnailBox.worksetOverlayBox) {
                 thumbnailBox.worksetOverlayBox.destroy_all_children();
-            thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START, x_expand: true, y_expand: true});
+                thumbnailBox.worksetOverlayBox.destroy();
+            }
+            thumbnailBox.worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START});
             thumbnailBox.worksetOverlayBox.width = thumbnailBox._contents.width;
             thumbnailBox.worksetOverlayBox.height = thumbnailBox._contents.height;
 
