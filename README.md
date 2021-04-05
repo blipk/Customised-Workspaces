@@ -10,6 +10,9 @@ Create customised workspaces that are isolated from each other, each with their 
 
 ### Installation
 
+##### Prerequisites
+Requires gnome-shell and libwnck
+
 ###### Gnome extensions website
 <https://extensions.gnome.org/extension/1583/worksets/>
 
@@ -26,7 +29,8 @@ chmod +x install.sh && ./install.sh
 
 ### Support
 
-This has only been thoroughly tested on Gnome Shell versions 3.22, 3.30, 3.36 and 3.38, although it should work on any version from 3.00 to 3.38.
+There are versions of the extension for Gnome Shell versions 3.00++
+This has only been thoroughly tested on Gnome Shell versions 3.32 to 3.38, and on Gnome 40 (3.40)
 
 ### Licence
 
