@@ -136,7 +136,11 @@ var WorksetsIndicator = GObject.registerClass({
         //uiUtils.createIconButton(sessionMenuItem, 'document-new-symbolic', () => {Me.session.newWorkset(); this._refreshMenu();}, {}, {msg: "Create new custom workspace"});
 
         // Orient menu
-        if (Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED || Me.session.activeSession.Options.ReverseMenu) {
+        let reverseMenu;
+        if (Me.gExtensions.dash2panel)
+            reverseMenu = Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED ? true : Me.session.activeSession.Options.ReverseMenu;
+        else reverseMenu = Me.session.activeSession.Options.ReverseMenu
+        if (reverseMenu) {
             this.menu.addMenuItem(this.viewSection);
             this.menu.addMenuItem(this.optionsMenuItem);
             this.menu.addMenuItem(this.ViewSectionSeperator);

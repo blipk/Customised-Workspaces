@@ -149,7 +149,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false;
                 thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
-                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+                if (thumbnailBox._bgManager.backgroundActor.content)
+                    thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+                else
+                    thumbnailBox._bgManager.backgroundActor.background = thumbnailBox._newbg
             }
 
             // Stop after background change if overlay box is not enabled
