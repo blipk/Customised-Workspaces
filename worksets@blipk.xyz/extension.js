@@ -49,7 +49,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
-const scopeName = "worksetsalphaextension";
+const scopeName = "cw-shell-extension";
 
 function init() {
     extensionUtils.initTranslations();
