@@ -112,12 +112,10 @@ var WorkspaceManager = class WorkspaceManager {
         let foundActive = false;
         //Loop through worksets and load the one which is set to current
         Me.session.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
-                if (workspaceMapValues.currentWorkset == workset.WorksetName && this.activeWorkspaceIndex == parseInt(workspaceMapKey.substr(-1, 1))) {
-                    foundActive = true;
-                    Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
-                }
-            }, this);
+            if (Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset == workset.WorksetName) {
+                foundActive = true;
+                Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
+            }
         }, this);
 
         //If there's not any active on the workspace, load any that are set to default here, or just display the background/favourites from the default
@@ -133,13 +131,12 @@ var WorkspaceManager = class WorkspaceManager {
 
         let found = false;
         Me.session.Worksets.forEach(function (workset, worksetIndex) {
-            Me.session.workspaceMaps.forEachEntry(function(workspaceMapKey, workspaceMapValues) {
-                if (workspaceMapValues.defaultWorkset == workset.WorksetName && workspaceMapValues.currentWorkset == '' && parseInt(workspaceMapKey.substr(-1, 1)) == this.activeWorkspaceIndex) {
-                    Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
-                    Me.session.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
-                    found = true;
-                }
-            }, this);
+            let map = Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex];
+            if (map.defaultWorkset == workset.WorksetName && map.currentWorkset == '') {
+                Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
+                Me.session.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
+                found = true;
+            }
         }, this);
 
         if (!found) Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
