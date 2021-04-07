@@ -1,15 +1,26 @@
 ## Customised Workspaces - Gnome Shell Extension
 
-Customised Workspaces adds the following features to Gnome Shell workspace usage:
+<p align="left">
+    <a href="https://extensions.gnome.org/extension/1583/worksets/" >
+        <img src="/doc/gnome_logo.svg" width="120px"/>
+    </a>
+</p>
 
-* Custom favourite applications on the dash for each workspace
-* Only show applications on the dash when they're running on the active workspace
-* Custom background image for each workspace
-* Name and save each customisation, set them to autoload on specific workspaces
+Customised Workspaces enables creating isolated and customised workspaces.
+
+* Customise the dash to be unique for each workspace, each with their own favourites
+* Only show running applications on the dash in their respective workspace
+* Choose a custom background image for each workspace
+* Minor UI tweaks to the overview workspaces
+* Save each customisation, set them to autoload on specific workspaces
 * Hide the extension once you've configured your preferences to enjoy seamlessly upgraded workspaces in gnome shell
-* Compatible with dash-to-dock and dash-to-panel, use with with Auto Move Windows for a complete automated workflow: https://extensions.gnome.org/extension/16/auto-move-windows/
 
-Each functionality can be turned off so can be used just as a wallpaper manager or as a workspace isolater.
+Compatible for use with any of these extensions to complete your workspace upgrade:
+
+* Dash to Panel - https://extensions.gnome.org/extension/1160/dash-to-panel/
+* Dash to Dock - https://extensions.gnome.org/extension/307/dash-to-dock/
+* Auto Move Windows - https://extensions.gnome.org/extension/16/auto-move-windows/
+* Vertical Overview - https://github.com/RensAlthuis/vertical-overview
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=T35UZZSUMK66L)
 [![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
@@ -20,21 +31,18 @@ Each functionality can be turned off so can be used just as a wallpaper manager 
 
 ### Installation
 
-Requires `gnome-shell` and `libwnck` to be already installed.
+Requires libwnck to be installed.
 
-###### Gnome extensions website
-<https://extensions.gnome.org/extension/1583/worksets/>
+###### Gnome Extensions
+
+https://extensions.gnome.org/extension/1583/worksets/
 
 ###### Git
-``` bash
-cd ~/.local/share/gnome-shell
-git clone https://github.com/blipk/Customised-Workspaces.git extensions
-```
+`cd ~/.local/share/gnome-shell `
+`git clone https://github.com/blipk/Customised-Workspaces.git extensions`
 
 ###### Clickable installer in the release or run
-``` bash
-chmod +x install.sh && ./install.sh
-```
+`chmod +x install.sh && ./install.sh`
 
 ### Support
 
