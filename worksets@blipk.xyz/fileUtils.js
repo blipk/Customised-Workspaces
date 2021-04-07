@@ -91,10 +91,13 @@ function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, return
 
     return childrenFilePropertiesArray;
 }
-function saveRawToFile (rawobject, filename, directory=CONF_DIR, append=false, async=false) {
+function saveToFile(object, filename, directory=CONF_DIR, raw=false, append=false, async=false) {
     let savePath = GLib.build_filenamev([directory, filename]);
-    let contentsString = rawobject.toString();
-    let contents = new GLib.Bytes(rawobject);
+    let outBuff;
+    if (raw) outBuff = object.toString();
+    else outBuff = JSON.stringify(object, null, 1);
+
+    let contents = new GLib.Bytes(outBuff);
 
     // Make sure dir exists
     GLib.mkdir_with_parents(directory, parseInt('0775', 8));
@@ -108,52 +111,22 @@ function saveRawToFile (rawobject, filename, directory=CONF_DIR, append=false, a
     } else {
         if (append) {
             let outstream = file.append_to(Gio.FileCreateFlags.NONE, null);
-            outstream.write(contentsString, null);
-            outstream.close(null);
-        } else {
-            let outstream = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
-            outstream.write(contentsString, null);
-            outstream.close(null);
-        }
-    }
-}
-function saveJSObjectToFile (jsobject, filename, directory=CONF_DIR, append=false, async=false) {
-    let savePath = GLib.build_filenamev([directory, filename]);
-    let jsonString = JSON.stringify(jsobject, null, 1);
-    let contents = new GLib.Bytes(jsonString);
-
-    // Make sure dir exists
-    GLib.mkdir_with_parents(directory, parseInt('0775', 8));
-    let file = Gio.file_new_for_path(savePath);
-    try{
-    if (async) {
-        if (append) {
-            file.append_to_async(Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function(obj, res) {aSyncSaveCallback(obj, res, contents);});
-        } else {
-            file.replace_async(null, false, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (obj, res) {aSyncSaveCallback(obj, res, contents);});
-        }
-    } else {
-        if (append) {
-            let outstream = file.append_to(Gio.FileCreateFlags.NONE, null);
-            outstream.write(jsonString, null);
+            outstream.write(outBuff, null);
             outstream.close(null);
         } else {
             let outstream = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
             //Shell.write_string_to_stream (outstream, jsonString);
-            outstream.write(jsonString, null);
+            outstream.write(outBuff, null);
             outstream.close(null);
         }
     }
-    } catch(e) {dev.log(e)}
 }
 function aSyncSaveCallback(obj, res, contents) {
     let stream = obj.replace_finish(res);
-
     stream.write_bytes_async(contents, GLib.PRIORITY_DEFAULT, null, function (w_obj, w_res) {
         w_obj.write_bytes_finish(w_res); stream.close(null);
     });
 }
-
 function loadJSObjectFromFile(filename=CONF_FILE, directory=CONF_DIR, callback=null, async=false) {
     let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;

@@ -32,7 +32,7 @@ const { extensionUtils } = imports.misc;
 const Me = extensionUtils.getCurrentExtension();
 const { dev } = Me.imports;
 
-function init () {
+function init() {
     Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
     Me.settings.set_boolean('show-panel-indicator', true);
 }

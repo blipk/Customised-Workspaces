@@ -199,7 +199,7 @@ var SessionManager = class SessionManager {
         let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
         let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
-        fileUtils.saveJSObjectToFile(sessionCopy, filename, fileUtils.CONF_DIR);
+        fileUtils.saveToFile(sessionCopy, filename, fileUtils.CONF_DIR);
 
         if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
@@ -579,7 +579,7 @@ var SessionManager = class SessionManager {
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
         let filename = (backup ? 'env-'+workset.WorksetName+'-'+timestamp+'.json' : 'env-'+workset.WorksetName+'.json');
 
-        fileUtils.saveJSObjectToFile(workset, filename, fileUtils.CONF_DIR+'/envbackups');
+        fileUtils.saveToFile(workset, filename, fileUtils.CONF_DIR+'/envbackups');
         if (!backup) uiUtils.showUserNotification("Environment saved to "+filename);
 
         return filename;

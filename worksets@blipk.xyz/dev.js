@@ -58,5 +58,5 @@ function log(context, message) {
         global.log(out);
     }
 
-    fileUtils.saveRawToFile(out, 'debug.log', fileUtils.CONF_DIR, true);
+    fileUtils.saveToFile(out, 'debug.log', fileUtils.CONF_DIR, true, true);
 }
