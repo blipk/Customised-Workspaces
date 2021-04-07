@@ -6,6 +6,9 @@
     </a>
 </p>
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=T35UZZSUMK66L)
+[![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
+
 Customised Workspaces enables creating isolated and customised workspaces.
 
 * Customise the dash to be unique for each workspace, each with their own favourites
@@ -21,9 +24,6 @@ Compatible for use with any of these extensions to complete your workspace upgra
 * Dash to Dock - https://extensions.gnome.org/extension/307/dash-to-dock/
 * Auto Move Windows - https://extensions.gnome.org/extension/16/auto-move-windows/
 * Vertical Overview - https://github.com/RensAlthuis/vertical-overview
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=T35UZZSUMK66L)
-[![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
 
 ### Usage
 ![User Interface Guide](doc/CustomisedWorkspacesUserInterfaceGuide.png?raw=true "Customised Workspaces User Interface Guide")
