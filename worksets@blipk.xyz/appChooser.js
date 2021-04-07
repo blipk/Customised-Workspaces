@@ -44,7 +44,6 @@ imports.searchPath.unshift(worksets.extdatadir);
 
 worksets.metadata = (() => {
     let data = GLib.file_get_contents(worksets.extdatadir + '/metadata.json')[1];
-
     return JSON.parse(imports.byteArray.toString(data));
 })();
 worksets.app_id = worksets.metadata['application-id'];
@@ -76,16 +75,15 @@ class worksetsAppChooser  {
         this.application.connect('handle-local-options', this.vfunc_handle_local_options.bind(this));
     }
 
-
     vfunc_startup() {
         this._buildUI();
     }
 
     _buildUI() {
-        this.dialog = new Gtk.AppChooserDialog({ title: "Select an application", 
+        this.dialog = new Gtk.AppChooserDialog({ title: "Select an application",
                                                     heading: "Will be added to '"+this.WorksetName+"' favourites",
                                                     content_type: "any",
-                                                    icon_name: 'xapp-prefs-toolbar-symbolic', 
+                                                    icon_name: 'xapp-prefs-toolbar-symbolic',
                                                     type: 0});
         this.dialog.get_widget().default_text = '';
         //this.dialog.get_widget().show_default = true;
@@ -108,7 +106,7 @@ class worksetsAppChooser  {
                 let icon = '';
                 if (app.get_icon()) icon = app.get_icon().to_string();
 
-                let newFav = {'name': id, 
+                let newFav = {'name': id,
                         'displayName': name,
                         'icon': icon,
                         'exec': exec };
@@ -127,7 +125,7 @@ class worksetsAppChooser  {
             _('Show release version'),
             null
         );
- 
+
         this.application.add_main_option(
             'workset',
             'w'.charCodeAt(0),
@@ -137,14 +135,14 @@ class worksetsAppChooser  {
             null
         );
     }
- 
+
     vfunc_handle_local_options(application, options) {
         try {
             if (options.contains('version')) {
                 print(`${worksets.metadata.name} v${worksets.metadata.version}`);
                 return 0;
             }
- 
+
             if (options.contains('workset')) {
                 this.WorksetName = options.lookup_value('workset', null).unpack();
             }

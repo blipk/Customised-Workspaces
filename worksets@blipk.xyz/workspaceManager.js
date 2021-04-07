@@ -122,10 +122,9 @@ var WorkspaceManager = class WorkspaceManager {
         if (foundActive === false) this.loadDefaultWorksets();
 
         this._workspaceUpdate();
-        //Main.overview.show();
         } catch(e) { dev.log(e) }
     }
-    loadDefaultWorksets(){
+    loadDefaultWorksets() {
         try {
         if (!this.loadDefaults) return;
 
@@ -134,7 +133,7 @@ var WorkspaceManager = class WorkspaceManager {
             let map = Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex];
             if (map.defaultWorkset == workset.WorksetName && map.currentWorkset == '') {
                 Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
-                Me.session.workspaceMaps[workspaceMapKey].currentWorkset = workset.WorksetName;
+                Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
                 found = true;
             }
         }, this);

@@ -454,7 +454,7 @@ var WorksetsIndicator = GObject.registerClass({
         this._worksetMenuItemMoveToTop(menuItem);
         } catch(e) { dev.log(e) }
     }
-    toggleMenu(){
+    toggleMenu() {
         this.menu.toggle();
     }
 });

@@ -36,7 +36,7 @@ const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceIsolater, workspaceView } = Me.imports;
 
 var SessionManager = class SessionManager {
-    constructor () {
+    constructor() {
         try {
         Me.session = this;
         this.activeSession = null;
@@ -44,7 +44,7 @@ var SessionManager = class SessionManager {
 
         // Set up our bindings
         this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()});
-        this.watchOptions();
+        this._watchOptions();
 
         // Make sure our GTK App chooser is executable
         util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC]);
@@ -69,7 +69,7 @@ var SessionManager = class SessionManager {
         if (this.dash2panelSettingsWatcher) Me.gExtensions.dash2panel.settings.disconnect(this.dash2panelSettingsWatcher);
         } catch(e) { dev.log(e) }
     }
-    watchOptions() {
+    _watchOptions() {
         this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean('isolate-workspaces');
         });
@@ -83,14 +83,14 @@ var SessionManager = class SessionManager {
                 if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
             });
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
-                this.loadOptions();
+                this._loadOptions();
                 if (!Me.worksetsIndicator) return;
                 if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
                     Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
                 }
             });
     }
-    initOptions(){
+    _initOptions() {
         let keys = Me.settings.list_keys();
         keys.forEach((key) => {
             let k = Me.settings.settings_schema.get_key(key);
@@ -98,9 +98,9 @@ var SessionManager = class SessionManager {
                 this.activeSession.Options[utils.textToPascalCase(key)] = Me.settings.get_boolean(key);
             }
         }, this)
-        this.saveOptions();
+        this._saveOptions();
     }
-    saveOptions() {
+    _saveOptions() {
         this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
             if (optionName != 'ShowPanelIndicator')
                 Me.settings.set_boolean(utils.textToKebabCase(optionName), this.activeSession.Options[optionName]);
@@ -108,7 +108,7 @@ var SessionManager = class SessionManager {
         // This has to be last or the signal callback will change the other options
         Me.settings.set_boolean("show-panel-indicator", this.activeSession.Options.ShowPanelIndicator);
     }
-    loadOptions() {
+    _loadOptions() {
         this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
             this.activeSession.Options[optionName] = Me.settings.get_boolean(utils.textToKebabCase(optionName));
         }, this);
@@ -128,7 +128,7 @@ var SessionManager = class SessionManager {
             if (!Me.worksetsIndicator) Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
             this.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.show() : Me.worksetsIndicator.hide();
 
-            this.initOptions();
+            this._initOptions();
             this.saveSession();
         }
         } catch(e) { dev.log(e) }
@@ -190,7 +190,7 @@ var SessionManager = class SessionManager {
     saveSession(backup=false) {
         try {
         if (utils.isEmpty(this.activeSession)) return;
-        this.saveOptions();
+        this._saveOptions();
         this.activeSession.Worksets = this.Worksets;
         this.activeSession.workspaceMaps = this.workspaceMaps;
         this.activeSession.SessionName = this.SessionName;

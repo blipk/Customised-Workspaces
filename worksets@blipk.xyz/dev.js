@@ -42,7 +42,7 @@ function log(context, message) {
     if (message instanceof Error) {
         out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name +" "+ message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
         global.log(out);
-        if (logError) logError(message)
+        global.logError(message)
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
         var seen = [];
