@@ -39,8 +39,10 @@
 // External imports
 const Main = imports.ui.main;
 const ExtensionSystem = imports.ui.extensionSystem;
-const { extensionUtils } = imports.misc;
+const { extensionUtils, config } = imports.misc;
 const { Meta, GLib, Gio, Shell } = imports.gi;
+const [major] = config.PACKAGE_VERSION.split('.');
+const shellVersion = Number.parseInt(major);
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -48,7 +50,6 @@ const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "worksetsalphaextension";
-
 
 function init() {
     extensionUtils.initTranslations();
@@ -59,13 +60,14 @@ function enable() {
     try {
     dev.log(scopeName+'.'+arguments.callee.name, "@---------------------------------|");
     if (Me.session) return; // Already initialized
+    global.shellVersion = shellVersion;
 
     // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
     Me.gScreen = global.screen || global.display;
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
     Me.gMonitorManager = global.screen || Meta.MonitorManager.get();
-    Me.gExtensionManager = (uuid)=>{var x = (extensionUtils.extensions) 
-                                            ? extensionUtils.extensions[uuid].imports.extension || 0 
+    Me.gExtensionManager = (uuid)=>{var x = (extensionUtils.extensions)
+                                            ? extensionUtils.extensions[uuid].imports.extension || 0
                                             : Main.extensionManager.lookup(uuid) || 0;
                                     return x};
 

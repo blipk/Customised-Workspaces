@@ -28,9 +28,6 @@
 const Main = imports.ui.main;
 const { workspace, workspacesView, workspaceThumbnail, popupMenu, background } = imports.ui;
 const { GObject, Meta, Wnck, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
-const Config = imports.misc.config;
-const [major] = Config.PACKAGE_VERSION.split('.');
-const shellVersion = Number.parseInt(major);
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -57,7 +54,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.refreshThumbNailsBoxes();
                 });
 
-            if (shellVersion < 40)
+            if (global.shellVersion < 40)
                 this.addInjection('workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking', 
                     function(stackIndices) {
                         // Using the Gnome-Shell 40 version of this function on all previous Gnome-Shell versions
@@ -75,7 +72,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                         }            
                     });
 
-            if (shellVersion < 40) return;
+            if (global.shellVersion < 40) return;
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
                 function(win) {
@@ -133,7 +130,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
             thumbnailBox._newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-            if (shellVersion >= 40) {
+            if (global.shellVersion >= 40) {
                 // For thumbnails on the overview
                 if (!thumbnailBox._bgManager)
                     thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
