@@ -32,7 +32,7 @@
       <description>Show or hide custom workspace details/actions on the overview workspace list</description>
     </key>
     <key name="show-notifications" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Show passive notifications</summary>
       <description>Show or hide notifications for passive actions such as switching between workspaces</description>
     </key>

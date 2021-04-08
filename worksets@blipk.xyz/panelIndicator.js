@@ -86,14 +86,24 @@ var WorksetsIndicator = GObject.registerClass({
             let settingsKeyName = utils.textToKebabCase(optionName)
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
-            let apply = (optionName == 'IsolateWorkspaces')
-                ? () => { Me.workspaceManager.activateIsolater(); }
-                : () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession(); }
-            if (optionName == 'ReverseMenu')
-                apply = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; Me.session.applySession();
-                                Me.session.resetIndicator() } ;
-            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{  apply(); });
-            //optionMenuItem.pressHandler = optionMenuItem.connect('button_release_event', ()=>{  apply();  });
+            let apply;
+            let toggleOpt = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; 
+                                    Me.session.applySession(); }
+            switch(optionName) {
+                case 'IsolateWorkspaces':
+                    apply = () => { Me.workspaceManager.activateIsolater(); }
+                    break;
+                case 'ReverseMenu':
+                    apply = () => { toggleOpt(); Me.session.resetIndicator() };
+                    break;
+                case 'ShowWorkspaceOverly':
+                    apply = () => { toggleOpt(); Me.workspaceViewManager.refreshThumbNailsBoxes() };
+                    break;
+                default: apply = toggleOpt;
+                }
+            optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{ apply(); });
+            //optionMenuItem.pressHandler = optionMenuItem.connect('button_release_event', ()=>{ apply(); });
+            optionMenuItem.activate = ()=>{ if (optionMenuItem._switch.mapped) optionMenuItem.toggle(); };
             uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description()});
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);

@@ -152,14 +152,14 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     thumbnailBox._bgManager.backgroundActor.background = thumbnailBox._newbg
             }
 
-            // Stop after background change if overlay box is not enabled
-            if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
-
             // Delete old overlay box and rebuild
             if (thumbnailBox._worksetOverlayBox) {
                 thumbnailBox._worksetOverlayBox.destroy_all_children();
                 thumbnailBox._worksetOverlayBox.destroy();
             }
+            // Stop after background change if overlay box is not enabled
+            if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
+
             thumbnailBox._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START});
             thumbnailBox._worksetOverlayBox.width = thumbnailBox._contents.width;
             thumbnailBox._worksetOverlayBox.height = thumbnailBox._contents.height;
