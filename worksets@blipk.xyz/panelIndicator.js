@@ -87,7 +87,7 @@ var WorksetsIndicator = GObject.registerClass({
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
             optionMenuItem.optionName = optionName;
             let apply;
-            let toggleOpt = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]; 
+            let toggleOpt = () => { Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName];
                                     Me.session.applySession(); }
             switch(optionName) {
                 case 'IsolateWorkspaces':
@@ -303,6 +303,7 @@ var WorksetsIndicator = GObject.registerClass({
         viewArea.lastOpen = menuItem;
 
         // Background info
+        if (!Me.session.activeSession.Options.DisableWallpaperManagement) {
         menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
         menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
@@ -340,6 +341,7 @@ var WorksetsIndicator = GObject.registerClass({
             if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
         });
         menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
+        }
 
         if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
             // Workset info

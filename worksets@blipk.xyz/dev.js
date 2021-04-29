@@ -29,7 +29,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { utils, fileUtils } = Me.imports;
 
 function log(context, message) {
-    let _debug_ = Me.session ? Me.session.activeSession.Options.DebugMode : true;
+    let _debug_ = Me.session ? true : Me.session ? Me.session.activeSession.Options.DebugMode : true;
     if (!_debug_) return;
     if (message === undefined) {message = context; context = "() =>";}
     if (message === undefined) {message = "UNDEFINED value"}

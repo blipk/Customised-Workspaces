@@ -44,7 +44,6 @@ var SessionManager = class SessionManager {
 
         // Set up our bindings
         this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()});
-        this._watchOptions();
 
         // Make sure our GTK App chooser is executable
         util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC]);
@@ -57,6 +56,8 @@ var SessionManager = class SessionManager {
             this.newSession(true);
             this._setup(this.activeSession);
         }
+
+        this._watchOptions();
         } catch(e) { dev.log(e) }
     }
     destroy() {
@@ -122,6 +123,8 @@ var SessionManager = class SessionManager {
             this.SessionName = this.activeSession.SessionName;
             if (utils.isEmpty(this.activeSession.Default)) this.activeSession.Default = this.Worksets[0].WorksetName;
             this._cleanWorksets();
+
+            if (!this.activeSession.Options) this.activeSession.Options = {"ShowPanelIndicator": true};
 
             if (!Me.workspaceManager) Me.workspaceManager = new workspaceManager.WorkspaceManager();
             if (!Me.workspaceViewManager) Me.workspaceViewManager = new workspaceView.WorkspaceViewManager();
@@ -217,6 +220,7 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     setBackground(bgPath, style = 'ZOOM') {
+        if (this.activeSession.Options.DisableWallpaperManagement) return;
         bgPath = bgPath.replace("file://", "");
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
