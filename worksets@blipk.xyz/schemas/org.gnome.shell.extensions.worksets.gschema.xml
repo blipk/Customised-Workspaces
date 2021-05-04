@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gnome-shell-extensions">
-  <enum id='org.gnome.shell.extensions.worksets.test'>
-    <value value='0' nick='DOTS'/>
-    <value value='1' nick='SQUARES'/>
-    <value value='2' nick='DASHES'/>
-    <value value='3' nick='SEGMENTED'/>
-    <value value='4' nick='SOLID'/>
-    <value value='5' nick='CILIORA'/>
-    <value value='6' nick='METRO'/>
-  </enum>
-
   <schema id="org.gnome.shell.extensions.worksets" path="/org/gnome/shell/extensions/worksets/">
     <key name="isolate-workspaces" type="b">
       <default>true</default>
@@ -53,7 +43,7 @@
     </key>
     <key name="debug-mode" type="b">
       <default>true</default>
-      <summary>Debug mode</summary>
+      <summary>Enable logging</summary>
       <description>Toggles writing log file to ~/.config/worksets@blipk.xyz</description>
     </key>
     <key name="favorites-prototype" type="s">
@@ -72,7 +62,7 @@
       <description>Contains the information about the state and position of custom workspaces.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{ \"SessionName\":\"\",\"DefaultWorkset\": \"\",\"Options\":{\"ShowNotifications\":true, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <default>"{ \"SessionName\":\"\",\"DefaultWorkset\": \"\",\"Options\":{\"ShowNotifications\":false, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on the extensions session.</description>
     </key>

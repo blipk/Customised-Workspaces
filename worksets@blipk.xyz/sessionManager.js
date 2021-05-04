@@ -56,8 +56,6 @@ var SessionManager = class SessionManager {
             this.newSession(true);
             this._setup(this.activeSession);
         }
-
-        this._watchOptions();
         } catch(e) { dev.log(e) }
     }
     destroy() {
@@ -124,15 +122,15 @@ var SessionManager = class SessionManager {
             if (utils.isEmpty(this.activeSession.Default)) this.activeSession.Default = this.Worksets[0].WorksetName;
             this._cleanWorksets();
 
-            if (!this.activeSession.Options) this.activeSession.Options = {"ShowPanelIndicator": true};
+            this._initOptions();
+            this._loadOptions();
+            this._watchOptions();
+            this.saveSession();
 
             if (!Me.workspaceManager) Me.workspaceManager = new workspaceManager.WorkspaceManager();
             if (!Me.workspaceViewManager) Me.workspaceViewManager = new workspaceView.WorkspaceViewManager();
             if (!Me.worksetsIndicator) Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
             this.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.show() : Me.worksetsIndicator.hide();
-
-            this._initOptions();
-            this.saveSession();
         }
         } catch(e) { dev.log(e) }
     }
@@ -197,7 +195,6 @@ var SessionManager = class SessionManager {
         this.activeSession.Worksets = this.Worksets;
         this.activeSession.workspaceMaps = this.workspaceMaps;
         this.activeSession.SessionName = this.SessionName;
-
 
         let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
         let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');

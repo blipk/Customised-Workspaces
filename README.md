@@ -38,8 +38,10 @@ Requires libwnck to be installed.
 https://extensions.gnome.org/extension/1583/worksets/
 
 ###### Git
-`cd ~/.local/share/gnome-shell `
-`git clone https://github.com/blipk/Customised-Workspaces.git extensions`
+```
+cd ~/.local/share/gnome-shell
+git clone https://github.com/blipk/Customised-Workspaces.git extensions
+```
 
 ###### Clickable installer in the release or run
 `chmod +x install.sh && ./install.sh`
