@@ -12,8 +12,10 @@ assignees: blipk
 **Please include the debug file from ~/.config/worksets@blipk.xyz/debug.log**
 
 **Desktop (please complete the following information):**
- - Gnome-Shell Version:
+ - Gnome-Shell Version (gnome-shell --version):
+ - GJS Version (gjs --version):
  - Extension Version [e.g. 22]:
+ - Linux distribution and version
 
 **Describe the bug**
 A clear and concise description of what the bug is.
