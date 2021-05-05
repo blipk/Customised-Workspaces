@@ -15,7 +15,7 @@ assignees: blipk
  - Gnome-Shell Version (gnome-shell --version):
  - GJS Version (gjs --version):
  - Extension Version [e.g. 22]:
- - Linux distribution and version
+ - Linux distribution and version:
 
 **Describe the bug**
 A clear and concise description of what the bug is.
