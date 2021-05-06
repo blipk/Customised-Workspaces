@@ -29,7 +29,14 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { utils, fileUtils } = Me.imports;
 
 function log(context, message) {
-    let _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true;
+    // Ubuntu is terrible and is using an old version of GJS which doesnt support these operators yet
+    //let _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true;
+    let _debug_ = Me.session ?
+                    Me.session.activeSession ?
+                        Me.session.activeSession.Options ?
+                            (Me.session.activeSession.Options.DebugMode!=null && Me.session.activeSession.Options.DebugMode!=undefined) ?
+                                    Me.session.activeSession.Options.DebugMode : true : true : true : true;
+
     if (!_debug_) return;
     if (message === undefined) {message = context; context = "() =>";}
     if (message === undefined) {message = "UNDEFINED value"}
