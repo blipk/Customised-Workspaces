@@ -92,10 +92,6 @@ var SessionManager = class SessionManager {
             // Update active workset wallpaper info if changed elsewhere in gnome
             let bgPath = this.dSettings.get_string('picture-uri');
             let bgStyle = this.dSettings.get_string('picture-options');
-            dev.log('a')
-            dev.log(bgPath)
-            dev.log(bgStyle)
-            dev.log('b')
 
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
