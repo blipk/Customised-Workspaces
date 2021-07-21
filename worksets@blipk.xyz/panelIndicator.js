@@ -341,9 +341,8 @@ var WorksetsIndicator = GObject.registerClass({
             if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
         });
         menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
-        }
-
-        if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
+        } 
+        else if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
             // Workset info
             let infoText = "Has these favourites";
             Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
@@ -393,6 +392,10 @@ var WorksetsIndicator = GObject.registerClass({
                 }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
                 viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
             }, this);
+        } else {
+            menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Nothing here!"), '');
+            menuItem.infoMenuButton.label.set_x_expand(true);
+            viewArea.addMenuItem(menuItem.infoMenuButton);
         }
 
         //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);

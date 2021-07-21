@@ -8,13 +8,13 @@
     </key>
     <key name="only-background-details" type="b">
       <default>false</default>
-      <summary>Only show background in details</summary>
-      <description>Hides the favourite application list in the environment details</description>
+      <summary>Hide favourites in details</summary>
+      <description>Hides the favourite application list in the environment details menu</description>
     </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
       <summary>Show panel indicator</summary>
-      <description>Show or hide the extension indicator on the panel</description>
+      <description>Hide this menu and the panel indicator, to enable see global extension settings</description>
     </key>
     <key name="show-workspace-overlay" type="b">
       <default>true</default>
@@ -24,7 +24,7 @@
     <key name="show-notifications" type="b">
       <default>false</default>
       <summary>Show passive notifications</summary>
-      <description>Show or hide notifications for passive actions such as switching between workspaces</description>
+      <description>Show or hide notifications for switching between workspaces</description>
     </key>
     <key name="show-helpers" type="b">
       <default>true</default>
@@ -34,12 +34,12 @@
     <key name="reverse-menu" type="b">
       <default>false</default>
       <summary>Reverse menu order</summary>
-      <description>Reverse the menu order if you have your panel on the top or the bottom of the screen</description>
+      <description>Reverse the menu order if you have your panel on the lower edge</description>
     </key>
     <key name="disable-wallpaper-management" type="b">
       <default>false</default>
       <summary>Disable wallpaper management</summary>
-      <description>Disables the extension managing wallpapers, useful if you have another extension for that purpose</description>
+      <description>Disables this extension managing wallpapers, useful if configured elsewhere.</description>
     </key>
     <key name="debug-mode" type="b">
       <default>true</default>

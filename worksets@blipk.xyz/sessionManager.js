@@ -63,6 +63,8 @@ var SessionManager = class SessionManager {
         this.saveSession();
         if (this.favoritesChangeHandler) appFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler);
         if (this.showWorkspaceOverlayHandler) Me.settings.disconnect(this.showWorkspaceOverlayHandler);
+        if (this.disableWallpaperManagementyHandler) Me.settings.disconnect(this.disableWallpaperManagementyHandler);
+        if (this.globalWallpaperWatchHandler) Me.settings.disconnect(this.globalWallpaperWatchHandler);
         if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
         if (this.newFavouriteWatcher) Me.settings.disconnect(this.newFavouriteWatcher);
         if (this.dash2panelSettingsWatcher) Me.gExtensions.dash2panel.settings.disconnect(this.dash2panelSettingsWatcher);
@@ -79,8 +81,32 @@ var SessionManager = class SessionManager {
             });
 
         this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
-                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes()
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
             });
+        this.disableWallpaperManagementyHandler = Me.settings.connect('changed::disable-wallpaper-management', () => {
+            this.setBackground();
+        });
+
+        this.dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
+        this.globalWallpaperWatchHandler = this.dSettings.connect('changed::picture-uri', () => {
+            // Update active workset wallpaper info if changed elsewhere in gnome
+            let bgPath = this.dSettings.get_string('picture-uri');
+            let bgStyle = this.dSettings.get_string('picture-options');
+            dev.log('a')
+            dev.log(bgPath)
+            dev.log(bgStyle)
+            dev.log('b')
+
+            this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
+                this.Worksets[worksetIndex].BackgroundImage = bgPath;
+                this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                this.saveSession();
+            }, this);
+
+            this.setBackground(bgPath, bgStyle);
+        });
+
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
                 this._loadOptions();
                 if (!Me.worksetsIndicator) return;
@@ -218,7 +244,10 @@ var SessionManager = class SessionManager {
     }
     setBackground(bgPath, style = 'ZOOM') {
         if (this.activeSession.Options.DisableWallpaperManagement) return;
+        if (!bgPath)
+            bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;
         bgPath = bgPath.replace("file://", "");
+
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
         dSettings.set_string('picture-options', style.toLowerCase());
