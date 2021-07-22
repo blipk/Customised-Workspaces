@@ -139,7 +139,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                                                                                     container: thumbnailBox._contents,
                                                                                     vignette: false });
                 // For larger workspace view and app grid workspace preview
-                //if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
+                if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
                 this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
                     if (thumbnailBox.metaWorkspace == metaWorkspace)
                         this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
