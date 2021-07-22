@@ -103,7 +103,7 @@ var WorkspaceManager = class WorkspaceManager {
         Main.wm._workspaceTracker._checkWorkspaces();
 
         // Update the overlay
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {

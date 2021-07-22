@@ -124,6 +124,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
             }, this);
 
+            thumbnailBox._workset = thumbnailBox._workset || Me.session.DefaultWorkset;
+            if (Me.session.workspaceMaps['Workspace'+i].currentWorkset != thumbnailBox._workset.WorksetName
+                && Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
+                return;
+            //dev.log('b', i)
+            //dev.log(Me.session.workspaceMaps['Workspace'+i].currentWorkset, thumbnailBox._workset.WorksetName);
             // New background for thumbnail box
             if (thumbnailBox._newbg) delete thumbnailBox._newbg;
             thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -131,35 +137,40 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             let bgPath = bg.BackgroundImage.replace("file://", "");
             thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-            
+
+            // For larger workspace view and app grid workspace preview
             if (global.shellVersion >= 40) {
-                // For thumbnails on the overview
-                if (!thumbnailBox._bgManager)
-                    thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
-                                                                                    container: thumbnailBox._contents,
-                                                                                    vignette: false });
-                // For larger workspace view and app grid workspace preview
                 if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
+
                 this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
                     if (thumbnailBox.metaWorkspace == metaWorkspace)
                         this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
                 }, this);
             }
-            if (thumbnailBox._bgManager) {
-                // Prevent excessive recursion but enforce background updates during various events
-                thumbnailBox._updated = false;
-                thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+
+            // For thumbnails on the overview
+            if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
+            if (!thumbnailBox._bgManager)
+                thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
+                                                                            container: thumbnailBox._contents,
+                                                                            vignette: false });
+            if (thumbnailBox._bgManager.backgroundActor) {
                 if (thumbnailBox._bgManager.backgroundActor.content)
                     thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
                 else
                     thumbnailBox._bgManager.backgroundActor.background = thumbnailBox._newbg
             }
 
+            // Prevent excessive recursion but enforce background updates during various events
+            thumbnailBox._updated = false;
+            thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+
             // Delete old overlay box and rebuild
             if (thumbnailBox._worksetOverlayBox) {
                 thumbnailBox._worksetOverlayBox.destroy_all_children();
                 thumbnailBox._worksetOverlayBox.destroy();
             }
+
             // Stop after background change if overlay box is not enabled
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
