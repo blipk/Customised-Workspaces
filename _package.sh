@@ -6,4 +6,4 @@ glib-compile-schemas ./worksets@blipk.xyz/schemas
 cd worksets@blipk.xyz
 zip -r ../worksets@blipk.xyz.zip *
 cd ..
-zip worksets@blipk.xyz.zip install.sh 'Install Customised Workspaces.desktop'
+#zip worksets@blipk.xyz.zip install.sh 'Install Customised Workspaces.desktop'

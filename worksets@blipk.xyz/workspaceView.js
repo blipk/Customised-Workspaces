@@ -44,7 +44,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.menus = [];
             this.gsWorkspaces = {};
 
-            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails', 
+            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
                 function(start, count) {
                     Me.workspaceViewManager.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails'].call(this, start, count); // Call parent
                     this.connect('destroy', () => {
@@ -55,7 +55,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 });
 
             if (global.shellVersion < 40)
-                this.addInjection('workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking', 
+                this.addInjection('workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking',
                     function(stackIndices) {
                         // Using the Gnome-Shell 40 version of this function on all previous Gnome-Shell versions
                         // Prevents window clones in the workspace thumbnails from flashing
@@ -69,7 +69,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             let clone = this._windows[i];
                             const previousClone = this._windows[i - 1];
                             clone.setStackAbove(previousClone);
-                        }            
+                        }
                     });
 
             if (global.shellVersion < 40) return;
@@ -86,7 +86,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     if (this._windows.length == 0) clone.setStackAbove(this._bgManager.backgroundActor);
                     else clone.setStackAbove(this._windows[this._windows.length - 1]);
                     this._windows.push(clone);
-                    return clone;        
+                    return clone;
                 });
             // Keep track of the new workspace views so their background can be changed in refreshThumbNailsBoxes()
             this.addInjection('workspace.Workspace.prototype._init',
@@ -128,8 +128,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (thumbnailBox._newbg) delete thumbnailBox._newbg;
             thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
             let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
-            thumbnailBox._newbg.set_file(Gio.file_new_for_path(bg.BackgroundImage),
+            let bgPath = bg.BackgroundImage.replace("file://", "");
+            thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            
             if (global.shellVersion >= 40) {
                 // For thumbnails on the overview
                 if (!thumbnailBox._bgManager)
@@ -137,7 +139,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                                                                                     container: thumbnailBox._contents,
                                                                                     vignette: false });
                 // For larger workspace view and app grid workspace preview
-                if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
+                //if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
                 this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
                     if (thumbnailBox.metaWorkspace == metaWorkspace)
                         this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
