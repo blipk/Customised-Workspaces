@@ -128,8 +128,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (Me.session.workspaceMaps['Workspace'+i].currentWorkset != thumbnailBox._workset.WorksetName
                 && Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
                 return;
-            //dev.log('b', i)
-            //dev.log(Me.session.workspaceMaps['Workspace'+i].currentWorkset, thumbnailBox._workset.WorksetName);
+
             // New background for thumbnail box
             if (thumbnailBox._newbg) delete thumbnailBox._newbg;
             thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
