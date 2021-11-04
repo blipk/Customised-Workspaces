@@ -2,8 +2,8 @@ name: "tagged-release"
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - "master"
 
 jobs:
   tagged-release:
@@ -11,7 +11,6 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
-      # ...
       - name: "Build & test"
         run: |
           echo "done!"
