@@ -21,5 +21,4 @@ jobs:
           automatic_release_tag: "latest"
           title: "Latest Build"
           prerelease: false
-          files: |
-            worksets@blipk.xyz.zip
+          files: worksets@blipk.xyz.zip
