@@ -228,6 +228,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 //dev.dump(thumbnailBox._bgManager, "bgmanager-WITHactor")
                 thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
             } else {
+                // TODO - fix updating thumbnails when workset is closed from overview
                 //thumbnailBox._bgManager.backgroundActor = Object.assign({}, this.thumbnailBoxes[0]._bgManager.backgroundActor)
                 //thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
                 //dev.dump(thumbnailBox._bgManager, "bgmanager-noactor")
@@ -252,7 +253,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START, y_expand: true});
-            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.75;
+            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.77;
             this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.04;
 
             // Set text for any custom workspaces
@@ -358,9 +359,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             }
 
             // Apply changes
-            //dev.log(this.wsvWorkspaces[i])
             this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
-            //thumbnailBox._contents.add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
             } catch(e) { dev.log(e) }
         }, this)
 
