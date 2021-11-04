@@ -22,5 +22,5 @@ jobs:
           title: "Latest Build"
           prerelease: false
           files: |
-            /README.md
-            /worksets@blipk.xyz.zip
+            ${{github.workspace}}/README.md
+            ${{github.workspace}}/worksets@blipk.xyz.zip
