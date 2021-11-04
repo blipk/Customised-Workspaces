@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background } = imports.ui;
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout } = imports.ui;
 const { GObject, Meta, Wnck, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 
 // Internal imports
@@ -40,9 +40,9 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             Me.workspaceViewManager = this;
             this.injections = {}
             this.thumbnailBoxes = [];
-            this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
             this.menus = [];
             this.gsWorkspaces = {};
+            this.wsvWorkspaces = {};
 
             this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
                 function(start, count) {
@@ -53,24 +53,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
                     Me.workspaceViewManager.refreshThumbNailsBoxes();
                 });
-
-            if (global.shellVersion < 40)
-                this.addInjection('workspaceThumbnail.WorkspaceThumbnail.prototype.syncStacking',
-                    function(stackIndices) {
-                        // Using the Gnome-Shell 40 version of this function on all previous Gnome-Shell versions
-                        // Prevents window clones in the workspace thumbnails from flashing
-                        // During the succesive updates of refreshThumbNailsBoxes() that maintain the background state
-                        this._windows.sort((a, b) => {
-                            let indexA = stackIndices[a.metaWindow.get_stable_sequence()];
-                            let indexB = stackIndices[b.metaWindow.get_stable_sequence()];
-                            return indexA - indexB;
-                        });
-                        for (let i = 1; i < this._windows.length; i++) {
-                            let clone = this._windows[i];
-                            const previousClone = this._windows[i - 1];
-                            clone.setStackAbove(previousClone);
-                        }
-                    });
 
             if (global.shellVersion < 40) return;
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
@@ -95,6 +77,97 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
                     this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
                 });
+
+            // Extra reference to workspaces
+            this.addInjection('workspacesView.WorkspacesView.prototype._init',
+                function(monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment) {
+                    Me.workspaceViewManager.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment); // Call parent
+                    Me.workspaceViewManager.wsvWorkspaces = this._workspaces;
+                    this.connect('destroy', () => delete Me.workspaceViewManager.wsvWorkspaces);
+                });
+
+            // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
+            this._overViewShowingId = Main.overview.connect('showing', function() {
+                //Me.workspaceViewManager. = 
+            });
+            this._overViewHidingId = Main.overview.connect('hiding', function() {
+
+            });
+            this._overViewHiddenId = Main.overview.connect('hidden', function() {
+                let target;
+                Me.workspaceViewManager.thumbnailBoxes.forEach(function(thumbnailBox, i) {
+                    if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
+                    if (Me.workspaceManager.activeWorkspaceIndex != i) return;
+                    target = thumbnailBox._workset;
+                });
+                target = target || Me.session.DefaultWorkset; //TODO check monitors
+
+                let newbg = new Meta.Background({ meta_display: Me.gScreen });
+                let bgPath = target.BackgroundImage.replace("file://", "");
+                newbg.set_file(Gio.file_new_for_path(bgPath),
+                    imports.gi.GDesktopEnums.BackgroundStyle[target.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+
+
+                Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {      
+                    /*             
+                    let newbg2 = new background.Background({
+                        monitorIndex: Main.layoutManager.primaryIndex,
+                        layoutManager: Main._layoutManager,
+                        settings: new Gio.Settings({ schema_id: 'org.gnome.desktop.background' }),
+                        file: Gio.file_new_for_path(bgPath),
+                        style: imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM,
+                    });
+    
+                    newbg2._changedId = newbg2.connect('bg-changed', () => {
+                        newbg2.disconnect(background._changedId);
+                        newbg2.destroy();
+                        delete bgMan._backgrounds[monitorIndex];
+                    });
+        
+                    newbg2.changeSignalId = newbg2.connect('bg-changed', () => {
+                        newbg2.disconnect(newbg2.changeSignalId);
+                        newbg2.changeSignalId = null;
+                        bgMan._updateBackgroundActor();
+                    });
+
+                    bgMan._backgroundSource.background = newbg2;
+                    bgMan._backgroundSource._backgrounds = [];
+                    bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = newbg2;
+                    //*/
+                    
+                    //bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex)._loadImage(Gio.file_new_for_path(bgPath))
+                    /*
+
+                    bgMan._backgroundSource._backgrounds[0] = x;
+                    bgMan._backgroundSource._backgrounds[1] = x;
+                    bgMan._backgroundSource._backgrounds[2] = x;
+                    //*/
+
+                    ///*
+                    if (bgMan.backgroundActor.content)
+                        bgMan.backgroundActor.content.background = newbg;
+                    else
+                        bgMan.backgroundActor.background = newbg;
+                    
+                        
+                    let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
+                    /*
+                    bgMan._backgroundSource._backgrounds = [];
+                    bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = x;
+                    bgMan._backgroundSource._backgrounds[1] = x;
+                    bgMan._backgroundSource._backgrounds[2] = x;
+                    bgMan._backgroundSource._backgrounds[3] = x;
+                    bgMan._newBackgroundActor = bgMan.backgroundActor;
+                    */
+                    //bgMan._updateBackgroundActor();
+                    x.emit('bg-changed');
+
+
+                    dev.log("Main.layoutManager._bgManagers")
+                    
+                }, this);
+            });
+
         } catch(e) { dev.log(e) }
     }
     addInjection(srcName, dstFunc) {
@@ -112,7 +185,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     refreshThumbNailsBoxes() {
         try {
         if (!Main.overview._visible) return;
-        this._visible = Me.session.activeSession.Options.ShowWorkspaceOverlay;
 
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
@@ -124,10 +196,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
             }, this);
 
-            thumbnailBox._workset = thumbnailBox._workset || Me.session.DefaultWorkset;
-            if (Me.session.workspaceMaps['Workspace'+i].currentWorkset != thumbnailBox._workset.WorksetName
-                && Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
-                return;
+            //thumbnailBox._workset = thumbnailBox._workset || Me.session.DefaultWorkset;
+            //if (Me.session.workspaceMaps['Workspace'+i].currentWorkset != thumbnailBox._workset.WorksetName
+                //&& Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
+                //return;
 
             // New background for thumbnail box
             if (thumbnailBox._newbg) delete thumbnailBox._newbg;
@@ -140,11 +212,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // For larger workspace view and app grid workspace preview
             if (global.shellVersion >= 40) {
                 if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
-
-                this.gsWorkspaces.forEachEntry(function(metaWorkspace, gsWorkspace, ii) {
-                    if (thumbnailBox.metaWorkspace == metaWorkspace)
-                        this.gsWorkspaces[metaWorkspace]._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
-                }, this);
+                let gWS = this.gsWorkspaces[thumbnailBox.metaWorkspace];
+                gWS._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
             }
 
             // For thumbnails on the overview
@@ -152,53 +221,66 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!thumbnailBox._bgManager)
                 thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
                                                                             container: thumbnailBox._contents,
+                                                                            //layoutManager: Main.layoutManager,
                                                                             vignette: false });
+
             if (thumbnailBox._bgManager.backgroundActor) {
-                if (thumbnailBox._bgManager.backgroundActor.content)
-                    thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
-                else
-                    thumbnailBox._bgManager.backgroundActor.background = thumbnailBox._newbg
-            }
+                //dev.dump(thumbnailBox._bgManager, "bgmanager-WITHactor")
+                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+            } else {
+                //thumbnailBox._bgManager.backgroundActor = Object.assign({}, this.thumbnailBoxes[0]._bgManager.backgroundActor)
+                //thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+                //dev.dump(thumbnailBox._bgManager, "bgmanager-noactor")
+            }            
+                
 
             // Prevent excessive recursion but enforce background updates during various events
-            thumbnailBox._updated = false;
-            thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+            //thumbnailBox._updated = false;
+            //thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+            //*/
 
+
+
+            // ## Overlay
             // Delete old overlay box and rebuild
-            if (thumbnailBox._worksetOverlayBox) {
-                thumbnailBox._worksetOverlayBox.destroy_all_children();
-                thumbnailBox._worksetOverlayBox.destroy();
+            if (this.wsvWorkspaces[i]._worksetOverlayBox) {
+                this.wsvWorkspaces[i]._worksetOverlayBox.destroy_all_children();
+                this.wsvWorkspaces[i]._worksetOverlayBox.destroy();
             }
 
             // Stop after background change if overlay box is not enabled
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
-            thumbnailBox._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START});
-            thumbnailBox._worksetOverlayBox.width = thumbnailBox._contents.width;
-            thumbnailBox._worksetOverlayBox.height = thumbnailBox._contents.height;
+            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START, y_expand: true});
+            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.75;
+            this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.04;
 
             // Set text for any custom workspaces
-            let worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.END, y_expand: true, x_expand: true,});
-            thumbnailBox._worksetOverlayBox.add(worksetLabel, {});
+            let worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START, y_expand: true, x_expand: true,});
+            this.wsvWorkspaces[i]._worksetOverlayBox.add(worksetLabel, {});
             let text='';
             if (Me.session.workspaceMaps['Workspace'+i] != undefined)
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             worksetLabel.set_text(text);
 
             // Action buttons for custom workspaces
-            let icon_options = {icon_size: 140, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.END, x_expand: true, y_expand: true};
+            let icon_options = {icon_size: 20, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.START, x_expand: false, y_expand: false};
             if (thumbnailBox._workset) {
-                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
-                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
-                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbNailsBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbNailsBoxes();  }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail
             if (!thumbnailBox._workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
                 if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                    uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, icon_options, {msg: "Show the panel indicator menu"})
+                    uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, icon_options, {msg: "Show the panel indicator menu"})
 
-                let btn = uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'go-jump-symbolic', () => {
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-new-symbolic', () => {
+                    Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
+                }, icon_options, {msg: "Create new custom workspace here"});
+
+                let btn = uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'go-jump-symbolic', () => {
                     try {
                     if (btn.menu) return btn.menu.bye();
 
@@ -273,14 +355,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     } catch(e) { dev.log(e) }
                 }, icon_options, {msg: "Choose a custom workspace to load here"});
                 btn.connect('destroy', () => { if (btn.menu) btn.menu.bye(); } );
-
-                uiUtils.createIconButton(thumbnailBox._worksetOverlayBox, 'document-new-symbolic', () => {
-                    Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
-                }, icon_options, {msg: "Create new custom workspace here"});
             }
 
             // Apply changes
-            thumbnailBox._contents.add_child(thumbnailBox._worksetOverlayBox);
+            //dev.log(this.wsvWorkspaces[i])
+            this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
+            //thumbnailBox._contents.add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
             } catch(e) { dev.log(e) }
         }, this)
 

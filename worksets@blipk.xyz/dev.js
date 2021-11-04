@@ -67,3 +67,32 @@ function log(context, message) {
 
     fileUtils.saveToFile(out, 'debug.log', fileUtils.CONF_DIR, true, true);
 }
+
+
+function dump(object, objectName) {
+    // Ubuntu is terrible and is using an old version of GJS which doesnt support these operators yet
+    //let _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true;
+    let _debug_ = Me.session ?
+                    Me.session.activeSession ?
+                        Me.session.activeSession.Options ?
+                            (Me.session.activeSession.Options.DebugMode!=null && Me.session.activeSession.Options.DebugMode!=undefined) ?
+                                    Me.session.activeSession.Options.DebugMode : true : true : true : true;
+
+    if (!_debug_) return;
+
+    let timestamp = Date.now();
+
+    if (typeof object !== 'object') return;
+
+    let out = "";
+    var seen = [];
+    out += JSON.stringify(object, function(key, val) {
+        if (val != null && typeof val == "object") {
+            if (seen.indexOf(val) >= 0) return;
+            seen.push(val);
+        }
+        return val;
+    }, 2) + '\r\n\r\n';
+
+    fileUtils.saveToFile(out, objectName+'-'+timestamp+'.json', fileUtils.CONF_DIR, true, false);
+}

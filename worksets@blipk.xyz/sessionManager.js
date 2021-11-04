@@ -28,7 +28,7 @@
 const Main = imports.ui.main;
 const { extensionSystem, appFavorites } = imports.ui;
 const { extensionUtils, util } = imports.misc;
-const { GObject, Gio, Clutter, Shell } = imports.gi;
+const { GObject, Gio, Clutter, Shell, Meta } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -84,24 +84,25 @@ var SessionManager = class SessionManager {
                 if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
             });
         this.disableWallpaperManagementyHandler = Me.settings.connect('changed::disable-wallpaper-management', () => {
-            this.setBackground();
-        });
+                this.setBackground();
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+            });
 
         this.dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
-        this.globalWallpaperWatchHandler = this.dSettings.connect('changed::picture-uri', () => {
-            // Update active workset wallpaper info if changed elsewhere in gnome
-            let bgPath = this.dSettings.get_string('picture-uri');
-            let bgStyle = this.dSettings.get_string('picture-options');
+            this.globalWallpaperWatchHandler = this.dSettings.connect('changed::picture-uri', () => {
+                // Update active workset wallpaper info if changed elsewhere in gnome
+                let bgPath = this.dSettings.get_string('picture-uri');
+                let bgStyle = this.dSettings.get_string('picture-options');
 
-            this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-                if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
-                this.Worksets[worksetIndex].BackgroundImage = bgPath;
-                this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
-                this.saveSession();
-            }, this);
+                this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                    if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
+                    this.Worksets[worksetIndex].BackgroundImage = bgPath;
+                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                    this.saveSession();
+                }, this);
 
-            this.setBackground(bgPath, bgStyle);
-        });
+                this.setBackground(bgPath, bgStyle);
+            });
 
         this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
                 this._loadOptions();
@@ -238,7 +239,7 @@ var SessionManager = class SessionManager {
         return bgURI.replace("file://", "");
         } catch(e) { dev.log(e) }
     }
-    setBackground(bgPath, style = 'ZOOM') {
+    setBackground(bgPath = "", style = 'ZOOM') {
         if (this.activeSession.Options.DisableWallpaperManagement) return;
         if (!bgPath)
             bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;
@@ -247,6 +248,35 @@ var SessionManager = class SessionManager {
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
         dSettings.set_string('picture-options', style.toLowerCase());
+        
+        // workspaceView is losing track of the original bgmanager so this has to be updated here to affect other changes in the system
+        let newbg = new Meta.Background({ meta_display: Me.gScreen });
+        newbg.set_file(Gio.file_new_for_path(bgPath),
+            imports.gi.GDesktopEnums.BackgroundStyle[style] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+
+        Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
+            if (bgMan.backgroundActor) {
+                if (bgMan.backgroundActor.content)
+                    bgMan.backgroundActor.content.background = newbg;
+                else
+                    bgMan.backgroundActor.background = newbg
+            }
+        }, this);
+
+        //*/
+        /*
+        Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {      
+            let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
+            bgMan._backgroundSource._backgrounds = [];
+            bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = x;
+            bgMan._backgroundSource._backgrounds[0] = x;
+            bgMan._backgroundSource._backgrounds[1] = x;
+            bgMan._backgroundSource._backgrounds[2] = x;
+            x.emit('bg-changed');
+            bgMan._newBackgroundActor = "true";
+            bgMan._updateBackgroundActor()
+        }, this);
+        //*/
     }
     setFavorites(favArray) {
         try {
@@ -325,7 +355,7 @@ var SessionManager = class SessionManager {
 
         if (activeIndex > -1 && !displayOnly && !loadInNewWorkspace) { // Switch to it if already active
             if (Me.workspaceManager.activeWorkspaceIndex != activeIndex) Me.workspaceManager.switchToWorkspace(activeIndex);
-            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 1);
+            if (Me.session.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Switched to active environment " + workset.WorksetName, false, 1);
         } else if (!displayOnly) {
             if (loadInNewWorkspace) {
                 //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
@@ -336,7 +366,7 @@ var SessionManager = class SessionManager {
                     Me.workspaceManager.switchToWorkspace(Me.workspaceManager.NumGlobalWorkspaces-1);
             }
             Me.workspaceManager.activeWorksetName = workset.WorksetName;
-            if (this.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Loaded environment " + workset.WorksetName, false, 1.4);
+            if (Me.session.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Loaded environment " + workset.WorksetName, false, 1.4);
         }
 
         this.setFavorites(workset.FavApps);
@@ -361,7 +391,7 @@ var SessionManager = class SessionManager {
             if (parseInt(closing.substr(-1, 1)) == Me.workspaceManager.activeWorkspaceIndex)
                 this.displayWorkset(this.DefaultWorkset, false, true);
 
-            uiUtils.showUserNotification("Environment '" + workset.WorksetName + "' disengaged.", false, 1.8);
+            if (Me.session.activeSession.Options.ShowNotifications) uiUtils.showUserNotification("Environment '" + workset.WorksetName + "' disengaged.", false, 1.8);
             this.saveSession();
         } catch(e) { dev.log(e) }
     }
@@ -387,6 +417,7 @@ var SessionManager = class SessionManager {
 
             uiUtils.showUserNotification("Background Image Changed", true)
             if (Me.workspaceManager.activeWorksetName == workset.WorksetName) this.setBackground(resource);
+            Me.workspaceViewManager.refreshThumbNailsBoxes();
             } catch(e) { dev.log(e) }
         });
         } catch(e) { dev.log(e) }

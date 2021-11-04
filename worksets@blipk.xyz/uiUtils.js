@@ -85,6 +85,7 @@ let messages = [];
 function showUserNotification(input, overviewMessage=false, fadeTime=2.9) {
     dev.log('Notification', input);
     removeAllUserNotifications();
+
     if (overviewMessage) {
         var label = null;
         Main.overview.setMessage(_(input), { forFeedback: true });

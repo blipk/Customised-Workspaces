@@ -102,7 +102,8 @@ var WorkspaceManager = class WorkspaceManager {
         // Update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
 
-        // Update the overlay
+        // Update the overlay - needs to be done twice to maintain correct thumbnails
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
@@ -122,6 +123,10 @@ var WorkspaceManager = class WorkspaceManager {
         if (foundActive === false) this.loadDefaultWorksets();
 
         this._workspaceUpdate();
+
+        // Update the overlay - needs to be done twice to maintain correct thumbnails
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets() {

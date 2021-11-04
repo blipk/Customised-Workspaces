@@ -56,7 +56,7 @@ This has only been thoroughly tested on Gnome Shell versions 3.32 to 3.38, and o
 
 ```
 This file is part of the Customised Workspaces Gnome Extension for Gnome 3
-Copyright (C) 2021 A.D. - http://kronosoul.xyz
+Copyright (C) 2021 A.D.
 ```
 
 ```

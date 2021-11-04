@@ -75,22 +75,25 @@ entry:indeterminate {
 }
 .workspace-overlay StIcon {
     color: ghostwhite;
-    icon-shadow: 1em 1em 0px black;
+    /*icon-shadow: 1em 1em 0px black;*/
     background-color: rgba(0, 0, 0, 0.2);
-    border: 3px hidden black;
+    border: 0.5px hidden black;
     border-radius: 40px;
-    padding: 1.3em;
-    margin-right: 0.5em;
-    margin-bottom: 2.1em;
+    padding: 1.0em;
+    margin-right: 0.0em;
+    margin-bottom: 0.0em;
 }
 .workspace-overlay .workset-label {
-    font: small-caps bold 12em/12em;
-    font-size: 12em;
+    font: small-caps bold 4em/4em;
+    font-size: 2em;
     font-weight: bold;
     font-variant: unicase slashed-zero no-common-ligatures tabular-nums;
     font-feature-settings: "c2sc", "smcp";
     color: ghostwhite;
-    text-shadow: 9px 12px 2px black;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px hidden black;
+    border-radius: 5px;
+    /*text-shadow: 9px 12px 2px black;*/
      /*
         -20px 20px 0 red; BOTTOM LEFT
         -20px -20px 0 red; TOP LEFT
