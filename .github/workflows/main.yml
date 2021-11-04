@@ -14,6 +14,9 @@ jobs:
       - name: "Build & test"
         run: |
           echo "done!"
+        
+      - name: Check out repository code
+        uses: actions/checkout@v2
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
