@@ -304,12 +304,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             Me.session.displayWorkset(workset);
                             // Something is switching to the last workspace after this menu is destroyed
                             // This is my hack to make sure we stay on the right one
-                            GLib.timeout_add(null, 230, ()=> {
+                            this.signals.add(GLib.timeout_add(null, 230, ()=> {
                                 Me.workspaceManager.switchToWorkspace(i);
                                 Me.workspaceManager.loadDefaults = true;
                                 Me.workspaceManager.noUpdate = false;
                                 Me.workspaceManager._workspaceUpdate();
-                            });
+                            }));
                             btn.menu.bye();
                         } );
 
@@ -340,7 +340,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     }
 
                     Main.uiGroup.add_actor(btn.menu.actor);
-                    GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); });
+                    this.signals.add(GLib.timeout_add(null, 5000, ()=> { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); }));
                     btn.menu.open();
                     } catch(e) { dev.log(e) }
                 }, icon_options, {msg: "Choose a custom workspace to load here"});

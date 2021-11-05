@@ -106,8 +106,6 @@ var WorkspaceManager = class WorkspaceManager {
         // Update the overlay - needs to be done twice to maintain correct thumbnails
         //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbnailBoxes();
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbnailBoxes();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
@@ -128,8 +126,8 @@ var WorkspaceManager = class WorkspaceManager {
         this._workspaceUpdate();
 
         // Update the overlay - needs to be done twice to maintain correct thumbnails
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets() {

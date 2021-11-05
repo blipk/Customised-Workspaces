@@ -258,7 +258,7 @@ var SessionManager = class SessionManager {
                     bgMan.backgroundActor.background = newbg
             }
         }, this);
-
+        
         //*/
         /*
         Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {      
