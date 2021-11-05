@@ -185,18 +185,24 @@ var InjectionHandler = class InjectionHandler {
     }
 
     add(srcProto, dstFunc) {
+        try {
         this.injections[srcProto] = eval(srcProto);
         eval(srcProto + '= dstFunc');
+        } catch(e) { dev.log(e); }
     }
 
     removeAll() {
+        try {
         this.injections.forEachEntry(function(srcProto, srcObject){
             eval(srcProto + '= srcObject');
         }, this);
+        } catch(e) { dev.log(e); }
     }
 
     destroy() {
+        try {
         this.removeAll()
+        } catch(e) { dev.log(e); }
     }
 }
 
@@ -206,15 +212,21 @@ var SignalHandler = class SignalHandler {
     }
 
     add(target, signal, fn) {
+        try {
         let signalId = target.connect(signal, fn, )
         this.signalIds[signalId] = target;
+        } catch(e) { dev.log(e); }
     }
 
     disconnectAll() {
-        this.signalIds.forEach((target, i) => target.discconect(i))
+        try {
+        this.signalIds.forEach((target, i) => target.disconnect(i))
+        } catch(e) { dev.log(e); }
     }
 
     destroy() {
+        try { 
         this.disconnectAll()
+        } catch(e) { dev.log(e); }
     }
 }
