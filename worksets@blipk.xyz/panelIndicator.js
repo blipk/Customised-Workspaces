@@ -97,7 +97,7 @@ var WorksetsIndicator = GObject.registerClass({
                     apply = () => { toggleOpt(); Me.session.resetIndicator() };
                     break;
                 case 'ShowWorkspaceOverly':
-                    apply = () => { toggleOpt(); Me.workspaceViewManager.refreshThumbNailsBoxes() };
+                    apply = () => { toggleOpt(); Me.workspaceViewManager.refreshOverview() };
                     break;
                 default: apply = toggleOpt;
                 }
@@ -304,45 +304,46 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Background info
         if (!Me.session.activeSession.Options.DisableWallpaperManagement) {
-        menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
-        menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
+            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
+            menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
-        uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
-        viewArea.addMenuItem(menuItem.bgMenuButton);
+            uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
+            viewArea.addMenuItem(menuItem.bgMenuButton);
 
-        menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
-            Me.session.setWorksetBackgroundImage(menuItem.workset);
-            this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
-        });
-        uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to select a new desktop background for '"+menuItem.workset.WorksetName+"'"});
-
-        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
-            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
-        let updateBackgroundStyle = (style, menuItem) => {
-            backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
+            menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
+                Me.session.setWorksetBackgroundImage(menuItem.workset);
+                this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
             });
+            uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to select a new desktop background for '"+menuItem.workset.WorksetName+"'"});
 
-            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
-            Me.session.saveSession();
-            if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
-                || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
-                    Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
-        }
+            let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
+                track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+            let updateBackgroundStyle = (style, menuItem) => {
+                backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+                    if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
+                });
 
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
-        backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
-        });
-        menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
+                Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
+                Me.session.saveSession();
+                if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
+                    || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
+                        Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
+            }
+
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
+            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
+            backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
+            });
+            menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
         } 
-        else if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
+        if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
+            
             // Workset info
             let infoText = "Has these favourites";
             Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
@@ -392,7 +393,9 @@ var WorksetsIndicator = GObject.registerClass({
                 }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
                 viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
             }, this);
-        } else {
+        } 
+        
+        if (Me.session.activeSession.Options.OnlyBackgroundDetails && Me.session.activeSession.Options.DisableWallpaperManagement) {
             menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Nothing here!"), '');
             menuItem.infoMenuButton.label.set_x_expand(true);
             viewArea.addMenuItem(menuItem.infoMenuButton);

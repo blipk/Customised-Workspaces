@@ -4,7 +4,7 @@
     "url": "https://github.com/blipk/Customised-Workspaces",
     "description": "Customised Workspaces enables creating isolated and customised workspaces.\n\n* Customise the dash to be unique for each workspace, each with their own favourites\n* Only show running applications on the dash in their respective workspace\n* Choose a custom background image for each workspace\n* Minor UI tweaks to the overview workspaces\n* Save each customisation, set them to autoload on specific workspaces\n* Hide the extension once you've configured your preferences to enjoy seamlessly upgraded workspaces in gnome shell\n\nCompatible for use with any of these extensions to complete your workspace upgrade:\n\n* Dash to Panel - https://extensions.gnome.org/extension/1160/dash-to-panel/\n* Dash to Dock - https://extensions.gnome.org/extension/307/dash-to-dock/\n* Auto Move Windows - https://extensions.gnome.org/extension/16/auto-move-windows/\n* Vertical Overview - https://github.com/RensAlthuis/vertical-overview",
     "original-author": "blipk",
-    "version": 37,
+    "version": 38,
 
     "extension-id": "worksets",
     "application-id": "org.kronosoul.worksets",

@@ -82,7 +82,7 @@ function dump(object, objectName) {
 
     let timestamp = Date.now();
 
-    if (typeof object !== 'object') return;
+    //if (typeof object !== 'object') return;
 
     let out = "";
     var seen = [];

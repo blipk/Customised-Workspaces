@@ -98,11 +98,11 @@ Object.defineProperty(Object.prototype, 'forEachEntry', {
 }
 
 if (!Object.prototype.hasOwnProperty('filterObj')) {
-Object.defineProperty(Object.prototype, 'filterObj', {
-    value: function (predicate) {
-        return Object.fromEntries(Object.entries(this).filter(predicate));
-    }
-});
+    Object.defineProperty(Object.prototype, 'filterObj', {
+        value: function (predicate) {
+            return Object.fromEntries(Object.entries(this).filter(predicate));
+        }
+    });
 }
 
 function splitURI(inURI) {
@@ -174,4 +174,47 @@ function readStream(stream, callback) {
             readStream(source, callback);
         }
     });
+}
+
+
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overviewControls } = imports.ui;
+
+var InjectionHandler = class InjectionHandler {
+    constructor() {
+        this.injections = {}
+    }
+
+    add(srcProto, dstFunc) {
+        this.injections[srcProto] = eval(srcProto);
+        eval(srcProto + '= dstFunc');
+    }
+
+    removeAll() {
+        this.injections.forEachEntry(function(srcProto, srcObject){
+            eval(srcProto + '= srcObject');
+        }, this);
+    }
+
+    destroy() {
+        this.removeAll()
+    }
+}
+
+var SignalHandler = class SignalHandler {
+    constructor() {
+        this.signalIds = [];
+    }
+
+    add(target, signal, fn) {
+        let signalId = target.connect(signal, fn, )
+        this.signalIds[signalId] = target;
+    }
+
+    disconnectAll() {
+        this.signalIds.forEach((target, i) => target.discconect(i))
+    }
+
+    destroy() {
+        this.disconnectAll()
+    }
 }

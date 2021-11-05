@@ -38,7 +38,8 @@ var WorkspaceManager = class WorkspaceManager {
     constructor() {
         try {
         Me.workspaceManager = this;
-        this.workspaceChangeHandler = global.window_manager.connect('switch-workspace', ()=> { this._activeWorkspaceChanged() })
+        this.signals = new utils.SignalHandler();
+        this.signals.add(global.window_manager, 'switch-workspace', ()=> { this._activeWorkspaceChanged() })
 
         this.loadDefaults = true;
         this.noUpdate = false;
@@ -53,7 +54,7 @@ var WorkspaceManager = class WorkspaceManager {
         try {
         this.switchToWorkspace(0);
         this._workspaceUpdate(true);
-        if (this.workspaceChangeHandler) global.window_manager.disconnect(this.workspaceChangeHandler);
+        this.signals.destroy();
         } catch(e) { dev.log(e) }
     }
     _workspaceUpdate(destroyClean=false) {
@@ -103,8 +104,10 @@ var WorkspaceManager = class WorkspaceManager {
         Main.wm._workspaceTracker._checkWorkspaces();
 
         // Update the overlay - needs to be done twice to maintain correct thumbnails
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbnailBoxes();
+        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbnailBoxes();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {
@@ -125,8 +128,8 @@ var WorkspaceManager = class WorkspaceManager {
         this._workspaceUpdate();
 
         // Update the overlay - needs to be done twice to maintain correct thumbnails
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets() {

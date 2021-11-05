@@ -42,8 +42,10 @@ var SessionManager = class SessionManager {
         this.activeSession = null;
         this.allApps = {};
 
+        this.signals = new utils.SignalHandler();
+
         // Set up our bindings
-        this.favoritesChangeHandler = appFavorites.getAppFavorites().connect('changed', ()=>{this._favoritesChanged()});
+        this.signals.add(appFavorites.getAppFavorites(), 'changed', ()=>{this._favoritesChanged()})
 
         // Make sure our GTK App chooser is executable
         util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC]);
@@ -61,35 +63,29 @@ var SessionManager = class SessionManager {
     destroy() {
         try {
         this.saveSession();
-        if (this.favoritesChangeHandler) appFavorites.getAppFavorites().disconnect(this.favoritesChangeHandler);
-        if (this.showWorkspaceOverlayHandler) Me.settings.disconnect(this.showWorkspaceOverlayHandler);
-        if (this.disableWallpaperManagementyHandler) Me.settings.disconnect(this.disableWallpaperManagementyHandler);
-        if (this.globalWallpaperWatchHandler) Me.settings.disconnect(this.globalWallpaperWatchHandler);
-        if (this.showPanelIndicatorHandler) Me.settings.disconnect(this.showPanelIndicatorHandler);
-        if (this.newFavouriteWatcher) Me.settings.disconnect(this.newFavouriteWatcher);
-        if (this.dash2panelSettingsWatcher) Me.gExtensions.dash2panel.settings.disconnect(this.dash2panelSettingsWatcher);
+        this.signals.destroy()
         } catch(e) { dev.log(e) }
     }
     _watchOptions() {
-        this.workspaceIsolaterHandler = Me.settings.connect('changed::isolate-workspaces', () => {
+        this.signals.add(Me.settings, 'changed::isolate-workspaces', () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean('isolate-workspaces');
         });
         if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED)
-            this.dash2panelSettingsWatcher = Me.gExtensions.dash2panel.settings.connect('changed::isolate-workspaces', () => {
+            this.signals.add(Me.gExtensions.dash2panel.settings, 'changed::isolate-workspaces', () => {
                 Me.settings.set_boolean('isolate-workspaces', Me.gExtensions.dash2panel.settings.get_boolean('isolate-workspaces'));
                 Me.session.saveSession();
             });
 
-        this.showWorkspaceOverlayHandler = Me.settings.connect('changed::show-workspace-overlay', () => {
-                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        this.signals.add(Me.settings, 'changed::show-workspace-overlay', () => {
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             });
-        this.disableWallpaperManagementyHandler = Me.settings.connect('changed::disable-wallpaper-management', () => {
+        this.signals.add(Me.settings, 'changed::disable-wallpaper-management', () => {
                 this.setBackground();
-                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+                if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             });
 
         this.dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
-            this.globalWallpaperWatchHandler = this.dSettings.connect('changed::picture-uri', () => {
+        this.signals.add(this.dSettings, 'changed::picture-uri', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
                 let bgPath = this.dSettings.get_string('picture-uri');
                 let bgStyle = this.dSettings.get_string('picture-options');
@@ -104,7 +100,7 @@ var SessionManager = class SessionManager {
                 this.setBackground(bgPath, bgStyle);
             });
 
-        this.showPanelIndicatorHandler = Me.settings.connect('changed::show-panel-indicator', () => {
+        this.signals.add(Me.settings, 'changed::show-panel-indicator', () => {
                 this._loadOptions();
                 if (!Me.worksetsIndicator) return;
                 if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
@@ -208,7 +204,7 @@ var SessionManager = class SessionManager {
             sessionsObject = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
         this._setup(sessionsObject)
 
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     saveSession(backup=false) {
@@ -224,7 +220,7 @@ var SessionManager = class SessionManager {
         let filename = (backup ? 'session-backup-'+timestamp+'.json' : 'session.json');
         fileUtils.saveToFile(sessionCopy, filename, fileUtils.CONF_DIR);
 
-        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     applySession(callback) {
@@ -417,7 +413,7 @@ var SessionManager = class SessionManager {
 
             uiUtils.showUserNotification("Background Image Changed", true)
             if (Me.workspaceManager.activeWorksetName == workset.WorksetName) this.setBackground(resource);
-            if (Me.workspaceViewManager) Me.workspaceViewManager.refreshThumbNailsBoxes();
+            if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             } catch(e) { dev.log(e) }
         });
         } catch(e) { dev.log(e) }

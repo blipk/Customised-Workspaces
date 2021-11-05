@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout } = imports.ui;
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overviewControls } = imports.ui;
 const { GObject, Meta, Wnck, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 
 // Internal imports
@@ -38,25 +38,36 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     constructor() {
         try {
             Me.workspaceViewManager = this;
-            this.injections = {}
-            this.thumbnailBoxes = [];
+            this.injections = new utils.InjectionHandler();
+            this.signals = new utils.SignalHandler();
             this.menus = [];
+
+            this.thumbnailsBox = null;
+            this.thumbnailBoxes = [];
+            this.overviewControls = null;
             this.gsWorkspaces = {};
             this.wsvWorkspaces = {};
 
-            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
+            this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
                 function(start, count) {
-                    Me.workspaceViewManager.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails'].call(this, start, count); // Call parent
+                    Me.workspaceViewManager.injections.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails'].call(this, start, count); // Call parent
                     this.connect('destroy', () => {
                         if (this._bgManager) { this._bgManager.destroy(); this._bgManager = null; }
                     });
+                    Me.workspaceViewManager.thumbnailsBox = this;
                     Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
-                    Me.workspaceViewManager.refreshThumbNailsBoxes();
+                    Me.workspaceViewManager.refreshOverview();
                 });
 
-            if (global.shellVersion < 40) return;
+            this.injections.add('overviewControls.ControlsManager.prototype._init',
+                function() {
+                    Me.workspaceViewManager.injections.injections['overviewControls.ControlsManager.prototype._init'].call(this); // Call parent
+                    Me.workspaceViewManager.overviewControls = this;
+                    Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
+                });
+
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
-            this.addInjection('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
+            this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
                 function(win) {
                     let clone = new workspaceThumbnail.ThumbnailsBox.WindowClone(win);
                     clone.connect('selected', (o, time) => { this.activate(time); });
@@ -70,30 +81,26 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     this._windows.push(clone);
                     return clone;
                 });
-            // Keep track of the new workspace views so their background can be changed in refreshThumbNailsBoxes()
-            this.addInjection('workspace.Workspace.prototype._init',
+
+            // Keep track of the new workspace views so their background can be changed in refreshOverview()
+            this.injections.add('workspace.Workspace.prototype._init',
                 function(metaWorkspace, monitorIndex, overviewAdjustment) {
-                    Me.workspaceViewManager.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
+                    Me.workspaceViewManager.injections.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment); // Call parent
                     Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
                     this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
                 });
 
             // Extra reference to workspaces
-            this.addInjection('workspacesView.WorkspacesView.prototype._init',
+            this.injections.add('workspacesView.WorkspacesView.prototype._init',
                 function(monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment) {
-                    Me.workspaceViewManager.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment); // Call parent
+                    Me.workspaceViewManager.injections.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment); // Call parent
                     Me.workspaceViewManager.wsvWorkspaces = this._workspaces;
                     this.connect('destroy', () => delete Me.workspaceViewManager.wsvWorkspaces);
                 });
 
             // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
-            this._overViewShowingId = Main.overview.connect('showing', function() {
-                //Me.workspaceViewManager. = 
-            });
-            this._overViewHidingId = Main.overview.connect('hiding', function() {
-
-            });
-            this._overViewHiddenId = Main.overview.connect('hidden', function() {
+            /* hidden, hiding, showing */
+            this.signals.add(Main.overview, 'hidden', function() {
                 let target;
                 Me.workspaceViewManager.thumbnailBoxes.forEach(function(thumbnailBox, i) {
                     if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
@@ -107,85 +114,41 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 newbg.set_file(Gio.file_new_for_path(bgPath),
                     imports.gi.GDesktopEnums.BackgroundStyle[target.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
-
-                Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {      
-                    /*             
-                    let newbg2 = new background.Background({
-                        monitorIndex: Main.layoutManager.primaryIndex,
-                        layoutManager: Main._layoutManager,
-                        settings: new Gio.Settings({ schema_id: 'org.gnome.desktop.background' }),
-                        file: Gio.file_new_for_path(bgPath),
-                        style: imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM,
-                    });
-    
-                    newbg2._changedId = newbg2.connect('bg-changed', () => {
-                        newbg2.disconnect(background._changedId);
-                        newbg2.destroy();
-                        delete bgMan._backgrounds[monitorIndex];
-                    });
-        
-                    newbg2.changeSignalId = newbg2.connect('bg-changed', () => {
-                        newbg2.disconnect(newbg2.changeSignalId);
-                        newbg2.changeSignalId = null;
-                        bgMan._updateBackgroundActor();
-                    });
-
-                    bgMan._backgroundSource.background = newbg2;
-                    bgMan._backgroundSource._backgrounds = [];
-                    bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = newbg2;
-                    //*/
-                    
-                    //bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex)._loadImage(Gio.file_new_for_path(bgPath))
-                    /*
-
-                    bgMan._backgroundSource._backgrounds[0] = x;
-                    bgMan._backgroundSource._backgrounds[1] = x;
-                    bgMan._backgroundSource._backgrounds[2] = x;
-                    //*/
-
-                    ///*
+                Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
                     if (bgMan.backgroundActor.content)
                         bgMan.backgroundActor.content.background = newbg;
                     else
                         bgMan.backgroundActor.background = newbg;
-                    
-                        
+
                     let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
-                    /*
-                    bgMan._backgroundSource._backgrounds = [];
-                    bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = x;
-                    bgMan._backgroundSource._backgrounds[1] = x;
-                    bgMan._backgroundSource._backgrounds[2] = x;
-                    bgMan._backgroundSource._backgrounds[3] = x;
-                    bgMan._newBackgroundActor = bgMan.backgroundActor;
-                    */
-                    //bgMan._updateBackgroundActor();
                     x.emit('bg-changed');
-
-
-                    dev.log("Main.layoutManager._bgManagers")
-                    
                 }, this);
             });
 
         } catch(e) { dev.log(e) }
     }
-    addInjection(srcName, dstFunc) {
-        this.injections[srcName] = eval(srcName);
-        eval(srcName + '= dstFunc');
-    }
+
     destroy() {
         try {
-        this.injections.forEachEntry(function(srcName, srcObject){
-            eval(srcName + '= srcObject');
-        }, this);
-        delete this.injections;
+            this.injections.removeAll();
+            this.signals.disconnectAll();
+
+            delete this.injections;
+            delete this.signals;
         } catch(e) { dev.log(e) }
     }
-    refreshThumbNailsBoxes() {
+
+    refreshThumbnailBoxes() {
+        try {
+            if (this.thumbnailsBox) this.thumbnailsBox.addThumbnails()
+            this.refreshOverview()
+        } catch(e) { dev.log(e) }
+    }
+
+    refreshOverview() {
         try {
         if (!Main.overview._visible) return;
-
+        Me.workspaceManager._workspaceUpdate();
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
             // Find active workset for thumbnailbox
@@ -213,6 +176,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (global.shellVersion >= 40) {
                 if (Me.session.activeSession.Options.DisableWallpaperManagement) return;
                 let gWS = this.gsWorkspaces[thumbnailBox.metaWorkspace];
+                if (!gWS) return;
                 gWS._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
             }
 
@@ -220,24 +184,49 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
             if (!thumbnailBox._bgManager)
                 thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
-                                                                            container: thumbnailBox._contents,
-                                                                            //layoutManager: Main.layoutManager,
-                                                                            vignette: false });
+                                                                        container: thumbnailBox._contents,
+                                                                        //layoutManager: Main.layoutManager,
+                                                                        controlPosition: false,
+                                                                        vignette: false,
+                                                                            });
 
+            /*
+            let _useContentSize = true;
+            let backgroundActor = new Meta.BackgroundActor({
+                meta_display: global.display,
+                monitor: i,
+                request_mode: _useContentSize
+                    ? Clutter.RequestMode.CONTENT_SIZE
+                    : Clutter.RequestMode.HEIGHT_FOR_WIDTH,
+                x_expand: !_useContentSize,
+                y_expand: !_useContentSize,
+            });
+            thumbnailBox._bgManager.backgroundActor = backgroundActor;
+            thumbnailBox._bgManager.backgroundActor.content.set({
+                background: thumbnailBox._newbg,
+                vignette: false,
+                vignette_sharpness: 0.5,
+                brightness: 0.5,
+            })
+            //*/
             if (thumbnailBox._bgManager.backgroundActor) {
                 //dev.dump(thumbnailBox._bgManager, "bgmanager-WITHactor")
-                thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
-            } else {
-                // TODO - fix updating thumbnails when workset is closed from overview
-                //thumbnailBox._bgManager.backgroundActor = Object.assign({}, this.thumbnailBoxes[0]._bgManager.backgroundActor)
                 //thumbnailBox._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
-                //dev.dump(thumbnailBox._bgManager, "bgmanager-noactor")
-            }            
-                
+                thumbnailBox._bgManager.backgroundActor.content.set({
+                    background: thumbnailBox._newbg,
+                    vignette: false,
+                    vignette_sharpness: 0.5,
+                    brightness: 0.5,
+                })
+            } else {
+                // TODO Fix this
+                //uiUtils.showUserNotification("NONE")
+            }
+
 
             // Prevent excessive recursion but enforce background updates during various events
-            //thumbnailBox._updated = false;
-            //thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshThumbNailsBoxes(); thumbnailBox._updated = true; });
+            thumbnailBox._updated = false;
+            thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshOverview(); thumbnailBox._updated = true; });
             //*/
 
 
@@ -269,7 +258,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (thumbnailBox._workset) {
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbNailsBoxes();  }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbnailBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail
