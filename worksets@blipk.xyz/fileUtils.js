@@ -31,7 +31,7 @@ const { GLib, Gio } = imports.gi;
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
-const { dev, utils } = Me.imports;
+const { dev } = Me.imports;
 
 // Directory and file paths for resources
 var USER_CONF_DIR = GLib.get_user_config_dir();

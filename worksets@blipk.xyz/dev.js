@@ -26,7 +26,7 @@
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const { utils, fileUtils } = Me.imports;
+const { fileUtils } = Me.imports;
 
 function log(context, message) {
     // Ubuntu is terrible and is using an old version of GJS which doesnt support these operators yet

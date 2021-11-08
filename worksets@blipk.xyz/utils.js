@@ -211,18 +211,13 @@ var SignalHandler = class SignalHandler {
         this.signalIds = [];
     }
 
-    add(target, signal, fn) {
+    add(target, signal = null, fn = null) {
         try {
-        let signalId = target.connect(signal, fn)
+        let signalId = target.connect ? target.connect(signal, fn) : target;
         this.signalIds[signalId] = target;
         } catch(e) { dev.log(e); }
     }
-
-    addg(signalId) {
-        try {
-        this.signalIds[signalId] = {disconnect: false};
-        } catch(e) { dev.log(e); }
-    }
+    
     disconnectAll() {
         try {
         this.signalIds.forEach((target, id) => target.disconnect ? target.disconnect(id) : GLib.Source.remove(id))

@@ -107,7 +107,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     if (Me.workspaceManager.activeWorkspaceIndex != i) return;
                     target = thumbnailBox._workset;
                 });
-                target = target || Me.session.DefaultWorkset; //TODO check monitors
+                /*
+                target = target || Me.session.DefaultWorkset;
 
                 let newbg = new Meta.Background({ meta_display: Me.gScreen });
                 let bgPath = target.BackgroundImage.replace("file://", "");
@@ -123,6 +124,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
                     x.emit('bg-changed');
                 }, this);
+                //*/
             });
 
         } catch(e) { dev.log(e) }
