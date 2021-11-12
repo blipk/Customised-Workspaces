@@ -104,7 +104,7 @@ var WorksetsIndicator = GObject.registerClass({
             optionMenuItem.pressHandler = optionMenuItem.connect('toggled', ()=>{ apply(); });
             //optionMenuItem.pressHandler = optionMenuItem.connect('button_release_event', ()=>{ apply(); });
             optionMenuItem.activate = ()=>{ if (optionMenuItem._switch.mapped) optionMenuItem.toggle(); };
-            uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description()});
+            uiUtils.createTooltip(optionMenuItem, {msg: Me.settings.settings_schema.get_key(settingsKeyName).get_description(), delay: 1400});
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
         }, this);
@@ -205,7 +205,7 @@ var WorksetsIndicator = GObject.registerClass({
              ? "Switch to '"+menuItem.workset.WorksetName+"'"
              : "Load '"+menuItem.workset.WorksetName+"' in this workspace";
         //uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true, {msg: "Pin '"+menuItem.workset.WorksetName+"' to the top of the list"});
-        uiUtils.createIconButton(menuItem, icondefault_nameuri, () => {Me.session.setDefaultWorkset(menuItem.workset); this._refreshMenu();}, true, {msg: "Set '"+menuItem.workset.WorksetName+"' as the default"});
+        uiUtils.createIconButton(menuItem, icondefault_nameuri, () => {Me.session.setDefaultWorkset(menuItem.workset); this._refreshMenu(); Me.workspaceViewManager.refreshOverview(); }, true, {msg: "Set '"+menuItem.workset.WorksetName+"' as the default"});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openCloseCommand, {}, {msg: openCloseMsg});
         //uiUtils.createIconButton(menuItem, iconOpenHere_nameuri, () => {Me.session.displayWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: viewOpenMessage});
@@ -257,7 +257,6 @@ var WorksetsIndicator = GObject.registerClass({
         Me.worksetsIndicator.popUpMenus = [];
 
         // Area for object info
-        //menuItem.worksetPopupMenu = new popupMenu.PopupMenu(menuItem.actor, St.Align.START, St.Side.BOTTOM);
         menuItem.worksetPopupMenu = new popupMenu.PopupSubMenuMenuItem("Details for '"+ menuItem.workset.WorksetName +"'", true);
         menuItem.worksetPopupMenu.icon.icon_name = 'org.gnome.tweaks'
         menuItem.worksetPopupMenu.actor.add_style_class_name('panel-menu');

@@ -103,8 +103,10 @@ var SessionManager = class SessionManager {
         this.signals.add(Me.settings, 'changed::show-panel-indicator', () => {
                 this._loadOptions();
                 if (!Me.worksetsIndicator) return;
-                if(this.activeSession.Options.ShowPanelIndicator && !Me.worksetsIndicator.visible) {
-                    Me.worksetsIndicator.show(); this.saveSession(); Me.worksetsIndicator.toggleMenu();
+                if (this.activeSession.Options.ShowPanelIndicator) {
+                    Me.worksetsIndicator.show();
+                    this.saveSession();
+                    Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu();
                 }
             });
     }
@@ -244,7 +246,7 @@ var SessionManager = class SessionManager {
         let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         dSettings.set_string('picture-uri', 'file://'+bgPath);
         dSettings.set_string('picture-options', style.toLowerCase());
-        
+
         // workspaceView is losing track of the original bgmanager so this has to be updated here to affect other changes in the system
         let newbg = new Meta.Background({ meta_display: Me.gScreen });
         newbg.set_file(Gio.file_new_for_path(bgPath),
@@ -258,10 +260,10 @@ var SessionManager = class SessionManager {
                     bgMan.backgroundActor.background = newbg
             }
         }, this);
-        
+
         //*/
         /*
-        Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {      
+        Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
             let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
             bgMan._backgroundSource._backgrounds = [];
             bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = x;

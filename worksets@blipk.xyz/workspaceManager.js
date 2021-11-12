@@ -125,9 +125,8 @@ var WorkspaceManager = class WorkspaceManager {
 
         this._workspaceUpdate();
 
-        // Update the overlay - needs to be done twice to maintain correct thumbnails
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
+        // Update the overlay
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     loadDefaultWorksets() {

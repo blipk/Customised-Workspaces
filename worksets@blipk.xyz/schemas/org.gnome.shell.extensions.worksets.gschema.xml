@@ -4,47 +4,47 @@
     <key name="isolate-workspaces" type="b">
       <default>true</default>
       <summary>Isolate running applications</summary>
-      <description>When enabled applications are only shown on the dash/panel in their workspace</description>
-    </key>
-    <key name="only-background-details" type="b">
-      <default>false</default>
-      <summary>Hide favourites in details</summary>
-      <description>Hides the favourite application list in the environment details menu</description>
-    </key>
-    <key name="show-panel-indicator" type="b">
-      <default>true</default>
-      <summary>Show panel indicator</summary>
-      <description>Hide this menu and the panel indicator, to enable see global extension settings</description>
+      <description>Applications are only shown on the dash/panel in their workspace</description>
     </key>
     <key name="show-workspace-overlay" type="b">
       <default>true</default>
-      <summary>Show workspace overlay</summary>
-      <description>Show or hide custom workspace details/actions on the overview workspace list</description>
+      <summary>Show overview overlay</summary>
+      <description>Show custom workspace details/actions in the overview</description>
     </key>
-    <key name="show-notifications" type="b">
-      <default>false</default>
-      <summary>Show passive notifications</summary>
-      <description>Show or hide notifications for switching between workspaces</description>
+    <key name="show-panel-indicator" type="b">
+      <default>true</default>
+      <summary>Show this</summary>
+      <description>Disable to hide this menu and its indicator, re-enable from overview or global extension settings</description>
     </key>
     <key name="show-helpers" type="b">
       <default>true</default>
-      <summary>Show help notifications</summary>
-      <description>Show or hide these notifications when hovering over buttons and options</description>
+      <summary>Show tooltips</summary>
+      <description>Show these notifications when hovering over buttons and options</description>
     </key>
-    <key name="reverse-menu" type="b">
+    <key name="show-notifications" type="b">
       <default>false</default>
-      <summary>Reverse menu order</summary>
-      <description>Reverse the menu order if you have your panel on the lower edge</description>
+      <summary>Show notifications</summary>
+      <description>Show notifications for switching between workspaces</description>
+    </key>
+        <key name="only-background-details" type="b">
+      <default>false</default>
+      <summary>Hide favourites in details</summary>
+      <description>Hides the favourite application list in the environment details menu</description>
     </key>
     <key name="disable-wallpaper-management" type="b">
       <default>false</default>
       <summary>Disable wallpaper management</summary>
       <description>Disables this extension managing wallpapers, useful if configured elsewhere.</description>
     </key>
+    <key name="reverse-menu" type="b">
+      <default>false</default>
+      <summary>Reverse menu order</summary>
+      <description>Reverse the menu order if you have your panel on the lower edge</description>
+    </key>
     <key name="debug-mode" type="b">
       <default>true</default>
       <summary>Enable logging</summary>
-      <description>Toggles writing log file to ~/.config/worksets@blipk.xyz</description>
+      <description>Toggles writing log file to ~/.config/worksets@blipk.xyz/debug.log</description>
     </key>
     <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>

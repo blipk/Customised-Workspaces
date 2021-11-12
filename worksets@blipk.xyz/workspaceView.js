@@ -150,7 +150,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
     refreshOverview() {
         try {
         if (!Main.overview._visible) return;
-        Me.workspaceManager._workspaceUpdate();
+
         this.thumbnailBoxes.forEach(function(thumbnailBox, i) {
             try {
             // Find active workset for thumbnailbox
@@ -255,8 +255,17 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             worksetLabel.set_text(text);
 
-            // Action buttons for custom workspaces
+            // Icon buttons
             let icon_options = {icon_size: 20, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.START, x_expand: false, y_expand: false};
+            // Button to access panel menu, if it is disabled
+            //if (!Me.session.activeSession.Options.ShowPanelIndicator)
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => { 
+                    Me.session.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.toggleMenu() : null;
+                    Me.session.activeSession.Options.ShowPanelIndicator = true;
+                    Me.session.applySession();
+                }, icon_options, {msg: "Show the panel indicator menu"})
+
+            // Action buttons for custom workspaces
             if (thumbnailBox._workset) {
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
@@ -265,9 +274,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Image for empty workspace thumbnail
             if (!thumbnailBox._workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
-                if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                    uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => { Me.session.activeSession.Options.ShowPanelIndicator = true; Me.session.applySession(); }, icon_options, {msg: "Show the panel indicator menu"})
-
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
                 }, icon_options, {msg: "Create new custom workspace here"});
