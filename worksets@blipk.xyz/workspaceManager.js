@@ -102,10 +102,6 @@ var WorkspaceManager = class WorkspaceManager {
 
         // Update the workspace view
         Main.wm._workspaceTracker._checkWorkspaces();
-
-        // Update the overlay - needs to be done twice to maintain correct thumbnails
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
-        //if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     _activeWorkspaceChanged() {

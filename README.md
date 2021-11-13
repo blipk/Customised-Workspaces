@@ -11,12 +11,11 @@
 
 Customised Workspaces enables creating isolated and customised workspaces.
 
-* Customise the dash to be unique for each workspace, each with their own favourites
-* Only show running applications on the dash in their respective workspace
-* Choose a custom background image for each workspace
-* Minor UI tweaks to the overview workspaces
-* Save each customisation, set them to autoload on specific workspaces
-* Hide the extension once you've configured your preferences to enjoy seamlessly upgraded workspaces in gnome shell
+* Customise your dash/dock/panel to be unique for each workspace
+* Applications will only show on the dash in their active workspace
+* Set up a custom background for each workspace
+* Set up the custom dash favourites for each workspace
+* Edit your load settings and save your customised environments
 
 Compatible for use with any of these extensions to complete your workspace upgrade:
 
@@ -31,11 +30,17 @@ Compatible for use with any of these extensions to complete your workspace upgra
 
 ### Installation
 
-Requires libwnck to be installed.
+Requires `libwnck` to be installed.
 
 ###### Gnome Extensions
 
+<p align="left">
+    <a href="https://extensions.gnome.org/extension/1583/worksets/" >
+        <img src="/doc/gnome_logo.svg" width="120px"/>
+    </a>
+</p>
 https://extensions.gnome.org/extension/1583/worksets/
+
 
 ###### Git
 ```
@@ -48,11 +53,11 @@ git clone https://github.com/blipk/Customised-Workspaces.git extensions
 
 ### Support
 
-There are versions of the extension for Gnome Shell versions 3.00+
+There are versions of the extension for Gnome Shell versions 3.00+ @ extensions.gnome.org
 
-This has only been thoroughly tested on Gnome Shell versions 3.32 to 3.38, and on Gnome 40 (3.40)
+Latest versions only tested and working on Gnome 40+ (3.40)
 
-### Licence
+### License
 
 ```
 This file is part of the Customised Workspaces Gnome Extension for Gnome 3
