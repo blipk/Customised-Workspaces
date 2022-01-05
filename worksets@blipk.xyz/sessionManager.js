@@ -279,6 +279,7 @@ var SessionManager = class SessionManager {
     setFavorites(favArray) {
         try {
         favArray = favArray || this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].FavApps;
+        if (!favArray) return;
         let outFavorites = []
         favArray.forEach(function(favorite, i) {
             outFavorites.push(favorite.name)
@@ -294,10 +295,11 @@ var SessionManager = class SessionManager {
         let newFavorites = [];
 
         currentFavorites.forEach(function(favorite, i) {
+            if (!this.allApps[favorite]) continue
             newFavorites.push({'name': favorite, 'displayName': this.allApps[favorite].displayName, 'icon': this.allApps[favorite].icon || '', 'exec': this.allApps[favorite].exec || '' })
         }, this);
 
-        return newFavorites;
+        return newFavorites
         } catch(e) { dev.log(e) }
     }
     removeFavorite(workset, appid) {
