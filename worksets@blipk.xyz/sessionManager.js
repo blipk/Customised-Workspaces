@@ -295,8 +295,9 @@ var SessionManager = class SessionManager {
         let newFavorites = [];
 
         currentFavorites.forEach(function(favorite, i) {
-            if (!this.allApps[favorite]) continue
-            newFavorites.push({'name': favorite, 'displayName': this.allApps[favorite].displayName, 'icon': this.allApps[favorite].icon || '', 'exec': this.allApps[favorite].exec || '' })
+            if (this.allApps[favorite]) {
+                newFavorites.push({'name': favorite, 'displayName': this.allApps[favorite].displayName, 'icon': this.allApps[favorite].icon || '', 'exec': this.allApps[favorite].exec || '' })
+            }
         }, this);
 
         return newFavorites
