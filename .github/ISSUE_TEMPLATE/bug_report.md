@@ -9,7 +9,11 @@ assignees: blipk
 
 **Please disable all other extensions and see if the issue persists**
 
+**Also try deleting your session configuration file and restarting (~/.config/worksets@blipk.xyz/session.json)**
+
 **Please include the debug file from ~/.config/worksets@blipk.xyz/debug.log**
+
+**Also include your session configuration file from ~/.config/worksets@blipk.xyz/session.json**
 
 **Desktop (please complete the following information):**
  - Gnome-Shell Version (gnome-shell --version):
