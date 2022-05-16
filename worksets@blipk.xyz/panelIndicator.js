@@ -354,7 +354,7 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
             let addApps = () => {
                 this.menu.toggle();
-                utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], fileUtils.GLib.get_environ(), 0, null,
+                utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
                     (resource) => {
                         try {
                         if (!resource) return;

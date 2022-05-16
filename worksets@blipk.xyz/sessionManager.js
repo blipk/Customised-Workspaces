@@ -501,7 +501,7 @@ var SessionManager = class SessionManager {
                 this.saveSession();
                 if (activate) this.displayWorkset(this.Worksets[this.Worksets.length-1]);
                 uiUtils.showUserNotification("Environment "+returnText+" created.");
-            }, true, false, [], [], buttonStyles, 'Environment '+timestamp);
+            }, true, false, [], [], buttonStyles, '');
         } else {
             worksetObject.WorksetName = name;
             //Push it to the session
