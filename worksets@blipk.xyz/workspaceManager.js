@@ -136,6 +136,11 @@ var WorkspaceManager = class WorkspaceManager {
                 Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                 Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
                 found = true;
+            } 
+            if (map.currentWorkset == workset.WorksetName) {
+                Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
+                Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
+                found = true;
             }
         }, this);
 
