@@ -243,7 +243,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Stop after background change if overlay box is not enabled
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay) return;
 
-            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.START, y_expand: true});
+            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.CENTER, y_expand: true, x_expand: true});
+            this.wsvWorkspaces[i]._worksetOverlayBox.set_x_expand(true)
             this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.77;
             this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.04;
 
