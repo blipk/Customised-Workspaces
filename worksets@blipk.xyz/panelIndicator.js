@@ -148,7 +148,7 @@ var WorksetsIndicator = GObject.registerClass({
         // Orient menu
         let reverseMenu;
         if (Me.gExtensions.dash2panel)
-            reverseMenu = Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED ? true : Me.session.activeSession.Options.ReverseMenu;
+            reverseMenu = Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED ? true : Me.session.activeSession.Options.ReverseMenu;
         else reverseMenu = Me.session.activeSession.Options.ReverseMenu
         if (reverseMenu) {
             this.menu.addMenuItem(this.viewSection);
@@ -411,7 +411,7 @@ var WorksetsIndicator = GObject.registerClass({
                 mode: Clutter.AnimationMode.EASE_OUT_EXPO,
             });
         } else {
-            let angle = (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionSystem.ExtensionState.ENABLED)
+            let angle = (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED)
                     ? -90 : 90;
             menuItem._triangle.ease({
                 rotation_angle_z: angle,

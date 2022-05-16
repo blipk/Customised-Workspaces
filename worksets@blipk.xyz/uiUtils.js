@@ -39,6 +39,7 @@ const tweener = imports.tweener.tweener || imports.ui.tweener;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
 function createIconButton (parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
+    try {
     if (Array.isArray(iconNames))
         var [iconNameURI, alternateIconName] = iconNames;
     else iconNameURI = iconNames;
@@ -78,6 +79,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
         parentItem.iconsButtonsPressIds = [];
     }
     return iconButton;
+    } catch(e) { dev.log(e) }
 }
 
 //Display a short overlay message on the screen for user feedback etc..
