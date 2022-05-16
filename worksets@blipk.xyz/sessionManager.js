@@ -28,7 +28,7 @@
 const Main = imports.ui.main;
 const { extensionSystem, appFavorites } = imports.ui;
 const { extensionUtils, util } = imports.misc;
-const { GObject, Gio, Clutter, Shell, Meta } = imports.gi;
+const { GObject, Gio, Clutter, Shell, Meta, GLib } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -400,13 +400,13 @@ var SessionManager = class SessionManager {
     // Workset Management
     setWorksetBackgroundImage(workset) {
         try {
-        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose Background for ' + workset.WorksetName],  fileUtils.GLib.get_environ(), 0, null,
+        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose Background for ' + workset.WorksetName],  GLib.get_environ(), 0, null,
         (resource) => {
             try {
             if (!resource) return;
             resource = resource.trim();
-            let filePath = fileUtils.GLib.path_get_dirname(resource);
-            let fileName = fileUtils.GLib.path_get_basename(resource);
+            let filePath = GLib.path_get_dirname(resource);
+            let fileName = GLib.path_get_basename(resource);
 
             // Find the workset and update the background image path property
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
