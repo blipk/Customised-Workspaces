@@ -52,7 +52,7 @@
       <description>Contains the naming and app data for each favorite.</description>
     </key>
     <key name="workset-prototype-json" type="s">
-      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"BackgroundImage\":\"\", \"FavApps\":[\"\"]}"</default>
+      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"BackgroundImage\":\"\", \"BackgroundImageDark\":\"\", \"FavApps\":[\"\"]}"</default>
       <summary>JSObject containing info on each custom workspace</summary>
       <description>Contains the information on each custom workspace.</description>
     </key>

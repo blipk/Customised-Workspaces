@@ -306,14 +306,27 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
-            uiUtils.setImage(menuItem.workset.BackgroundImage, menuItem.bgMenuButton)
-            viewArea.addMenuItem(menuItem.bgMenuButton);
+            uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+            viewArea.addMenuItem(menuItem.bgMenuButton);          
+
+            let backgroundOtherOptionsBox = new St.BoxLayout({ vertical: false, reactive: true,
+                track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+            
+            let dmButtonIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
+            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {               
+                dmButton.viewingDarkMode = dmButton.icon.icon_name === 'night-light-symbolic' ? true : false;
+                dmButton.viewingDarkMode = !dmButton.viewingDarkMode
+                dmButton.icon.icon_name = dmButton.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
+                uiUtils.setImage(menuItem.bgMenuButton, dmButton.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+            }, {x_align: Clutter.ActorAlign.END}, {msg: "View dark mode background"});
+            dmButton.viewingDarkMode = Me.session.isDarkMode
+            dmButton.disconnect(dmButton.leaveEvent)
+            menuItem.bgMenuButton.add_child(backgroundOtherOptionsBox)
 
             menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
-                Me.session.setWorksetBackgroundImage(menuItem.workset);
+                Me.session.setWorksetBackgroundImage(menuItem.workset, dmButton.viewingDarkMode);
                 this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
             });
-            uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to select a new desktop background for '"+menuItem.workset.WorksetName+"'"});
 
             let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
                 track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
@@ -326,7 +339,7 @@ var WorksetsIndicator = GObject.registerClass({
                 Me.session.saveSession();
                 if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
                     || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
-                        Me.session.setBackground(menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
+                        Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
             }
 
             uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});

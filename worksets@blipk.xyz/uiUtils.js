@@ -53,7 +53,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
-        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_expand: false, y_expand: false
+        child: icon, style_class: options.style_class || 'icon-button', can_focus: true, x_expand: false, y_expand: false,
     });
     iconButton.icon = icon;
     parentItem.add_child ? parentItem.add_child(iconButton) : parentItem.actor.add_child(iconButton);
@@ -66,11 +66,11 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
     parentItem.iconButtons.push(iconButton);
 
     iconButton.focus = false;
-    let leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP;});
-    let enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP;});
-    let pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; return Clutter.EVENT_STOP;});
-    let releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); return Clutter.EVENT_STOP;});
-    parentItem.iconsButtonsPressIds.push( [pressEvent, releaseEvent, leaveEvent ] );
+    iconButton.leaveEvent = iconButton.connect('leave-event', ()=>{iconButton.focus = false;  iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP;});
+    iconButton.enterEvent = iconButton.connect('enter-event', ()=>{ if (alternateIconName) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP;});
+    iconButton.pressEvent = iconButton.connect('button-press-event', ()=>{iconButton.focus=true; return Clutter.EVENT_STOP;});
+    iconButton.releaseEvent = iconButton.connect('button-release-event', ()=>{ if (iconButton.focus==true) callback(); return Clutter.EVENT_STOP;});
+    parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent, iconButton.releaseEvent, iconButton.leaveEvent ] );
     parentItem.destroyIconButtons = function() {
         parentItem.iconButtons.forEach(function(iconButton) {
             //iconButton.destroy();
@@ -167,13 +167,16 @@ function createTooltip(widget, tooltip) {
 }
 
 let knownImages = {}; // Save on resources generating these in menu refreshes
-function setImage(imgFilePath, parent) {
+function setImage(parent, imgFilePath = '') {
+    try {
     imgFilePath = imgFilePath.replace("file://", "");
     let image;
+
     if (knownImages[imgFilePath]) {
         image = knownImages[imgFilePath];
-    } else {
+    } else if (imgFilePath) {
         let img = new Gtk.Image({file: imgFilePath});
+
         let pixbuf = img.get_pixbuf()
         if (pixbuf === null) // file doesnt exist
             return (imgFilePath = '');
@@ -192,6 +195,8 @@ function setImage(imgFilePath, parent) {
             pixbuf.get_rowstride()
         );
         if (!success) throw Error("error creating Clutter.Image()");
+    } else { // empty image if no file path
+        image = new Clutter.Image();
     }
     parent.imgSrc = imgFilePath;
     parent.content = image;
@@ -199,6 +204,7 @@ function setImage(imgFilePath, parent) {
 
     knownImages[imgFilePath] = image;
     return image;
+    } catch(e) { dev.log(e) }
 }
 
 // Shader example

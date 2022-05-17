@@ -84,11 +84,24 @@ var SessionManager = class SessionManager {
                 if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             });
 
-        this.dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
-        this.signals.add(this.dSettings, 'changed::picture-uri', () => {
+        this.iSettings = extensionUtils.getSettings('org.gnome.desktop.interface');
+        this.signals.add(this.iSettings, 'changed::color-scheme', () => {
+            // switched theme mode
+            this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
+
+                if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;              
+                let bgPath = isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
+                let bgStyle = this.Worksets[worksetIndex].BackgroundStyle;
+                this.setBackground(bgPath, bgStyle, isDarkMode);
+            }, this);
+        });
+
+        this.bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
+        this.signals.add(this.bSettings, 'changed::picture-uri', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
-                let bgPath = this.dSettings.get_string('picture-uri');
-                let bgStyle = this.dSettings.get_string('picture-options');
+                let bgPath = this.bSettings.get_string('picture-uri');
+                let bgStyle = this.bSettings.get_string('picture-options');
 
                 this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                     if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
@@ -97,7 +110,36 @@ var SessionManager = class SessionManager {
                     this.saveSession();
                 }, this);
 
-                this.setBackground(bgPath, bgStyle);
+                if (isDarkMode) return;
+                this.setBackground(bgPath, bgStyle, false);
+            });
+        this.signals.add(this.bSettings, 'changed::picture-uri-dark', () => {
+                // Update active workset wallpaper info if changed elsewhere in gnome
+                let bgPath = this.bSettings.get_string('picture-uri-dark');
+                let bgStyle = this.bSettings.get_string('picture-options');
+
+                this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                    if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
+                    this.Worksets[worksetIndex].BackgroundImageDark = bgPath;
+                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                    this.saveSession();
+                }, this);
+
+                if (!isDarkMode) return;
+                this.setBackground(bgPath, bgStyle, true);
+            });
+        this.signals.add(this.bSettings, 'changed::picture-options', () => {
+                let bgStyle = this.bSettings.get_string('picture-options');
+                let bgPath = ''
+
+                this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
+                    if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
+                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                    bgPath = this.isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
+                    this.saveSession();
+                }, this);
+
+                this.setBackground(bgPath, bgStyle, this.isDarkMode);
             });
 
         this.signals.add(Me.settings, 'changed::show-panel-indicator', () => {
@@ -174,6 +216,9 @@ var SessionManager = class SessionManager {
             if (typeof worksetBuffer.WorksetName !== 'string') worksetBuffer.WorksetName = "Workset " + ii;
             if (typeof worksetBuffer.Favorite !== 'boolean') worksetBuffer.Favorite = false;
 
+            if (typeof worksetBuffer.BackgroundImage !== 'string') worksetBuffer.BackgroundImage = this.getBackground();
+            if (typeof worksetBuffer.BackgroundImageDark !== 'string') worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage;
+
             // Remove duplicate entries
             filteredWorksets = this.Worksets.filter(function(item) {
                 if (item !== worksetBuffer &&
@@ -230,22 +275,39 @@ var SessionManager = class SessionManager {
         if (callback) callback();
         this.loadSession();
     }
+    get isDarkMode() {
+        return this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
+    }
     getBackground() {
         try{
-        let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
-        let bgURI = dSettings.get_string('picture-uri');
+        if (!this.bSettings) this.bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
+        let bgURI = this.bSettings.get_string('picture-uri');
         return bgURI.replace("file://", "");
         } catch(e) { dev.log(e) }
     }
-    setBackground(bgPath = "", style = 'ZOOM') {
+    getBackgroundDark() {
+        try{
+        if (!this.bSettings) this.bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
+        let bgURI = this.bSettings.get_string('picture-uri-dark');
+        return bgURI.replace("file://", "");
+        } catch(e) { dev.log(e) }
+    }
+    setBackground(bgPath = "", style = 'ZOOM', darkMode = false) {
+        dev.log("Setting background:", bgPath)
         if (this.activeSession.Options.DisableWallpaperManagement) return;
         if (!bgPath)
             bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;
         bgPath = bgPath.replace("file://", "");
 
-        let dSettings = extensionUtils.getSettings('org.gnome.desktop.background');
-        dSettings.set_string('picture-uri', 'file://'+bgPath);
-        dSettings.set_string('picture-options', style.toLowerCase());
+        let bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
+        if (darkMode) {
+            bSettings.set_string('picture-uri-dark', 'file://'+bgPath);
+        } else {
+            bSettings.set_string('picture-uri', 'file://'+bgPath);
+        }
+        bSettings.set_string('picture-options', style.toLowerCase());
+
+        if ((darkMode && !this.isDarkMode) || (!darkMode && this.isDarkMode)) return;
 
         // workspaceView is losing track of the original bgmanager so this has to be updated here to affect other changes in the system
         let newbg = new Meta.Background({ meta_display: Me.gScreen });
@@ -371,7 +433,7 @@ var SessionManager = class SessionManager {
         }
 
         this.setFavorites(workset.FavApps);
-        this.setBackground(workset.BackgroundImage, workset.BackgroundStyle);
+        this.setBackground(this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage, workset.BackgroundStyle, this.isDarkMode);
 
         this.saveSession();
         } catch(e) { dev.log(e) }
@@ -398,9 +460,10 @@ var SessionManager = class SessionManager {
     }
 
     // Workset Management
-    setWorksetBackgroundImage(workset) {
+    setWorksetBackgroundImage(workset, darkMode = false) {
         try {
-        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose Background for ' + workset.WorksetName],  GLib.get_environ(), 0, null,
+        let msg = darkMode ? "Dark Mode" : "Light Mode"
+        utils.spawnWithCallback(null, ['/usr/bin/zenity', '--file-selection', '--title=Choose Background for ' + workset.WorksetName + ' ('+msg+')'],  GLib.get_environ(), 0, null,
         (resource) => {
             try {
             if (!resource) return;
@@ -409,15 +472,26 @@ var SessionManager = class SessionManager {
             let fileName = GLib.path_get_basename(resource);
 
             // Find the workset and update the background image path property
+            let bgStyle;
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != workset.WorksetName) return;
-                this.Worksets[worksetIndex].BackgroundImage = resource;
+                if (darkMode) {
+                    this.Worksets[worksetIndex].BackgroundImageDark = resource;
+                } else  {
+                    this.Worksets[worksetIndex].BackgroundImage = resource;
+                }
                 this.Worksets[worksetIndex].BackgroundStyle = this.Worksets[worksetIndex].BackgroundStyle || 'ZOOM';
+                bgStyle = this.Worksets[worksetIndex].BackgroundStyle
                 this.saveSession();
             }, this);
 
-            uiUtils.showUserNotification("Background Image Changed", true)
-            if (Me.workspaceManager.activeWorksetName == workset.WorksetName) this.setBackground(resource);
+            let msg = darkMode ? "Dark Mode" : "Light Mode"
+            uiUtils.showUserNotification("Background Image Changed ("+msg+")", true)
+            if (Me.workspaceManager.activeWorksetName == workset.WorksetName) {
+                if ((darkMode && this.isDarkMode) || (!darkMode && !this.isDarkMode)) {
+                    this.setBackground(resource, bgStyle, this.isDarkMode); 
+                }    
+            }
             if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             } catch(e) { dev.log(e) }
         });
@@ -439,6 +513,7 @@ var SessionManager = class SessionManager {
             sessionObject.Worksets[0].WorksetName = "Primary";
             sessionObject.Worksets[0].Favorite = true;
             sessionObject.Worksets[0].BackgroundImage = this.getBackground();
+            sessionObject.Worksets[0].BackgroundImageDark = this.getBackgroundDark();
             sessionObject.Worksets[0].BackgroundStyle = 'ZOOM';
             sessionObject.workspaceMaps = workspaceMaps;
             sessionObject.workspaceMaps['Workspace0'].defaultWorkset = "Primary";
@@ -476,6 +551,7 @@ var SessionManager = class SessionManager {
         }
 
         worksetObject.BackgroundImage = this.getBackground();
+        worksetObject.BackgroundImageDark = this.getBackgroundDark();
 
         if (!name) {
             let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '-');

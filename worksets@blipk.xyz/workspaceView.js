@@ -170,7 +170,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (thumbnailBox._newbg) delete thumbnailBox._newbg;
             thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
             let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
-            let bgPath = bg.BackgroundImage.replace("file://", "");
+            let bgPath = Me.session.isDarkMode ? bg.BackgroundImageDark.replace("file://", "") : bg.BackgroundImage.replace("file://", "");
             thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
                 imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
@@ -269,7 +269,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Action buttons for custom workspaces
             if (thumbnailBox._workset) {
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset, Me.session.isDarkMode); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbnailBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
             }
 
