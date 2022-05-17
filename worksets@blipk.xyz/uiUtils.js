@@ -126,32 +126,43 @@ function removeAllUserNotifications(fadeTime) {
 }
 
 function createTooltip(widget, tooltip) {
+    try { 
     if (!tooltip) return;
     widget.tooltip = tooltip;
-    widget.connect('enter_event', ()=>{
+
+    if (widget.tooltipEnterEvent) widget.disconnect(widget.tooltipEnterEvent)
+    if (widget.tooltipLeaveEvent) widget.disconnect(widget.tooltipLeaveEvent)
+    if (widget.tooltipPressEvent) widget.disconnect(widget.tooltipPressEvent)
+    if (widget.notificationLabel) {
+        removeUserNotification(widget.notificationLabel, 0.1)
+        widget.notificationLabel = false
+        widget.hovering = false
+    }
+
+    widget.tooltipEnterEvent = widget.connect('enter_event', ()=>{
         widget.hovering = true;
-        GLib.timeout_add(null, tooltip.delay || 700, ()=> {
+        GLib.timeout_add(null, widget.tooltip.delay || 700, ()=> {
             // Ensure there is only one notification per widget
             if (widget.notificationLabel) return;
             // Create message
-            if(widget.hovering && !widget.notificationLabel && (Me.session.activeSession.Options.ShowHelpers || tooltip.force)) {
-                widget.notificationLabel = showUserNotification(tooltip.msg, tooltip.overviewMessage || false, tooltip.fadeTime || 0);
+            if(widget.hovering && !widget.notificationLabel && (Me.session.activeSession.Options.ShowHelpers || widget.tooltip.force)) {
+                widget.notificationLabel = showUserNotification(widget.tooltip.msg, widget.tooltip.overviewMessage || false, widget.tooltip.fadeTime || 0);
                 widget.notificationLabel.attachedTo = widget;
             }
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, tooltip.disappearTime || 4000, ()=> { if (widget.notificationLabel) removeUserNotification(widget.notificationLabel, 1);});
+            GLib.timeout_add(null, widget.tooltip.disappearTime || 4000, ()=> { if (widget.notificationLabel) removeUserNotification(widget.notificationLabel, 1);});
         });
 
         //return Clutter.EVENT_STOP;
     });
-    widget.connect('leave_event', ()=>{
+    widget.tooltipLeaveEvent = widget.connect('leave_event', ()=>{
         widget.hovering = false;
         if (widget.notificationLabel)
-            removeUserNotification(widget.notificationLabel, tooltip.leaveFadeTime || 1.4);
+            removeUserNotification(widget.notificationLabel, widget.tooltip.leaveFadeTime || 1.4);
         //return Clutter.EVENT_STOP;
     });
 
-    widget.connect('button-press-event', ()=>{
+    widget.tooltipPressEvent = widget.connect('button-press-event', ()=>{
         widget.hovering = false;
         if (widget.notificationLabel)
             removeUserNotification(widget.notificationLabel, 0.7);
@@ -164,6 +175,7 @@ function createTooltip(widget, tooltip) {
                 removeUserNotification(widget.notificationLabel, 0.7);
                 //return Clutter.EVENT_STOP;
         });
+    } catch(e) { dev.log(e)}
 }
 
 let knownImages = {}; // Save on resources generating these in menu refreshes

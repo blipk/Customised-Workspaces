@@ -314,11 +314,15 @@ var WorksetsIndicator = GObject.registerClass({
             
             let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
             let dmButtonIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
-            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {               
+            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {    
+                try {           
                 dmButton.viewingDarkMode = dmButton.icon.icon_name === 'night-light-symbolic' ? true : false;
                 dmButton.viewingDarkMode = !dmButton.viewingDarkMode
                 dmButton.icon.icon_name = dmButton.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
                 uiUtils.setImage(menuItem.bgMenuButton, dmButton.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+                modeText = dmButton.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
+                dmButton.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
+                } catch(e) { dev.log(e)}
             }, {x_align: Clutter.ActorAlign.END}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
             dmButton.viewingDarkMode = Me.session.isDarkMode
             dmButton.disconnect(dmButton.leaveEvent)
