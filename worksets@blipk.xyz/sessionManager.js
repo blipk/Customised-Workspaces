@@ -293,7 +293,6 @@ var SessionManager = class SessionManager {
         } catch(e) { dev.log(e) }
     }
     setBackground(bgPath = "", style = 'ZOOM', darkMode = false) {
-        dev.log("Setting background:", bgPath)
         if (this.activeSession.Options.DisableWallpaperManagement) return;
         if (!bgPath)
             bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;

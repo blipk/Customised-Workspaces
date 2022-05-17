@@ -303,7 +303,7 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Background info
         if (!Me.session.activeSession.Options.DisableWallpaperManagement) {
-            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem();
+            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem({style_class: 'bg-display'});
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
 
             uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
@@ -312,13 +312,14 @@ var WorksetsIndicator = GObject.registerClass({
             let backgroundOtherOptionsBox = new St.BoxLayout({ vertical: false, reactive: true,
                 track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
             
+            let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
             let dmButtonIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
             let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {               
                 dmButton.viewingDarkMode = dmButton.icon.icon_name === 'night-light-symbolic' ? true : false;
                 dmButton.viewingDarkMode = !dmButton.viewingDarkMode
                 dmButton.icon.icon_name = dmButton.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
                 uiUtils.setImage(menuItem.bgMenuButton, dmButton.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
-            }, {x_align: Clutter.ActorAlign.END}, {msg: "View dark mode background"});
+            }, {x_align: Clutter.ActorAlign.END}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
             dmButton.viewingDarkMode = Me.session.isDarkMode
             dmButton.disconnect(dmButton.leaveEvent)
             menuItem.bgMenuButton.add_child(backgroundOtherOptionsBox)

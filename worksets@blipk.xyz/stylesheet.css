@@ -121,3 +121,12 @@ entry:indeterminate {
     border: 3px hidden black;
     border-radius: 40px;
 }
+
+.bg-display:focus {
+    color: black;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.bg-display:hover {
+    color: black;
+    background-color: rgba(255, 255, 255, 0.1);
+}
