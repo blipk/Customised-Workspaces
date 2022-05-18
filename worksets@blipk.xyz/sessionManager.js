@@ -87,9 +87,8 @@ var SessionManager = class SessionManager {
         this.iSettings = extensionUtils.getSettings('org.gnome.desktop.interface');
         this.signals.add(this.iSettings, 'changed::color-scheme', () => {
             // switched theme mode
+            let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-                let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
-
                 if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;              
                 let bgPath = isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
                 let bgStyle = this.Worksets[worksetIndex].BackgroundStyle;
