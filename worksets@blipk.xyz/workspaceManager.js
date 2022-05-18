@@ -145,6 +145,8 @@ var WorkspaceManager = class WorkspaceManager {
         }, this);
 
         if (!found) Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
+
+        if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch(e) { dev.log(e) }
     }
     getWorkspaceWindows(workspaceIndex) {
