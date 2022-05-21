@@ -275,6 +275,7 @@ var SessionManager = class SessionManager {
         this.loadSession();
     }
     get isDarkMode() {
+        // no-preference, prefer-dark, prefer-light
         return this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
     }
     getBackground() {
