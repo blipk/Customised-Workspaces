@@ -305,23 +305,24 @@ var WorksetsIndicator = GObject.registerClass({
         if (!Me.session.activeSession.Options.DisableWallpaperManagement) {
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem({style_class: 'bg-display'});
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
-
             uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
-            viewArea.addMenuItem(menuItem.bgMenuButton);          
+            viewArea.addMenuItem(menuItem.bgMenuButton);
 
             let backgroundOtherOptionsBox = new St.BoxLayout({ vertical: false, reactive: true,
                 track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
-            
+
             let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
+            //uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"});
             let dmButtonIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
-            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {    
-                try {           
+            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {
+                try {
                 dmButton.viewingDarkMode = dmButton.icon.icon_name === 'night-light-symbolic' ? true : false;
                 dmButton.viewingDarkMode = !dmButton.viewingDarkMode
                 dmButton.icon.icon_name = dmButton.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
                 uiUtils.setImage(menuItem.bgMenuButton, dmButton.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
                 modeText = dmButton.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
                 dmButton.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
+                //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
                 } catch(e) { dev.log(e)}
             }, {x_align: Clutter.ActorAlign.END}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
             dmButton.viewingDarkMode = Me.session.isDarkMode
@@ -358,9 +359,9 @@ var WorksetsIndicator = GObject.registerClass({
                 if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
             });
             menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
-        } 
+        }
         if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
-            
+
             // Workset info
             let infoText = "Has these favourites";
             Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
@@ -410,8 +411,8 @@ var WorksetsIndicator = GObject.registerClass({
                 }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
                 viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
             }, this);
-        } 
-        
+        }
+
         if (Me.session.activeSession.Options.OnlyBackgroundDetails && Me.session.activeSession.Options.DisableWallpaperManagement) {
             menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Nothing here!"), '');
             menuItem.infoMenuButton.label.set_x_expand(true);
