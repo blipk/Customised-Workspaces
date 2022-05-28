@@ -17,11 +17,14 @@ Customised Workspaces enables creating isolated and customised workspaces.
 * Set up the custom dash favourites for each workspace
 * Edit your load settings and save your customised environments
 
+
 ### Usage
 ![User Interface Guide](doc/CustomisedWorkspacesUserInterfaceGuide.png?raw=true "Customised Workspaces User Interface Guide")
 ![Usage Example](doc/example.png?raw=true "Customised Workspaces Usage Example")
 
 ### Installation
+
+Requires `libwnck` to be installed for extension versions 45 and earlier.
 
 ###### Gnome Extensions
 
