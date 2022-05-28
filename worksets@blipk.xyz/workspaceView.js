@@ -27,7 +27,7 @@
 // External imports
 const Main = imports.ui.main;
 const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overviewControls } = imports.ui;
-const { GObject, Meta, Wnck, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
+const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();

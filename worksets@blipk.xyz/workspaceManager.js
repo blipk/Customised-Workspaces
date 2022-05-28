@@ -28,7 +28,7 @@
 const Main = imports.ui.main;
 const { workspace, extensionSystem } = imports.ui;
 const { extensionUtils, util } = imports.misc;
-const { GObject, Meta, Wnck, Shell, GLib } = imports.gi;
+const { GObject, Meta, Shell, GLib } = imports.gi;
 
 // Internal imports
 const Me = extensionUtils.getCurrentExtension();

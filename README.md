@@ -17,20 +17,11 @@ Customised Workspaces enables creating isolated and customised workspaces.
 * Set up the custom dash favourites for each workspace
 * Edit your load settings and save your customised environments
 
-Compatible for use with any of these extensions to complete your workspace upgrade:
-
-* Dash to Panel - https://extensions.gnome.org/extension/1160/dash-to-panel/
-* Dash to Dock - https://extensions.gnome.org/extension/307/dash-to-dock/
-* Auto Move Windows - https://extensions.gnome.org/extension/16/auto-move-windows/
-* Vertical Overview - https://github.com/RensAlthuis/vertical-overview
-
 ### Usage
 ![User Interface Guide](doc/CustomisedWorkspacesUserInterfaceGuide.png?raw=true "Customised Workspaces User Interface Guide")
 ![Usage Example](doc/example.png?raw=true "Customised Workspaces Usage Example")
 
 ### Installation
-
-Requires `libwnck` to be installed.
 
 ###### Gnome Extensions
 
