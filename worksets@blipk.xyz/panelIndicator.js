@@ -75,13 +75,8 @@ var WorksetsIndicator = GObject.registerClass({
         } catch(e) { dev.log(e) }
     }
     //main UI builder
-    _buildMenu() {
-        try {
+    _buildOptionsMenuItems() {
         // Sub menu for option switches
-        this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Extension Options', true);
-        this.optionsMenuItem.icon.icon_name = 'org.gnome.tweaks';
-        this.optionsMenuItems = [];
-
         Me.session.activeSession.Options.forEachEntry(function (optionName) {
             let settingsKeyName = utils.textToKebabCase(optionName)
             let optionMenuItem = new popupMenu.PopupSwitchMenuItem(_(Me.settings.settings_schema.get_key(settingsKeyName).get_summary()), Me.session.activeSession.Options[optionName], { reactive: true });
@@ -108,6 +103,19 @@ var WorksetsIndicator = GObject.registerClass({
             this.optionsMenuItems.push(optionMenuItem)
             this.optionsMenuItem.menu.addMenuItem(optionMenuItem);
         }, this);
+    }
+    _buildMenu() {
+        try {
+        this.optionsMenuItem = new popupMenu.PopupSubMenuMenuItem('Extension Options', true);
+        this.optionsMenuItem.icon.icon_name = 'org.gnome.tweaks';
+        this.optionsMenuItems = [];
+        this._buildOptionsMenuItems();
+        this.optionsMenuItem.connect('button_release_event', () => {
+            this.optionsMenuItems.forEach(m => m.destroy());
+            this.optionsMenuItems = [];
+            this._buildOptionsMenuItems();
+        });
+
 
         // Menu sections for workset items
         this.viewSection = new popupMenu.PopupMenuSection();
@@ -302,121 +310,150 @@ var WorksetsIndicator = GObject.registerClass({
         viewArea.lastOpen = menuItem;
 
         // Background info
-        if (!Me.session.activeSession.Options.DisableWallpaperManagement) {
-            menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem({style_class: 'bg-display'});
-            menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
-            uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
-            viewArea.addMenuItem(menuItem.bgMenuButton);
+        menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem({style_class: 'bg-display'});
+        menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
+        uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+        viewArea.addMenuItem(menuItem.bgMenuButton);
 
-            let backgroundOtherOptionsBox = new St.BoxLayout({ vertical: false, reactive: true,
-                track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+        let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
+        //uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"});
 
-            let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
-            //uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"});
-            let dmButtonIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
-            let dmButton = uiUtils.createIconButton(backgroundOtherOptionsBox, dmButtonIconName, () => {
-                try {
-                dmButton.viewingDarkMode = dmButton.icon.icon_name === 'night-light-symbolic' ? true : false;
-                dmButton.viewingDarkMode = !dmButton.viewingDarkMode
-                dmButton.icon.icon_name = dmButton.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
-                uiUtils.setImage(menuItem.bgMenuButton, dmButton.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
-                modeText = dmButton.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
-                dmButton.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
-                //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
-                } catch(e) { dev.log(e)}
-            }, {x_align: Clutter.ActorAlign.END}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
-            dmButton.viewingDarkMode = Me.session.isDarkMode
-            dmButton.disconnect(dmButton.leaveEvent)
-            menuItem.bgMenuButton.add_child(backgroundOtherOptionsBox)
+        let backgroundOtherOptionsBox = new St.BoxLayout({ vertical: true, reactive: true, track_hover: true,
+                x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.CENTER});
 
-            menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
-                Me.session.setWorksetBackgroundImage(menuItem.workset, dmButton.viewingDarkMode);
-                this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
-            });
+        let btnDarkModeIconName = Me.session.isDarkMode ? 'night-light-symbolic' : 'weather-clear-symbolic'
+        let btnDarkMode = uiUtils.createIconButton(backgroundOtherOptionsBox, btnDarkModeIconName, () => {
+            try {
+            btnDarkMode.viewingDarkMode = btnDarkMode.icon.icon_name === 'night-light-symbolic' ? true : false;
+            btnDarkMode.viewingDarkMode = !btnDarkMode.viewingDarkMode
+            btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
+            uiUtils.setImage(menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+            modeText = btnDarkMode.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
+            btnDarkMode.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
+            //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
+            } catch(e) { dev.log(e)}
+        }, {x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
+        btnDarkMode.viewingDarkMode = Me.session.isDarkMode
+        btnDarkMode.disconnect(btnDarkMode.leaveEvent)
 
-            let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
-                track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
-            let updateBackgroundStyle = (style, menuItem) => {
-                backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-                    if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
-                });
+        let btnApps = uiUtils.createIconButton(backgroundOtherOptionsBox, 'bookmark-new-symbolic', () => {
+            try {
+            Me.session.activeSession.Options.HideAppList = !Me.session.activeSession.Options.HideAppList
+            Me.session.applySession()
 
-                Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
-                Me.session.saveSession();
-                if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
-                    || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
-                        Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
-            }
+            Me.session.activeSession.Options.HideAppList ? menuItem.infoMenuButton.hide() : menuItem.infoMenuButton.show();
+            menuItem.favAppsMenuItems.forEach(b => Me.session.activeSession.Options.HideAppList ? b.hide() : b.show())
+            btnApps.tooltip.msg = (Me.session.activeSession.Options.HideAppList ? "Show" : "Hide") + " favourite apps for " + menuItem.workset.WorksetName
+            } catch(e) { dev.log(e)}
+        }, {x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.END},
+            {msg: (Me.session.activeSession.Options.HideAppList ? "Show" : "Hide") + " favourite apps for " + menuItem.workset.WorksetName});
+        btnApps.disconnect(btnApps.leaveEvent)
 
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
-            uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
+        menuItem.bgMenuButton.add_child(backgroundOtherOptionsBox)
+
+        menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect('activate', () => {
+            Me.session.setWorksetBackgroundImage(menuItem.workset, btnDarkMode.viewingDarkMode);
+            this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
+        });
+
+        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
+            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+        let updateBackgroundStyle = (style, menuItem) => {
             backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
+                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
             });
-            menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
+
+            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
+            Me.session.saveSession();
+            if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
+                || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
+                    Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
         }
-        if (!Me.session.activeSession.Options.OnlyBackgroundDetails) {
 
-            // Workset info
-            let infoText = "Has these favourites";
-            Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
-                if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
-                    infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
-            }, this);
-            menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
-            menuItem.infoMenuButton.label.set_x_expand(true);
-            menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
-            let addApps = () => {
-                this.menu.toggle();
-                utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
-                    (resource) => {
-                        try {
-                        if (!resource) return;
-                        let newFav = JSON.parse(resource);
-                        Me.session.Worksets
-                            .filter(w => w.WorksetName == menuItem.workset.WorksetName)[0]
-                            .FavApps.push(newFav);
-                        Me.session.saveSession();
-                        Me.session.setFavorites();
-                        } catch(e) { dev.log(e) }
-                    });
-            }
-            uiUtils.createIconButton(menuItem.infoMenuButton, 'list-add-symbolic', addApps, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
-            menuItem.infoMenuButton.connect('button_release_event', addApps);
-            uiUtils.createTooltip(menuItem.infoMenuButton, {msg: "Click to select an application to add to '"+menuItem.workset.WorksetName+"' favourites"});
-            viewArea.addMenuItem(menuItem.infoMenuButton);
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
+        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
+        backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
+        });
+        menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
 
-            // Favorite Apps entries
-            menuItem.workset.FavApps.forEach(function(favApp, i){
-                let {name, displayName, exec, icon} = favApp;
-                icon = icon || 'web-browser-sybmolic';
-                menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
-                menuItem.favAppsMenuItems[i].label.set_x_expand(true);
-                uiUtils.createTooltip(menuItem.favAppsMenuItems[i], {msg: "Click to launch '"+displayName+"'"});
-                menuItem.favAppsMenuItems[i].connect('activate', () => {
-                    let [success, argv] = GLib.shell_parse_argv(exec.replace('%u', ' ').replace('%U', ' '))
-                    util.spawn(argv);
-                    // To do get pid and use AppSystem to focus window - same with the bgmenu editor
-                });
-                uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
+        Me.session.activeSession.Options.DisableWallpaperManagement ? menuItem.bgMenuButton.hide() : menuItem.bgMenuButton.show();
+
+        // -- Workset info
+        let infoText = "Has these favourites";
+        Me.session.workspaceMaps.forEachEntry((workspaceMapKey, workspaceMapValues, i) => {
+            if (workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName)
+                infoText += " on the " + utils.stringifyNumber(parseInt(workspaceMapKey.substr(-1, 1))+1) + " workspace";
+        }, this);
+        menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_(infoText), '');
+        menuItem.infoMenuButton.label.set_x_expand(true);
+        menuItem.infoMenuButton.setOrnament(popupMenu.Ornament.DOT)
+        let addApps = () => {
+            this.menu.toggle();
+            utils.spawnWithCallback(null, [fileUtils.APP_CHOOSER_EXEC, '-w', menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
+                (resource) => {
                     try {
-                    menuItem.favAppsMenuItems[i].destroy();
-                    Me.session.removeFavorite(menuItem.workset, name);
+                    if (!resource) return;
+                    let newFav = JSON.parse(resource);
+                    Me.session.Worksets
+                        .filter(w => w.WorksetName == menuItem.workset.WorksetName)[0]
+                        .FavApps.push(newFav);
+                    Me.session.saveSession();
+                    Me.session.setFavorites();
                     } catch(e) { dev.log(e) }
-                }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
-                viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
-            }, this);
+                });
         }
+        uiUtils.createIconButton(menuItem.infoMenuButton, 'list-add-symbolic', addApps, {}, {msg: "Add an application to '"+menuItem.workset.WorksetName+"' favourites"});
+        menuItem.infoMenuButton.connect('button_release_event', addApps);
+        uiUtils.createTooltip(menuItem.infoMenuButton, {msg: "Click to select an application to add to '"+menuItem.workset.WorksetName+"' favourites"});
+        viewArea.addMenuItem(menuItem.infoMenuButton);
 
-        if (Me.session.activeSession.Options.OnlyBackgroundDetails && Me.session.activeSession.Options.DisableWallpaperManagement) {
-            menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem(_("Nothing here!"), '');
-            menuItem.infoMenuButton.label.set_x_expand(true);
-            viewArea.addMenuItem(menuItem.infoMenuButton);
+        // Favorite Apps entries
+        menuItem.workset.FavApps.forEach(function(favApp, i){
+            let {name, displayName, exec, icon} = favApp;
+            icon = icon || 'web-browser-sybmolic';
+            menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem(_(displayName), icon);
+            menuItem.favAppsMenuItems[i].label.set_x_expand(true);
+            uiUtils.createTooltip(menuItem.favAppsMenuItems[i], {msg: "Click to launch '"+displayName+"'"});
+            menuItem.favAppsMenuItems[i].connect('activate', () => {
+                let [success, argv] = GLib.shell_parse_argv(exec.replace('%u', ' ').replace('%U', ' '))
+                util.spawn(argv);
+                // To do get pid and use AppSystem to focus window - same with the bgmenu editor
+            });
+            uiUtils.createIconButton(menuItem.favAppsMenuItems[i], 'edit-delete-symbolic', () => {
+                try {
+                menuItem.favAppsMenuItems[i].destroy();
+                Me.session.removeFavorite(menuItem.workset, name);
+                } catch(e) { dev.log(e) }
+            }, {}, {msg: "Remove '"+displayName+"' from '"+menuItem.workset.WorksetName+"' favourites"});
+            viewArea.addMenuItem(menuItem.favAppsMenuItems[i]);
+        }, this);
+
+        Me.session.activeSession.Options.HideAppList ? menuItem.infoMenuButton.hide() : menuItem.infoMenuButton.show();
+        menuItem.favAppsMenuItems.forEach(b => Me.session.activeSession.Options.HideAppList ? b.hide() : b.show())
+
+        // -- Enable all switch if nothing to show here
+        if (Me.session.activeSession.Options.HideAppList && Me.session.activeSession.Options.DisableWallpaperManagement) {
+            menuItem.revealButton = new popupMenu.PopupSwitchMenuItem(_("Show Details"), false, { reactive: true });
+            menuItem.revealButton.connect('button_release_event', () => {
+                Me.session.activeSession.Options.HideAppList = false
+                Me.session.activeSession.Options.DisableWallpaperManagement = false
+                Me.session.applySession()
+                menuItem.bgMenuButton.show();
+                menuItem.infoMenuButton.show()
+                menuItem.favAppsMenuItems.forEach(b => b.show())
+                menuItem.revealButton.hide()
+                //return Clutter.SOURCE_REMOVE;
+                return Clutter.EVENT_STOP;
+            });
+            menuItem.revealButton.label.set_x_expand(true);
+            viewArea.addMenuItem(menuItem.revealButton);
+            uiUtils.createTooltip(menuItem.revealButton, {msg: "Reveal background and apps options for " + menuItem.workset.WorksetName});
         }
 
         //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);

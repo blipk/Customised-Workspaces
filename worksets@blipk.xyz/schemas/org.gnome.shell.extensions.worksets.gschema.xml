@@ -13,7 +13,7 @@
     </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
-      <summary>Show this</summary>
+      <summary>Hide this</summary>
       <description>Disable to hide this menu and its indicator, re-enable from overview or global extension settings</description>
     </key>
     <key name="show-helpers" type="b">
@@ -26,7 +26,7 @@
       <summary>Show notifications</summary>
       <description>Show notifications for switching between workspaces</description>
     </key>
-        <key name="only-background-details" type="b">
+        <key name="hide-app-list" type="b">
       <default>false</default>
       <summary>Hide favourites in details</summary>
       <description>Hides the favourite application list in the environment details menu</description>

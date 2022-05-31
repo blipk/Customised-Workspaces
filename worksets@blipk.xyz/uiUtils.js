@@ -50,6 +50,7 @@ function createIconButton (parentItem, iconNames, callback, options, tooltip) { 
                               y_expand: true,
                               y_align: Clutter.ActorAlign.CENTER};
     options = {...defaults, ...options };
+    //dev.log(iconNameURI, options)
 
     let icon = new St.Icon(options);
     let iconButton = new St.Button({
