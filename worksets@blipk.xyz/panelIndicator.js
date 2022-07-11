@@ -363,11 +363,14 @@ var WorksetsIndicator = GObject.registerClass({
                 if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
             });
 
-            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = menuItem.workset.BackgroundStyle = style;
-            Me.session.saveSession();
+            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = style;
+            menuItem.workset.BackgroundStyle = style;
+
             if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
                 || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
                     Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
+
+            Me.session.applySession();
         }
 
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
@@ -378,7 +381,7 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
         uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
         backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle)) ? 'active-icon' : 'icon-button';
+            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle.toUpperCase())) ? 'active-icon' : 'icon-button';
         });
         menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
 

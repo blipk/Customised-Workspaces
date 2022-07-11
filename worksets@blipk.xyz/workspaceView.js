@@ -113,7 +113,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 let newbg = new Meta.Background({ meta_display: Me.gScreen });
                 let bgPath = target.BackgroundImage.replace("file://", "");
                 newbg.set_file(Gio.file_new_for_path(bgPath),
-                    imports.gi.GDesktopEnums.BackgroundStyle[target.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                    imports.gi.GDesktopEnums.BackgroundStyle[target.BackgroundStyle.toUpperCase()] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
                 Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
                     if (bgMan.backgroundActor.content)
@@ -172,7 +172,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
             let bgPath = Me.session.isDarkMode ? bg.BackgroundImageDark.replace("file://", "") : bg.BackgroundImage.replace("file://", "");
             thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
-                imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle.toUpperCase()] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
             // For larger workspace view and app grid workspace preview
             if (global.shellVersion >= 40) {

@@ -311,7 +311,7 @@ var SessionManager = class SessionManager {
         // workspaceView is losing track of the original bgmanager so this has to be updated here to affect other changes in the system
         let newbg = new Meta.Background({ meta_display: Me.gScreen });
         newbg.set_file(Gio.file_new_for_path(bgPath),
-            imports.gi.GDesktopEnums.BackgroundStyle[style] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+            imports.gi.GDesktopEnums.BackgroundStyle[style.toUpperCase()] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
         Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
             if (bgMan.backgroundActor) {
