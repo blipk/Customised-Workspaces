@@ -111,7 +111,7 @@ var SessionManager = class SessionManager {
 
                 if (isDarkMode) return;
                 this.setBackground(bgPath, bgStyle, false);
-            });//
+            });
         this.signals.add(this.bSettings, 'changed::picture-uri-dark', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
                 let bgPath = this.bSettings.get_string('picture-uri-dark');
