@@ -373,7 +373,7 @@ var WorksetsIndicator = GObject.registerClass({
             Me.session.applySession();
         }
 
-        for (wallPaperOption in Me.session.wallPaperOptions)
+        for (const wallPaperOption of Me.session.wallPaperOptions)
             uiUtils.createIconButton(backgroundStyleOptionsBox, wallPaperOption.icon, ()=>{updateBackgroundStyle(wallPaperOption.enum, menuItem)}, {}, {msg: `Set background to '${wallPaperOption.enum}' style`});
         
         backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
