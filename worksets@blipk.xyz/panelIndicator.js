@@ -373,13 +373,9 @@ var WorksetsIndicator = GObject.registerClass({
             Me.session.applySession();
         }
 
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'window-close-symbolic', ()=>{updateBackgroundStyle('NONE', menuItem)}, {}, {msg: "Set background to 'NONE' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'open-menu-symbolic', ()=>{updateBackgroundStyle('WALLPAPER', menuItem)}, {}, {msg: "Set background to 'WALLPAPER' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('CENTERED', menuItem)}, {}, {msg: "Set background to 'CENTERED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'format-justify-center-symbolic', ()=>{updateBackgroundStyle('SCALED', menuItem)}, {}, {msg: "Set background to 'SCALED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-in-symbolic', ()=>{updateBackgroundStyle('ZOOM', menuItem)}, {}, {msg: "Set background to 'ZOOM' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('STRETCHED', menuItem)}, {}, {msg: "Set background to 'STRETCHED' style"});
-        uiUtils.createIconButton(backgroundStyleOptionsBox, 'zoom-fit-best-symbolic', ()=>{updateBackgroundStyle('SPANNED', menuItem)}, {}, {msg: "Set background to 'SPANNED' style"});
+        for (wallPaperOption in Me.session.wallPaperOptions)
+            uiUtils.createIconButton(backgroundStyleOptionsBox, wallPaperOption.icon, ()=>{updateBackgroundStyle(wallPaperOption.enum, menuItem)}, {}, {msg: `Set background to '${wallPaperOption.enum}' style`});
+        
         backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
             if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle.toUpperCase())) ? 'active-icon' : 'icon-button';
         });

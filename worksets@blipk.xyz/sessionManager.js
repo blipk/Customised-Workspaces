@@ -35,10 +35,21 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceIsolater, workspaceView } = Me.imports;
 
+const wallPaperOptions = [
+    {enum: "NONE", icon: 'window-close-symbolic'}, 
+    {enum: "WALLPAPER", icon: "open-menu-symbolic"},
+    {enum: "CENTERED", icon: "format-justify-center-symbolic"}, 
+    {enum: "SCALED", icon: "format-justify-center-symbolic"}, 
+    {enum: "ZOOM", icon: "zoom-in-symbolic"}, 
+    {enum: "STRETCHED", icon: "zoom-fit-best-symbolic"}, 
+    {enum: "SPANNED", icon: "zoom-fit-best-symbolic"}
+]
+
 var SessionManager = class SessionManager {
     constructor() {
         try {
         Me.session = this;
+        this.wallPaperOptions = wallPaperOptions
         this.activeSession = null;
         this.allApps = {};
 
