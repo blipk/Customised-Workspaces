@@ -171,8 +171,9 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
             let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
             let bgPath = Me.session.isDarkMode ? bg.BackgroundImageDark.replace("file://", "") : bg.BackgroundImage.replace("file://", "");
+            const backgroundStyle = Me.session.isDarkMode ? bg.BackgroundStyleDark.toUpperCase() : bg.BackgroundStyle.toUpperCase()
             thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
-                imports.gi.GDesktopEnums.BackgroundStyle[bg.BackgroundStyle.toUpperCase()] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                imports.gi.GDesktopEnums.BackgroundStyle[backgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
 
             // For larger workspace view and app grid workspace preview
             if (global.shellVersion >= 40) {

@@ -315,6 +315,9 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
         viewArea.addMenuItem(menuItem.bgMenuButton);
 
+        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
+            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+
         let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
         //uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"});
 
@@ -331,10 +334,18 @@ var WorksetsIndicator = GObject.registerClass({
             modeText = btnDarkMode.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
             btnDarkMode.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
             //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
+            updateIcons()
             } catch(e) { dev.log(e)}
         }, {x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START}, {msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode"});
         btnDarkMode.viewingDarkMode = Me.session.isDarkMode
         btnDarkMode.disconnect(btnDarkMode.leaveEvent)
+
+        const updateIcons = function() {  
+            backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
+                const backgroundStyleToCompare = btnDarkMode.viewingDarkMode ? menuItem.workset.BackgroundStyleDark : menuItem.workset.BackgroundStyle
+                if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(backgroundStyleToCompare.toUpperCase())) ? 'active-icon' : 'icon-button';
+            });
+        }
 
         let btnApps = uiUtils.createIconButton(backgroundOtherOptionsBox, 'bookmark-new-symbolic', () => {
             try {
@@ -356,19 +367,23 @@ var WorksetsIndicator = GObject.registerClass({
             this.menu.itemActivated(boxpointer.PopupAnimation.FULL);
         });
 
-        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
-            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
         let updateBackgroundStyle = (style, menuItem) => {
             backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
                 if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(style)) ? 'active-icon' : 'icon-button';
             });
-
-            Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = style;
-            menuItem.workset.BackgroundStyle = style;
-
+            
+            if (btnDarkMode.viewingDarkMode) {
+                Me.session.Worksets[menuItem.worksetIndex].BackgroundStyleDark = style;
+                menuItem.workset.BackgroundStyleDark = style;
+            } else {
+                Me.session.Worksets[menuItem.worksetIndex].BackgroundStyle = style;
+                menuItem.workset.BackgroundStyle = style;
+            }
+            
             if (menuItem.workset.WorksetName == Me.workspaceManager.activeWorksetName
-                || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default))
-                    Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, menuItem.workset.BackgroundStyle);
+                || (Me.workspaceManager.activeWorksetName == '' && menuItem.workset.WorksetName == Me.session.activeSession.Default)
+                && btnDarkMode.viewingDarkMode == Me.session.isDarkMode)
+                    Me.session.setBackground(Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage, Me.session.isDarkMode ? menuItem.workset.BackgroundStyleDark : menuItem.workset.BackgroundStyle);
 
             Me.session.applySession();
         }
@@ -376,9 +391,7 @@ var WorksetsIndicator = GObject.registerClass({
         for (const wallPaperOption of Me.session.wallPaperOptions)
             uiUtils.createIconButton(backgroundStyleOptionsBox, wallPaperOption.icon, ()=>{updateBackgroundStyle(wallPaperOption.enum, menuItem)}, {}, {msg: `Set background to '${wallPaperOption.enum}' style`});
         
-        backgroundStyleOptionsBox.iconButtons.forEach((iconButton) => {
-            if (iconButton.tooltip) iconButton.style_class = (iconButton.tooltip.msg.includes(menuItem.workset.BackgroundStyle.toUpperCase())) ? 'active-icon' : 'icon-button';
-        });
+        updateIcons()
         menuItem.bgMenuButton.add_child(backgroundStyleOptionsBox)
 
         Me.session.activeSession.Options.DisableWallpaperManagement ? menuItem.bgMenuButton.hide() : menuItem.bgMenuButton.show();

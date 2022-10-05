@@ -102,7 +102,7 @@ var SessionManager = class SessionManager {
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;              
                 let bgPath = isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
-                let bgStyle = this.Worksets[worksetIndex].BackgroundStyle;
+                let bgStyle = isDarkMode ? this.Worksets[worksetIndex].BackgroundStyleDark : this.Worksets[worksetIndex].BackgroundStyle;
                 this.setBackground(bgPath, bgStyle, isDarkMode);
             }, this);
         });
@@ -110,13 +110,13 @@ var SessionManager = class SessionManager {
         this.bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         this.signals.add(this.bSettings, 'changed::picture-uri', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
-                let bgPath = this.bSettings.get_string('picture-uri');
-                let bgStyle = this.bSettings.get_string('picture-options');
+                let bgPath = this.bSettings.get_string('picture-uri')
+                let bgStyle
 
                 this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                     if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
                     this.Worksets[worksetIndex].BackgroundImage = bgPath;
-                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                    bgStyle = this.Worksets[worksetIndex].BackgroundStyle
                     this.saveSession();
                 }, this);
 
@@ -125,13 +125,13 @@ var SessionManager = class SessionManager {
             });
         this.signals.add(this.bSettings, 'changed::picture-uri-dark', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
-                let bgPath = this.bSettings.get_string('picture-uri-dark');
-                let bgStyle = this.bSettings.get_string('picture-options');
+                let bgPath = this.bSettings.get_string('picture-uri-dark')
+                let bgStyle
 
                 this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                     if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
                     this.Worksets[worksetIndex].BackgroundImageDark = bgPath;
-                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                    bgStyle = this.Worksets[worksetIndex].BackgroundStyleDark
                     this.saveSession();
                 }, this);
 
@@ -144,8 +144,13 @@ var SessionManager = class SessionManager {
 
                 this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                     if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
-                    this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
-                    bgPath = this.isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
+                    if (this.isDarkMode) {
+                        this.Worksets[worksetIndex].BackgroundStyleDark = bgStyle;
+                        bgPath = this.Worksets[worksetIndex].BackgroundImageDark;
+                    } else {
+                        this.Worksets[worksetIndex].BackgroundStyle = bgStyle;
+                        bgPath = this.Worksets[worksetIndex].BackgroundImage;
+                    }
                     this.saveSession();
                 }, this);
 
@@ -303,7 +308,7 @@ var SessionManager = class SessionManager {
         return bgURI.replace("file://", "");
         } catch(e) { dev.log(e) }
     }
-    setBackground(bgPath = "", style = 'ZOOM', darkMode = false) {
+    setBackground(bgPath = "", style = "ZOOM", darkMode = false) {
         if (this.activeSession.Options.DisableWallpaperManagement) return;
         if (!bgPath)
             bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;
@@ -443,7 +448,7 @@ var SessionManager = class SessionManager {
         }
 
         this.setFavorites(workset.FavApps);
-        this.setBackground(this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage, workset.BackgroundStyle, this.isDarkMode);
+        this.setBackground(this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage, this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle, this.isDarkMode);
 
         this.saveSession();
         } catch(e) { dev.log(e) }
@@ -486,12 +491,14 @@ var SessionManager = class SessionManager {
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
                 if (worksetBuffer.WorksetName != workset.WorksetName) return;
                 if (darkMode) {
-                    this.Worksets[worksetIndex].BackgroundImageDark = resource;
+                    this.Worksets[worksetIndex].BackgroundImageDark = resource
+                    bgStyle = this.Worksets[worksetIndex].BackgroundStyleDark
                 } else  {
-                    this.Worksets[worksetIndex].BackgroundImage = resource;
+                    this.Worksets[worksetIndex].BackgroundImage = resource
+                    bgStyle = this.Worksets[worksetIndex].BackgroundStyle
                 }
-                this.Worksets[worksetIndex].BackgroundStyle = this.Worksets[worksetIndex].BackgroundStyle || 'ZOOM';
-                bgStyle = this.Worksets[worksetIndex].BackgroundStyle
+                this.Worksets[worksetIndex].BackgroundStyle = this.Worksets[worksetIndex].BackgroundStyle || "ZOOM"
+                this.Worksets[worksetIndex].BackgroundStyleDark = this.Worksets[worksetIndex].BackgroundStyleDark || "ZOOM"
                 this.saveSession();
             }, this);
 
@@ -524,7 +531,8 @@ var SessionManager = class SessionManager {
             sessionObject.Worksets[0].Favorite = true;
             sessionObject.Worksets[0].BackgroundImage = this.getBackground();
             sessionObject.Worksets[0].BackgroundImageDark = this.getBackgroundDark();
-            sessionObject.Worksets[0].BackgroundStyle = 'ZOOM';
+            sessionObject.Worksets[0].BackgroundStyle = "ZOOM";
+            sessionObject.Worksets[0].BackgroundStyleDark = "ZOOM";
             sessionObject.workspaceMaps = workspaceMaps;
             sessionObject.workspaceMaps['Workspace0'].defaultWorkset = "Primary";
             sessionObject.workspaceMaps['Workspace0'].currentWorkset = "Primary";
