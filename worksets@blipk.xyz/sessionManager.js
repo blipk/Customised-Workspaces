@@ -168,13 +168,17 @@ var SessionManager = class SessionManager {
             });
     }
     _initOptions() {
-        let keys = Me.settings.list_keys();
+        const keys = Me.settings.list_keys();
         keys.forEach((key) => {
             let k = Me.settings.settings_schema.get_key(key);
             if (k.get_default_value().toString().includes('"b"')) {  // GLib Variant Boolean
                 this.activeSession.Options[utils.textToPascalCase(key)] = Me.settings.get_boolean(key);
             }
         }, this)
+        this.activeSession.Options.forEachEntry(function(optionName, optionValue) {
+            if (keys.includes(utils.textToKebabCase(optionName))) return
+            delete this.activeSession.Options[optionName]
+        }, this);
         this._saveOptions();
     }
     _saveOptions() {
@@ -197,10 +201,9 @@ var SessionManager = class SessionManager {
             this.Worksets = this.activeSession.Worksets;
             this.workspaceMaps = this.activeSession.workspaceMaps;
             this.SessionName = this.activeSession.SessionName;
-            if (utils.isEmpty(this.activeSession.Default)) this.activeSession.Default = this.Worksets[0].WorksetName;
-            this._cleanWorksets();
-
+            
             this._initOptions();
+            this._validateSession();
             this._loadOptions();
             this._watchOptions();
             this.saveSession();
@@ -220,9 +223,12 @@ var SessionManager = class SessionManager {
         Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
         Me.worksetsIndicator.show();
     }
-    _cleanWorksets() {
+    _validateSession() {
         try {
-        if (typeof this.SessionName !== 'string') this.SessionName = 'Default';
+        if (utils.isEmpty(this.activeSession.Default)) 
+            this.activeSession.Default = this.Worksets[0].WorksetName;
+        if (typeof this.SessionName !== 'string') 
+            this.SessionName = 'Default';
 
         let filteredWorksets;
         this.Worksets.forEach(function (worksetBuffer, ii) {
