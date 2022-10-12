@@ -170,8 +170,9 @@ var SessionManager = class SessionManager {
     _initOptions() {
         const keys = Me.settings.list_keys();
         keys.forEach((key) => {
-            let k = Me.settings.settings_schema.get_key(key);
-            if (k.get_default_value().toString().includes('"b"')) {  // GLib Variant Boolean
+            const k = Me.settings.settings_schema.get_key(key)
+            const defaultValue = k.get_default_value()
+            if (defaultValue.toString().includes('"b"')) {  // GLib Variant Boolean
                 this.activeSession.Options[utils.textToPascalCase(key)] = Me.settings.get_boolean(key);
             }
         }, this)
@@ -229,7 +230,9 @@ var SessionManager = class SessionManager {
             this.activeSession.Default = this.Worksets[0].WorksetName;
         if (typeof this.SessionName !== 'string') 
             this.SessionName = 'Default';
-
+        
+        // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
+        //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
         let filteredWorksets;
         this.Worksets.forEach(function (worksetBuffer, ii) {
             //Fix entries
@@ -239,6 +242,9 @@ var SessionManager = class SessionManager {
 
             if (typeof worksetBuffer.BackgroundImage !== 'string') worksetBuffer.BackgroundImage = this.getBackground();
             if (typeof worksetBuffer.BackgroundImageDark !== 'string') worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage;
+
+            if (typeof worksetBuffer.BackgroundStyle !== 'string') worksetBuffer.BackgroundStyle = "ZOOM"
+            if (typeof worksetBuffer.BackgroundStyleDark !== 'string') worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
 
             // Remove duplicate entries
             filteredWorksets = this.Worksets.filter(function(item) {

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="gnome-shell-extensions">
+<schemalist gettext-domain="worksets">
   <schema id="org.gnome.shell.extensions.worksets" path="/org/gnome/shell/extensions/worksets/">
     <key name="isolate-workspaces" type="b">
       <default>true</default>
