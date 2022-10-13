@@ -1,27 +1,21 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: "**First disable all other extensions and see if the issue persists**"
 title: "[Bug]"
 labels: bug
 assignees: blipk
 
 ---
 
-**Please disable all other extensions and see if the issue persists**
+## Please include the debug file from ~/.config/worksets@blipk.xyz/debug.log and fill out the following sections
 
-**Also try deleting your session configuration file and restarting (~/.config/worksets@blipk.xyz/session.json)**
-
-**Please include the debug file from ~/.config/worksets@blipk.xyz/debug.log**
-
-**Also include your session configuration file from ~/.config/worksets@blipk.xyz/session.json**
-
-**Desktop (please complete the following information):**
+### Desktop:
  - Gnome-Shell Version (gnome-shell --version):
  - GJS Version (gjs --version):
  - Extension Version [e.g. 22]:
  - Linux distribution and version:
 
-**Describe the bug**
+### Describe the bug
 A clear and concise description of what the bug is.
 
 **To Reproduce**
