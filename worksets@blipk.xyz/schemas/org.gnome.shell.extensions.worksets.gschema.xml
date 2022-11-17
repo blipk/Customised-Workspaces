@@ -12,7 +12,7 @@
     </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
-      <summary>Hide this</summary>
+      <summary>Show panel indicator</summary>
       <description>Disable to hide this menu and its indicator, re-enable from overview or global extension settings</description>
     </key>
     <key name="show-helpers" type="b">
