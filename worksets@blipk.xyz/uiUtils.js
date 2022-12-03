@@ -127,7 +127,7 @@ function removeAllUserNotifications(fadeTime) {
 }
 
 function createTooltip(widget, tooltip) {
-    try { 
+    try {
     if (!tooltip) return;
     widget.tooltip = tooltip;
 
