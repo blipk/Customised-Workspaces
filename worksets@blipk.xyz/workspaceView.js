@@ -68,23 +68,43 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
                 });
 
-            this.injections.add('overview.Overview.prototype.show',
-                function(state = overviewControls.ControlsState.WINDOW_PICKER) {
-                    Me.workspaceViewManager.injections.injections['overview.Overview.prototype.show'].call(this, state);
-                    Me.workspaceViewManager.refreshOverview(state);
-                });
+            // This isn't needed
+            // this.injections.add('overview.Overview.prototype.show',
+            //     function(state = overviewControls.ControlsState.WINDOW_PICKER) {
+            //         Me.workspaceViewManager.injections.injections['overview.Overview.prototype.show'].call(this, state);
+            //         Me.workspaceViewManager.refreshOverview(state);
+            //     });
 
+            // This is needed otherwise the workspace that shrinks along with the gesture slide is force-defaulted by gnome,
+            // and doesn't update to the custom wallpaper until at the end of the animation
             this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
                 function(tracker) {
                     Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker);
                     Me.workspaceViewManager.refreshOverview();
                 });
 
-            this.injections.add('overviewControls.ControlsManager.prototype.gestureEnd',
-                function(target, duration, onComplete) {
-                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureEnd"].call(this, target, duration, onComplete);
-                    Me.workspaceViewManager.refreshOverview(target);
-                });
+            // Not needed either - see state adjustment value below
+            // this.injections.add('overviewControls.ControlsManager.prototype.gestureEnd',
+            //     function(target, duration, onComplete) {
+            //         Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureEnd"].call(this, target, duration, onComplete);
+            //         Me.workspaceViewManager.refreshOverview(target);
+            //     });
+
+            // Run the correct update when the state adjustment hits values in overviewConstrols.ConstrolsState
+            Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
+                const value = adjustment.value
+                const intValue = parseInt(adjustment.value, 10)
+                if (value > 1 && value < 2) {
+                    // Destroy the custom overlay when switching into AppView otherwise it distorts the shrunk workspaces
+                    Me.workspaceViewManager.wsvWorkspaces.forEach(wsworkspace => {
+                        wsworkspace._worksetOverlayBox.destroy_all_children();
+                        wsworkspace._worksetOverlayBox.destroy();
+                    } )
+                    return
+                } else if (value > intValue)
+                    return
+                Me.workspaceViewManager.refreshOverview(intValue);
+            });
 
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
@@ -124,9 +144,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.signals.add(Main.overview, 'hidden', function() {
                 let target;
                 Me.workspaceViewManager.thumbnailBoxes.forEach(function(thumbnailBox, i) {
-                    if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
+                    try {
+                    if (thumbnailBox._bgManager)
+                        thumbnailBox._bgManager.destroy();
                     if (Me.workspaceManager.activeWorkspaceIndex != i) return;
                     target = thumbnailBox._workset;
+                    } catch(e) { dev.log(e) }
                 });
 
                 /*
