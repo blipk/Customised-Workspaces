@@ -213,7 +213,7 @@ function setImage(parent, imgFilePath = '') {
     }
     parent.imgSrc = imgFilePath;
     parent.content = image;
-    parent.height = 135;
+    parent.height = 150;
 
     knownImages[imgFilePath] = image;
     return image;

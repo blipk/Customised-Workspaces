@@ -317,8 +317,10 @@ var WorksetsIndicator = GObject.registerClass({
         uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
         viewArea.addMenuItem(menuItem.bgMenuButton);
 
-        let backgroundStyleOptionsBox = new St.BoxLayout({ vertical: true, reactive: true,
-            track_hover: true, x_expand: false, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START});
+        let backgroundStyleOptionsBox = new St.BoxLayout({
+            vertical: true, reactive: true, track_hover: true,
+            x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.FILL
+        });
 
         let modeText = Me.session.isDarkMode ? 'Dark Mode' : 'Light Mode'
         //uiUtils.createTooltip(menuItem.bgMenuButton, {msg: "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"});

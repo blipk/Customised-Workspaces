@@ -90,7 +90,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             //         Me.workspaceViewManager.refreshOverview(target);
             //     });
 
-            // Run the correct update when the state adjustment hits values in overviewConstrols.ConstrolsState
+            // Run the correct update when the state adjustment hits values in overviewControls.ConstrolsState
             Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
                 const value = adjustment.value
                 const intValue = parseInt(adjustment.value, 10)
