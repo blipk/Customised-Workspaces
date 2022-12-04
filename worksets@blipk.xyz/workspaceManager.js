@@ -1,7 +1,7 @@
 /*
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
- * Copyright (C) 2021 A.D. - http://kronosoul.xyz
+ * Copyright (C) 2023 A.D. - http://kronosoul.xyz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -136,7 +136,7 @@ var WorkspaceManager = class WorkspaceManager {
                 Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                 Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
                 found = true;
-            } 
+            }
             if (map.currentWorkset == workset.WorksetName) {
                 Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                 Me.session.workspaceMaps['Workspace'+this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;

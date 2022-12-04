@@ -1,7 +1,7 @@
 /*
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
- * Copyright (C) 2021 A.D. - http://kronosoul.xyz
+ * Copyright (C) 2023 A.D. - http://kronosoul.xyz
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,12 +36,12 @@ const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceIsolater, workspaceView } = Me.imports;
 
 const wallPaperOptions = [
-    {enum: "NONE", icon: 'window-close-symbolic'}, 
+    {enum: "NONE", icon: 'window-close-symbolic'},
     {enum: "WALLPAPER", icon: "open-menu-symbolic"},
-    {enum: "CENTERED", icon: "format-justify-center-symbolic"}, 
-    {enum: "SCALED", icon: "format-justify-center-symbolic"}, 
-    {enum: "ZOOM", icon: "zoom-in-symbolic"}, 
-    {enum: "STRETCHED", icon: "zoom-fit-best-symbolic"}, 
+    {enum: "CENTERED", icon: "format-justify-center-symbolic"},
+    {enum: "SCALED", icon: "format-justify-center-symbolic"},
+    {enum: "ZOOM", icon: "zoom-in-symbolic"},
+    {enum: "STRETCHED", icon: "zoom-fit-best-symbolic"},
     {enum: "SPANNED", icon: "zoom-fit-best-symbolic"}
 ]
 
@@ -100,7 +100,7 @@ var SessionManager = class SessionManager {
             // switched theme mode
             let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
             this.Worksets.forEach(function (worksetBuffer, worksetIndex) {
-                if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;              
+                if (worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName) return;
                 let bgPath = isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage;
                 let bgStyle = isDarkMode ? this.Worksets[worksetIndex].BackgroundStyleDark : this.Worksets[worksetIndex].BackgroundStyle;
                 this.setBackground(bgPath, bgStyle, isDarkMode);
@@ -202,7 +202,7 @@ var SessionManager = class SessionManager {
             this.Worksets = this.activeSession.Worksets;
             this.workspaceMaps = this.activeSession.workspaceMaps;
             this.SessionName = this.activeSession.SessionName;
-            
+
             this._initOptions();
             this._validateSession();
             this._loadOptions();
@@ -226,11 +226,11 @@ var SessionManager = class SessionManager {
     }
     _validateSession() {
         try {
-        if (utils.isEmpty(this.activeSession.Default)) 
+        if (utils.isEmpty(this.activeSession.Default))
             this.activeSession.Default = this.Worksets[0].WorksetName;
-        if (typeof this.SessionName !== 'string') 
+        if (typeof this.SessionName !== 'string')
             this.SessionName = 'Default';
-        
+
         // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
         //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
         let filteredWorksets;
@@ -518,8 +518,8 @@ var SessionManager = class SessionManager {
             uiUtils.showUserNotification("Background Image Changed ("+msg+")", true)
             if (Me.workspaceManager.activeWorksetName == workset.WorksetName) {
                 if ((darkMode && this.isDarkMode) || (!darkMode && !this.isDarkMode)) {
-                    this.setBackground(resource, bgStyle, this.isDarkMode); 
-                }    
+                    this.setBackground(resource, bgStyle, this.isDarkMode);
+                }
             }
             if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
             } catch(e) { dev.log(e) }

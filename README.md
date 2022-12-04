@@ -55,7 +55,7 @@ Latest versions only tested and working on Gnome 40+ (3.40)
 
 ```
 This file is part of the Customised Workspaces Gnome Extension for Gnome 3
-Copyright (C) 2021 A.D.
+Copyright (C) 2023 A.D.
 ```
 
 ```
