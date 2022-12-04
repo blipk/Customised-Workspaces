@@ -177,7 +177,7 @@ function readStream(stream, callback) {
 }
 
 
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overviewControls } = imports.ui;
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
 var InjectionHandler = class InjectionHandler {
     constructor() {
@@ -217,7 +217,7 @@ var SignalHandler = class SignalHandler {
         this.signalIds[signalId] = target;
         } catch(e) { dev.log(e); }
     }
-    
+
     disconnectAll() {
         try {
         this.signalIds.forEach((target, id) => target.disconnect ? target.disconnect(id) : GLib.Source.remove(id))
@@ -225,7 +225,7 @@ var SignalHandler = class SignalHandler {
     }
 
     destroy() {
-        try { 
+        try {
         this.disconnectAll()
         } catch(e) { dev.log(e); }
     }

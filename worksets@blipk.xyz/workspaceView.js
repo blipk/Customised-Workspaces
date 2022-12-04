@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overviewControls } = imports.ui;
+const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 
 // Internal imports
@@ -66,6 +66,27 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
                 });
 
+            this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
+                function(tracker) {
+                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker); // Call parent
+                    Me.workspaceViewManager.refreshThumbnailBoxes();
+                    Me.workspaceViewManager.refreshOverview();
+                });
+
+            // this.injections.add('overviewControls.ControlsManager.prototype.gestureProgress',
+            //     function(progress) {
+            //         Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureProgress"].call(this, progress); // Call parent
+            //         Me.workspaceViewManager.refreshThumbnailBoxes();
+            //         Me.workspaceViewManager.refreshOverview();
+            //     });
+
+            this.injections.add('overviewControls.ControlsManager.prototype.gestureEnd',
+                function(target, duration, onComplete) {
+                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureEnd"].call(this, target, duration, onComplete); // Call parent
+                    Me.workspaceViewManager.refreshThumbnailBoxes();
+                    Me.workspaceViewManager.refreshOverview();
+                });
+
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
                 function(win) {
@@ -100,6 +121,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
             /* hidden, hiding, showing */
+
             this.signals.add(Main.overview, 'hidden', function() {
                 let target;
                 Me.workspaceViewManager.thumbnailBoxes.forEach(function(thumbnailBox, i) {
@@ -107,6 +129,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     if (Me.workspaceManager.activeWorkspaceIndex != i) return;
                     target = thumbnailBox._workset;
                 });
+
                 /*
                 target = target || Me.session.DefaultWorkset;
 
@@ -185,7 +208,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // For thumbnails on the overview
             if (thumbnailBox._bgManager) thumbnailBox._bgManager.destroy();
-            if (!thumbnailBox._bgManager)
+            // if (!thumbnailBox._bgManager)
                 thumbnailBox._bgManager = new background.BackgroundManager({ monitorIndex: Main.layoutManager.primaryIndex,
                                                                         container: thumbnailBox._contents,
                                                                         //layoutManager: Main.layoutManager,
@@ -261,7 +284,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             let icon_options = {icon_size: 20, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.START, x_expand: false, y_expand: false};
             // Button to access panel menu, if it is disabled
             //if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => { 
+                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => {
                     Me.session.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.toggleMenu() : null;
                     Me.session.activeSession.Options.ShowPanelIndicator = true;
                     Me.session.applySession();
