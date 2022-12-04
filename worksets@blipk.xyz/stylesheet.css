@@ -18,7 +18,7 @@
 }
 
 .popup-menu-item .ci-action-btn StIcon {
-    icon-size:8px;
+    icon-size: 16px;
 }
 
 .popup-menu-icon-ornament {
@@ -76,7 +76,7 @@ entry:indeterminate {
 .workspace-overlay StIcon {
     color: ghostwhite;
     /*icon-shadow: 1em 1em 0px black;*/
-    /*background-color: rgba(0, 0, 0, 0.2);*/
+    background-color: rgba(0, 0, 0, 0.2);
     border: 0.5px hidden black;
     border-radius: 40px;
     padding: 1.0em;
