@@ -85,20 +85,28 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Run the correct update when the state adjustment hits values in overviewControls.ConstrolsState
             Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
-                const value = adjustment.value
+                const params = adjustment.getStateTransitionParams()
+                const { transitioning, progress,
+                        currentState,
+                        initialState,
+                        finalState
+                     } = params
+                const value = adjustment.value || currentState
+                const valueDecimal = parseFloat("0."+(value+"").split(".")[1], 10)
                 const intValue = parseInt(adjustment.value, 10)
-                dev.log("values", intValue, value)
+
+                // dev.log("values", intValue, value)
                 if (value > 1 && value < 2) {
-                    // Destroy the custom overlay when switching into AppView otherwise it distorts the shrunk workspaces
-                    Me.workspaceViewManager.wsvWorkspaces.forEach(wsworkspace => {
-                        wsworkspace._worksetOverlayBox.destroy_all_children();
-                        wsworkspace._worksetOverlayBox.destroy();
-                    } )
+                    if (finalState == 2) {  // Entering into AppGrid overview
+                        if (valueDecimal > 0.3)
+                            return
+                        Me.workspaceViewManager.refreshOverview(2);
+                    } else if (finalState == 1) { // Exiting from AppView
+                        if (valueDecimal > 0.2)
+                            return
+                        Me.workspaceViewManager.refreshOverview(1);
+                    }
                     return
-                    // Me.workspaceViewManager.refreshOverview(intValue);
-                } else if (value >= 2) {
-                    //app grid, go to refresh
-                    dev.log("APP GRID")
                 } else if (value > intValue)
                     return
                 Me.workspaceViewManager.refreshOverview(intValue);
