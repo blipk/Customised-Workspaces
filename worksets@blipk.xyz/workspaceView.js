@@ -68,13 +68,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
                 });
 
-            // This isn't needed
-            // this.injections.add('overview.Overview.prototype.show',
-            //     function(state = overviewControls.ControlsState.WINDOW_PICKER) {
-            //         Me.workspaceViewManager.injections.injections['overview.Overview.prototype.show'].call(this, state);
-            //         Me.workspaceViewManager.refreshOverview(state);
-            //     });
-
             // This is needed otherwise the workspace that shrinks along with the gesture slide is force-defaulted by gnome,
             // and doesn't update to the custom wallpaper until at the end of the animation
             this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
@@ -83,7 +76,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.refreshOverview();
                 });
 
-            // Not needed either - see state adjustment value below
+            // Not needed - see state adjustment value below
             // this.injections.add('overviewControls.ControlsManager.prototype.gestureEnd',
             //     function(target, duration, onComplete) {
             //         Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureEnd"].call(this, target, duration, onComplete);
@@ -94,6 +87,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
                 const value = adjustment.value
                 const intValue = parseInt(adjustment.value, 10)
+                dev.log("values", intValue, value)
                 if (value > 1 && value < 2) {
                     // Destroy the custom overlay when switching into AppView otherwise it distorts the shrunk workspaces
                     Me.workspaceViewManager.wsvWorkspaces.forEach(wsworkspace => {
@@ -101,6 +95,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                         wsworkspace._worksetOverlayBox.destroy();
                     } )
                     return
+                    // Me.workspaceViewManager.refreshOverview(intValue);
+                } else if (value >= 2) {
+                    //app grid, go to refresh
+                    dev.log("APP GRID")
                 } else if (value > intValue)
                     return
                 Me.workspaceViewManager.refreshOverview(intValue);
@@ -288,12 +286,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
             // Stop after background change if overlay box is not enabled
             // dev.log(Main.overview._overview._controls._appDisplay.visible)
-            if (!Me.session.activeSession.Options.ShowWorkspaceOverlay || overviewState == overviewControls.ControlsState.APP_GRID)
+            if (!Me.session.activeSession.Options.ShowWorkspaceOverlay)
                 return;
 
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.CENTER, y_expand: true, x_expand: false});
-            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.77;
-            this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.04;
+            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.82;
+            this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.05;
 
             // Set text for any custom workspaces
             let worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START, y_expand: true, x_expand: true,});
@@ -302,6 +300,12 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (Me.session.workspaceMaps['Workspace'+i] != undefined)
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             worksetLabel.set_text(text);
+
+            if (overviewState == overviewControls.ControlsState.APP_GRID) {
+                this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.19;
+                this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox)
+                return
+            }
 
             // Icon buttons
             let icon_options = {icon_size: 20, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.START, x_expand: false, y_expand: false};
