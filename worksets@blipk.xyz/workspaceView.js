@@ -102,6 +102,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                             return
                         Me.workspaceViewManager.refreshOverview(2);
                     } else if (finalState == 1) { // Exiting from AppView
+                        this.wsvWorkspaces.forEach(wsworkspace => {
+                            wsworkspace.destroy_all_children()
+                            wsworkspace.destroy()
+                        })
                         if (valueDecimal > 0.2)
                             return
                         Me.workspaceViewManager.refreshOverview(1);
