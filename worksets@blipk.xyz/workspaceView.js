@@ -338,7 +338,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.session.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.toggleMenu() : null;
                     Me.session.activeSession.Options.ShowPanelIndicator = true;
                     Me.session.applySession();
-                }, icon_options, {msg: "Show the panel indicator menu"})
+                }, icon_options, {msg: "Customised Workspaces panel menu"})
 
             // Action buttons for custom workspaces
             if (thumbnailBox._workset) {
