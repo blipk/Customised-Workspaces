@@ -73,7 +73,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
                 function(tracker) {
                     Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker);
-                    Me.workspaceViewManager.refreshOverview();
+                    Me.workspaceViewManager.refreshOverview(2);
                 });
 
             // Not needed - see state adjustment value below
@@ -91,28 +91,29 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                         initialState,
                         finalState
                      } = params
-                const value = adjustment.value || currentState
+                const value = adjustment.value || currentState //finalState is junk
                 const valueDecimal = parseFloat("0."+(value+"").split(".")[1], 10)
                 const intValue = parseInt(adjustment.value, 10)
 
-                // dev.log("values", intValue, value)
+                if (!adjustment.lastValue)
+                     adjustment.lastValue = -1
+                const ascending = value > adjustment.lastValue
+                adjustment.lastValue = Number(value)
+                // dev.log(ascending, value)
                 if (value > 1 && value < 2) {
-                    if (finalState == 2) {  // Entering into AppGrid overview
+                    if (ascending) {  // Entering into AppGrid overview
                         if (valueDecimal > 0.3)
                             return
                         Me.workspaceViewManager.refreshOverview(2);
-                    } else if (finalState == 1) { // Exiting from AppView
-                        this.wsvWorkspaces.forEach(wsworkspace => {
-                            wsworkspace.destroy_all_children()
-                            wsworkspace.destroy()
-                        })
-                        if (valueDecimal > 0.2)
+                    } else { // Exiting from AppView
+                        if (valueDecimal < 0.7)
                             return
-                        Me.workspaceViewManager.refreshOverview(1);
+                        Me.workspaceViewManager.refreshOverview(2);
                     }
                     return
                 } else if (value > intValue)
                     return
+                // dev.log("Reached transition state", intValue)
                 Me.workspaceViewManager.refreshOverview(intValue);
             });
 
@@ -301,7 +302,13 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay)
                 return;
 
-            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({style_class: 'workspace-overlay', y_align: Clutter.ActorAlign.START, x_align: Clutter.ActorAlign.CENTER, y_expand: true, x_expand: false});
+            const labelXAlign = overviewState === overviewControls.ControlsState.APP_GRID ?
+                    Clutter.ActorAlign.START : Clutter.ActorAlign.CENTER
+            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({
+                        style_class: 'workspace-overlay',
+                        y_align: Clutter.ActorAlign.START, y_expand: true,
+                        x_align: labelXAlign, x_expand: true
+                });
             this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.82;
             this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.05;
 
@@ -313,7 +320,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             worksetLabel.set_text(text);
 
-            if (overviewState == overviewControls.ControlsState.APP_GRID) {
+            if (overviewState === overviewControls.ControlsState.APP_GRID) {
                 this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.19;
                 this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox)
                 return
