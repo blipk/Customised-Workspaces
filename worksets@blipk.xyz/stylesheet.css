@@ -71,17 +71,20 @@ entry:indeterminate {
 
 
 .workspace-overlay {
-    padding-top: 0em;
+    padding: 0em;
+    margin: 0em;
 }
-.workspace-overlay StIcon {
+.overlay-icon {
+    margin: 2px;
+}
+.overlay-icon StIcon {
     color: ghostwhite;
     /*icon-shadow: 1em 1em 0px black;*/
     background-color: rgba(0, 0, 0, 0.2);
     border: 0.5px hidden black;
     border-radius: 40px;
-    padding: 1.0em;
-    margin-right: 0.0em;
-    margin-bottom: 0.0em;
+    padding: 5px;
+    margin: 0px;
 }
 .workspace-overlay .workset-label {
     font: small-caps bold 4em/4em;
@@ -112,7 +115,7 @@ entry:indeterminate {
 
 .icon-button {
     padding: 0px;
-    margin: 0.5px;
+    margin: 0px;
 }
 .icon-button StIcon {
     icon-size:16px;

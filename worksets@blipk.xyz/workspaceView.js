@@ -306,7 +306,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Clutter.ActorAlign.START : Clutter.ActorAlign.CENTER
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({
                         style_class: 'workspace-overlay',
-                        y_align: Clutter.ActorAlign.START, y_expand: true,
+                        y_align: Clutter.ActorAlign.START, y_expand: false,
                         x_align: labelXAlign, x_expand: true
                 });
             this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.82;
@@ -327,7 +327,11 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             }
 
             // Icon buttons
-            let icon_options = {icon_size: 20, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.START, x_expand: false, y_expand: false};
+            let icon_options = {
+                    style_class: "overlay-icon",
+                    icon_size: 22,
+                    x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.START,
+                    x_expand: true, y_expand: false};
             // Button to access panel menu, if it is disabled
             //if (!Me.session.activeSession.Options.ShowPanelIndicator)
                 uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => {
