@@ -302,12 +302,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay)
                 return;
 
-            const labelXAlign = overviewState === overviewControls.ControlsState.APP_GRID ?
-                    Clutter.ActorAlign.START : Clutter.ActorAlign.CENTER
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({
                         style_class: 'workspace-overlay',
                         y_align: Clutter.ActorAlign.START, y_expand: false,
-                        x_align: labelXAlign, x_expand: true
+                        x_align: Clutter.ActorAlign.START, x_expand: true
                 });
             this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.82;
             this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.05;
