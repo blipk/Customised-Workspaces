@@ -71,8 +71,8 @@ entry:indeterminate {
 
 
 .workspace-overlay {
-    padding: 0em;
-    margin: 0em;
+    margin: 0px;
+    padding: 0px;
 }
 .overlay-icon {
     margin: 2px;
@@ -87,6 +87,8 @@ entry:indeterminate {
     margin: 0px;
 }
 .workspace-overlay .workset-label {
+    margin: 0px;
+    padding: 0px;
     font: small-caps bold 4em/4em;
     font-size: 2em;
     font-weight: bold;

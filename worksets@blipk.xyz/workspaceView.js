@@ -37,18 +37,40 @@ const { sessionManager } = Me.imports;
 var WorkspaceViewManager = class WorkspaceViewManager {
     constructor() {
         try {
-            Me.workspaceViewManager = this;
-            this.injections = new utils.InjectionHandler();
-            this.signals = new utils.SignalHandler();
-            this.menus = [];
+            Me.workspaceViewManager = this
+            this.injections = new utils.InjectionHandler()
+            this.signals = new utils.SignalHandler()
+            this.menus = []
 
-            this.thumbnailsBox = null;
-            this.thumbnailBoxes = [];
-            this.overviewControls = null;
-            this.gsWorkspaces = {};
-            this.wsvWorkspaces = {};
-
+            this.thumbnailsBox = null
+            this.thumbnailBoxes = []
+            this.overviewControls = null
+            this.gsWorkspaces = {}
+            this.wsvWorkspaces = {}
             this.overviewState = 0
+
+            // Keep track of the new workspace views so their background can be changed in refreshOverview()
+            this.injections.add('workspace.Workspace.prototype._init',
+                function(metaWorkspace, monitorIndex, overviewAdjustment) {
+                    Me.workspaceViewManager.injections.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment);
+                    Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
+                    this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
+                });
+
+            // Extra reference to workspace views in overview
+            this.injections.add('workspacesView.WorkspacesView.prototype._init',
+                function(monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment) {
+                    Me.workspaceViewManager.injections.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment);
+                    Me.workspaceViewManager.wsvWorkspaces = this._workspaces;
+                    this.connect('destroy', () => delete Me.workspaceViewManager.wsvWorkspaces);
+                });
+
+            this.injections.add('overviewControls.ControlsManager.prototype._init',
+                function() {
+                    Me.workspaceViewManager.injections.injections['overviewControls.ControlsManager.prototype._init'].call(this);
+                    Me.workspaceViewManager.overviewControls = this;
+                    Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
+                });
 
             this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
                 function(start, count) {
@@ -60,62 +82,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailBoxes = this._thumbnails;
                     Me.workspaceViewManager.refreshOverview();
                 });
-
-            this.injections.add('overviewControls.ControlsManager.prototype._init',
-                function() {
-                    Me.workspaceViewManager.injections.injections['overviewControls.ControlsManager.prototype._init'].call(this);
-                    Me.workspaceViewManager.overviewControls = this;
-                    Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
-                });
-
-            // This is needed otherwise the workspace that shrinks along with the gesture slide is force-defaulted by gnome,
-            // and doesn't update to the custom wallpaper until at the end of the animation
-            this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
-                function(tracker) {
-                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker);
-                    Me.workspaceViewManager.refreshOverview(2);
-                });
-
-            // Not needed - see state adjustment value below
-            // this.injections.add('overviewControls.ControlsManager.prototype.gestureEnd',
-            //     function(target, duration, onComplete) {
-            //         Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureEnd"].call(this, target, duration, onComplete);
-            //         Me.workspaceViewManager.refreshOverview(target);
-            //     });
-
-            // Run the correct update when the state adjustment hits values in overviewControls.ConstrolsState
-            Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
-                const params = adjustment.getStateTransitionParams()
-                const { transitioning, progress,
-                        currentState,
-                        initialState,
-                        finalState
-                     } = params
-                const value = adjustment.value || currentState //finalState is junk
-                const valueDecimal = parseFloat("0."+(value+"").split(".")[1], 10)
-                const intValue = parseInt(adjustment.value, 10)
-
-                if (!adjustment.lastValue)
-                     adjustment.lastValue = -1
-                const ascending = value > adjustment.lastValue
-                adjustment.lastValue = Number(value)
-                // dev.log(ascending, value)
-                if (value > 1 && value < 2) {
-                    if (ascending) {  // Entering into AppGrid overview
-                        if (valueDecimal > 0.3)
-                            return
-                        Me.workspaceViewManager.refreshOverview(2);
-                    } else { // Exiting from AppView
-                        if (valueDecimal < 0.7)
-                            return
-                        Me.workspaceViewManager.refreshOverview(2);
-                    }
-                    return
-                } else if (value > intValue)
-                    return
-                // dev.log("Reached transition state", intValue)
-                Me.workspaceViewManager.refreshOverview(intValue);
-            });
 
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone',
@@ -133,25 +99,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     return clone;
                 });
 
-            // Keep track of the new workspace views so their background can be changed in refreshOverview()
-            this.injections.add('workspace.Workspace.prototype._init',
-                function(metaWorkspace, monitorIndex, overviewAdjustment) {
-                    Me.workspaceViewManager.injections.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment);
-                    Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
-                    this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
-                });
-
-            // Extra reference to workspaces
-            this.injections.add('workspacesView.WorkspacesView.prototype._init',
-                function(monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment) {
-                    Me.workspaceViewManager.injections.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment);
-                    Me.workspaceViewManager.wsvWorkspaces = this._workspaces;
-                    this.connect('destroy', () => delete Me.workspaceViewManager.wsvWorkspaces);
-                });
-
             // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
             /* hidden, hiding, showing */
-
             this.signals.add(Main.overview, 'hidden', function() {
                 let target;
                 Me.workspaceViewManager.thumbnailBoxes.forEach(function(thumbnailBox, i) {
@@ -162,26 +111,39 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     target = thumbnailBox._workset;
                     } catch(e) { dev.log(e) }
                 });
-
-                /*
-                target = target || Me.session.DefaultWorkset;
-
-                let newbg = new Meta.Background({ meta_display: Me.gScreen });
-                let bgPath = target.BackgroundImage.replace("file://", "");
-                newbg.set_file(Gio.file_new_for_path(bgPath),
-                    imports.gi.GDesktopEnums.BackgroundStyle[target.BackgroundStyle.toUpperCase()] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
-
-                Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
-                    if (bgMan.backgroundActor.content)
-                        bgMan.backgroundActor.content.background = newbg;
-                    else
-                        bgMan.backgroundActor.background = newbg;
-
-                    let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
-                    x.emit('bg-changed');
-                }, this);
-                //*/
             });
+
+            // Run the correct overlay update when the state adjustment hits values in overviewControls.ControlsState
+            Main.overview._overview._controls._stateAdjustment.connect('notify::value', (adjustment) => {
+                const value = adjustment.value
+                const valueDecimal = parseFloat("0."+(value+"").split(".")[1], 10)
+                const intValue = parseInt(adjustment.value, 10)
+
+                if (!adjustment.lastValue)
+                     adjustment.lastValue = -1
+                const ascending = value > adjustment.lastValue
+                adjustment.lastValue = Number(value)
+
+                if (value > 1 && value < 2) {
+                    if (ascending) { // Entering into AppGrid overview
+                        if (valueDecimal > 0.3) return
+                        Me.workspaceViewManager.refreshOverview(2);
+                    } else {
+                        if (valueDecimal < 0.7) return
+                        Me.workspaceViewManager.refreshOverview(2);
+                    }
+                    return
+                } else if (value > intValue)
+                    return
+
+                Me.workspaceViewManager.refreshOverview(intValue);
+            });
+            // This is needed in addition to above to ensure the correct starting overlay state with gestures
+            this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
+                function(tracker) {
+                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker);
+                    Me.workspaceViewManager.refreshOverview(2);
+                });
 
         } catch(e) { dev.log(e) }
     }
@@ -286,9 +248,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // Prevent excessive recursion but enforce background updates during various events
             thumbnailBox._updated = false;
             thumbnailBox._bgManager.connect('changed', ()=> { if (!thumbnailBox._updated) Me.workspaceViewManager.refreshOverview(); thumbnailBox._updated = true; });
-            //*/
-
-
 
             // ## Overlay
             // Delete old overlay box and rebuild
@@ -302,56 +261,60 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             if (!Me.session.activeSession.Options.ShowWorkspaceOverlay)
                 return;
 
+            // Global box
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({
                         style_class: 'workspace-overlay',
+                        x_align: Clutter.ActorAlign.FILL, x_expand: true,
                         y_align: Clutter.ActorAlign.START, y_expand: false,
-                        x_align: Clutter.ActorAlign.START, x_expand: true
                 });
-            this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.82;
-            this.wsvWorkspaces[i]._worksetOverlayBox.height = this.wsvWorkspaces[i].height*0.05;
+            this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
 
-            // Set text for any custom workspaces
-            let worksetLabel = new St.Label({style_class: 'workset-label', x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START, y_expand: true, x_expand: true,});
-            this.wsvWorkspaces[i]._worksetOverlayBox.add(worksetLabel, {});
+            // Label text
+            let worksetLabel = new St.Label({style_class: 'workset-label',
+                        x_align: Clutter.ActorAlign.START, x_expand: true,
+                        y_align: Clutter.ActorAlign.START, y_expand: true,});
             let text='';
             if (Me.session.workspaceMaps['Workspace'+i] != undefined)
                 text = Me.session.workspaceMaps['Workspace'+i].currentWorkset;
             worksetLabel.set_text(text);
-
-            if (overviewState === overviewControls.ControlsState.APP_GRID) {
-                this.wsvWorkspaces[i]._worksetOverlayBox.width = this.wsvWorkspaces[i].width*0.19;
-                this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox)
+            this.wsvWorkspaces[i]._worksetOverlayBox.add_child(worksetLabel);
+            if (overviewState === overviewControls.ControlsState.APP_GRID)
                 return
-            }
 
             // Icon buttons
+            let iconsBox = new St.BoxLayout({
+                x_align: Clutter.ActorAlign.END, x_expand: true,
+                y_align: Clutter.ActorAlign.START, y_expand: false,
+            });
+            this.wsvWorkspaces[i]._worksetOverlayBox.add_child(iconsBox);
+
             let icon_options = {
                     style_class: "overlay-icon",
-                    icon_size: 22,
-                    x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.START,
-                    x_expand: true, y_expand: false};
+                    icon_size: 24
+                };
+
             // Button to access panel menu, if it is disabled
-            //if (!Me.session.activeSession.Options.ShowPanelIndicator)
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'emblem-system-symbolic', () => {
+            if (!Me.session.activeSession.Options.ShowPanelIndicator)
+                uiUtils.createIconButton(iconsBox, 'emblem-system-symbolic', () => {
                     Me.session.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.toggleMenu() : null;
                     Me.session.activeSession.Options.ShowPanelIndicator = true;
                     Me.session.applySession();
-                }, icon_options, {msg: "Customised Workspaces panel menu"})
+                }, icon_options, {msg: "Customised Workspaces options menu"})
 
             // Action buttons for custom workspaces
             if (thumbnailBox._workset) {
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset, Me.session.isDarkMode); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbnailBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(iconsBox, 'document-edit-symbolic', () => { Me.session.editWorkset(thumbnailBox._workset); }, icon_options, {msg: "Edit '"+thumbnailBox._workset.WorksetName+"'"});
+                uiUtils.createIconButton(iconsBox, 'image-x-generic-symbolic', () => { Me.session.setWorksetBackgroundImage(thumbnailBox._workset, Me.session.isDarkMode); }, icon_options, {msg: "Change the background for '"+thumbnailBox._workset.WorksetName+"'"})
+                uiUtils.createIconButton(iconsBox, 'window-close-symbolic', () => { Me.session.closeWorkset(thumbnailBox._workset); Me.workspaceViewManager.refreshThumbnailBoxes(); }, icon_options, {msg: "Disengage '"+thumbnailBox._workset.WorksetName+"'"})
             }
 
             // Image for empty workspace thumbnail
             if (!thumbnailBox._workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
-                uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'document-new-symbolic', () => {
+                uiUtils.createIconButton(iconsBox, 'document-new-symbolic', () => {
                     Me.workspaceManager.switchToWorkspace(i); Me.session.newWorkset(null, true, true);
                 }, icon_options, {msg: "Create new custom workspace here"});
 
-                let btn = uiUtils.createIconButton(this.wsvWorkspaces[i]._worksetOverlayBox, 'go-jump-symbolic', () => {
+                let btn = uiUtils.createIconButton(iconsBox, 'go-jump-symbolic', () => {
                     try {
                     if (btn.menu) return btn.menu.bye();
 
@@ -427,9 +390,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }, icon_options, {msg: "Choose a custom workspace to load here"});
                 btn.connect('destroy', () => { if (btn.menu) btn.menu.bye(); } );
             }
-
-            // Apply changes
-            this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
             } catch(e) { dev.log(e) }
         }, this)
 
