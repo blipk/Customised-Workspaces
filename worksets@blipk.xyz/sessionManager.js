@@ -238,7 +238,6 @@ var SessionManager = class SessionManager {
             //Fix entries
             if (!Array.isArray(worksetBuffer.FavApps)) worksetBuffer.FavApps = [];
             if (typeof worksetBuffer.WorksetName !== 'string') worksetBuffer.WorksetName = "Workset " + ii;
-            if (typeof worksetBuffer.Favorite !== 'boolean') worksetBuffer.Favorite = false;
 
             if (typeof worksetBuffer.BackgroundImage !== 'string') worksetBuffer.BackgroundImage = this.getBackground();
             if (typeof worksetBuffer.BackgroundImageDark !== 'string') worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage;
@@ -467,6 +466,8 @@ var SessionManager = class SessionManager {
     }
     get DefaultWorkset() { // Returns the object from the WorksetName
         let index = this.Worksets.findIndex(w => w.WorksetName == this.activeSession.Default);
+        if (index === -1)
+            index = 0
         return this.Worksets[index];
     }
     closeWorkset(workset) {
@@ -537,10 +538,8 @@ var SessionManager = class SessionManager {
         if (fromEnvironment) {
             //Build on prototype from current environment, blank prototype workset add all current FavApps to Primary workset
             sessionObject.SessionName = "Default";
-            sessionObject.Favorite = true;
             sessionObject.Worksets[0].FavApps = this.getFavorites();
             sessionObject.Worksets[0].WorksetName = "Primary";
-            sessionObject.Worksets[0].Favorite = true;
             sessionObject.Worksets[0].BackgroundImage = this.getBackground();
             sessionObject.Worksets[0].BackgroundImageDark = this.getBackgroundDark();
             sessionObject.Worksets[0].BackgroundStyle = "ZOOM";
@@ -573,11 +572,9 @@ var SessionManager = class SessionManager {
         if (fromEnvironment) {
             //Build on prototype from current environment, add all current FavApps+RunningApps to it
             worksetObject.FavApps = newFavs;
-            worksetObject.Favorite = true;
         } else {
             //Blank prototype with no FavApps
             worksetObject.FavApps = [];
-            worksetObject.Favorite = false;
         }
 
         worksetObject.BackgroundImage = this.getBackground();
@@ -639,7 +636,7 @@ var SessionManager = class SessionManager {
         let workspaceOptionsEditables = [{Workspace0: 'First', Workspace1: 'Second', Workspace2: 'Third', Workspace3: 'Fourth', Workspace4: 'Fifth'}]
         let workspaceOptionsEditables2 = [{Workspace5: 'Sixth', Workspace6: 'Seventh', Workspace7: 'Eighth', Workspace8: 'Ninth', Workspace9: 'Tenth'}]
 
-        let editables = [{WorksetName: 'Name'}, {BackgroundImage: ' ', hidden: true}, {Favorite: 'Favorite'},
+        let editables = [{WorksetName: 'Name'}, {BackgroundImage: ' ', hidden: true},
             {workSpaceOptionsLabel: 'Opens on these workspaces automatically:', labelOnly: true},
             {workSpaceOptions: ' ', subObjectEditableProperties: workspaceOptionsEditables},
             {workSpaceOptions2: ' ', subObjectEditableProperties: workspaceOptionsEditables2}]
@@ -677,7 +674,6 @@ var SessionManager = class SessionManager {
                     if (this.activeSession.Default == this.Worksets[worksetIndex].WorksetName)
                         this.activeSession.Default = returnObject.WorksetName;
                     this.Worksets[worksetIndex].WorksetName = returnObject.WorksetName;
-                    this.Worksets[worksetIndex].Favorite = returnObject.Favorite;
                 }
             }, this);
 
@@ -709,7 +705,7 @@ var SessionManager = class SessionManager {
         this.activeSession.Default = name;
         if (this.workspaceMaps['Workspace'+Me.workspaceManager.activeWorkspaceIndex].currentWorkset == '')
             Me.session.displayWorkset(Me.session.DefaultWorkset, false, true);
-        this.saveSession();
+        this.applySession();
         } catch(e) { dev.log(e) }
     }
 

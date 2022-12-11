@@ -199,7 +199,6 @@ var WorksetsIndicator = GObject.registerClass({
 
         // Create iconbuttons on MenuItem
         let activeIndex = Me.session.getWorksetActiveIndex(menuItem.workset);
-        //let iconfav_nameuri = menuItem.workset.Favorite ? 'starred-symbolic' : 'non-starred-symbolic';
         let icondefault_nameuri = (Me.session.activeSession.Default == menuItem.workset.WorksetName) ? 'starred-symbolic' : ['non-starred-symbolic', 'starred-symbolic'];
         let iconOpenNew_nameuri = (activeIndex > -1) ? 'window-close-symbolic' : 'window-new-symbolic';
         let iconOpenHere_nameuri = (activeIndex > -1) ? 'view-reveal-symbolic' : 'go-jump-symbolic';
@@ -212,7 +211,6 @@ var WorksetsIndicator = GObject.registerClass({
         let viewOpenMessage = (activeIndex > -1)
              ? "Switch to '"+menuItem.workset.WorksetName+"'"
              : "Load '"+menuItem.workset.WorksetName+"' in this workspace";
-        //uiUtils.createIconButton(menuItem, iconfav_nameuri, () => {this._worksetMenuItemToggleFavorite(menuItem); this._refreshMenu();}, true, {msg: "Pin '"+menuItem.workset.WorksetName+"' to the top of the list"});
         uiUtils.createIconButton(menuItem, icondefault_nameuri, () => {Me.session.setDefaultWorkset(menuItem.workset); this._refreshMenu(); Me.workspaceViewManager.refreshOverview(); }, true, {msg: "Set '"+menuItem.workset.WorksetName+"' as the default"});
         uiUtils.createIconButton(menuItem, 'document-edit-symbolic', () => {Me.session.editWorkset(menuItem.workset); this._refreshMenu();}, {}, {msg: "Edit '"+menuItem.workset.WorksetName+"'"});
         uiUtils.createIconButton(menuItem, iconOpenNew_nameuri, openCloseCommand, {}, {msg: openCloseMsg});
@@ -532,15 +530,6 @@ var WorksetsIndicator = GObject.registerClass({
         if (index == -1) return;
         this._addWorksetMenuItemEntry(Me.session.Worksets[index], index);
         this._refreshMenu();
-        } catch(e) { dev.log(e) }
-    }
-    _worksetMenuItemToggleFavorite(menuItem) {
-        try {
-        let index = Me.session.Worksets.findIndex(w => w.WorksetName == menuItem.workset.WorksetName);
-        if (index == -1) return;
-        Me.session.Worksets[index].Favorite = !Me.session.Worksets[index].Favorite;
-        Me.session.saveSession();
-        this._worksetMenuItemMoveToTop(menuItem);
         } catch(e) { dev.log(e) }
     }
     toggleMenu() {

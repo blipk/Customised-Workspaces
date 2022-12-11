@@ -51,7 +51,7 @@
       <description>Contains the naming and app data for each favorite.</description>
     </key>
     <key name="workset-prototype-json" type="s">
-      <default>"{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"BackgroundImage\":\"\", \"BackgroundImageDark\":\"\", \"BackgroundStyle\":\"\", \"BackgroundStyleDark\":\"\", \"FavApps\":[\"\"]}"</default>
+      <default>"{\"WorksetName\":\"\", \"WindowData\":null, \"BackgroundImage\":\"\", \"BackgroundImageDark\":\"\", \"BackgroundStyle\":\"\", \"BackgroundStyleDark\":\"\", \"FavApps\":[\"\"]}"</default>
       <summary>JSObject containing info on each custom workspace</summary>
       <description>Contains the information on each custom workspace.</description>
     </key>
@@ -61,7 +61,7 @@
       <description>Contains the information about the state and position of custom workspaces.</description>
     </key>
     <key name="session-prototype-json" type="s">
-      <default>"{ \"SessionName\":\"\",\"DefaultWorkset\": \"\",\"Options\":{\"ShowNotifications\":false, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"Favorite\":false, \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
+      <default>"{ \"SessionName\":\"\",\"Default\": \"\",\"Options\":{\"ShowNotifications\":false, \"ShowHelpers\":true, \"IsolateWorkspaces\":true, \"ShowPanelIndicator\":true, \"ShowWorkspaceOverlay\":true},\"Worksets\":[{\"WorksetName\":\"\", \"WindowData\":null, \"FavApps\":[\"\"]}] }"</default>
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on the extensions session.</description>
     </key>
