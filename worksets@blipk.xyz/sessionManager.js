@@ -110,6 +110,7 @@ var SessionManager = class SessionManager {
         this.bSettings = extensionUtils.getSettings('org.gnome.desktop.background');
         this.signals.add(this.bSettings, 'changed::picture-uri', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
+                let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
                 let bgPath = this.bSettings.get_string('picture-uri')
                 let bgStyle
 
@@ -125,6 +126,7 @@ var SessionManager = class SessionManager {
             });
         this.signals.add(this.bSettings, 'changed::picture-uri-dark', () => {
                 // Update active workset wallpaper info if changed elsewhere in gnome
+                let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
                 let bgPath = this.bSettings.get_string('picture-uri-dark')
                 let bgStyle
 

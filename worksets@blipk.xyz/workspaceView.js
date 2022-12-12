@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
+const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
 
 // Internal imports
@@ -45,36 +45,53 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             this.thumbnailsBox = null
             this.thumbnailBoxes = []
             this.overviewControls = null
-            this.metaWorkspaces = {}
+            this.gsWorkspaces = {}
             this.wsvWorkspaces = {}
+            this.wsGroups = {}
             this.overviewState = 0
 
             // Keep track of the new workspace views so their background can be changed in refreshOverview()
             this.injections.add('workspace.Workspace.prototype._init',
                 function (metaWorkspace, monitorIndex, overviewAdjustment) {
-                    Me.workspaceViewManager.injections.injections['workspace.Workspace.prototype._init'].call(this, metaWorkspace, monitorIndex, overviewAdjustment);
-                    Me.workspaceViewManager.metaWorkspaces[metaWorkspace] = this;
-                    this.connect('destroy', () => delete Me.workspaceViewManager.metaWorkspaces[metaWorkspace]);
+                    Me.workspaceViewManager.injections.injections['workspace.Workspace.prototype._init']
+                        .call(this, metaWorkspace, monitorIndex, overviewAdjustment);
+                    Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this;
+                    this.connect('destroy', () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace]);
                 });
 
             // Extra reference to workspace views in overview
             this.injections.add('workspacesView.WorkspacesView.prototype._init',
                 function (monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment) {
-                    Me.workspaceViewManager.injections.injections['workspacesView.WorkspacesView.prototype._init'].call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment);
+                    Me.workspaceViewManager.injections.injections['workspacesView.WorkspacesView.prototype._init']
+                        .call(this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment);
                     Me.workspaceViewManager.wsvWorkspaces = this._workspaces;
                     this.connect('destroy', () => delete Me.workspaceViewManager.wsvWorkspaces);
                 });
 
+            // For gestures from desktop
+            this.injections.add('workspaceAnimation.WorkspaceGroup.prototype._init',
+                function (workspace, monitor, movingWindow) {
+                    Me.workspaceViewManager.injections.injections['workspaceAnimation.WorkspaceGroup.prototype._init']
+                        .call(this, workspace, monitor, movingWindow);
+                    if (!workspace)
+                        return
+                    Me.workspaceViewManager.wsGroups[workspace] = this;
+                    Me.workspaceViewManager.refreshDesktop();
+                    this.connect('destroy', () => delete Me.workspaceViewManager.wsGroups[workspace]);
+                });
+
             this.injections.add('overviewControls.ControlsManager.prototype._init',
                 function () {
-                    Me.workspaceViewManager.injections.injections['overviewControls.ControlsManager.prototype._init'].call(this);
+                    Me.workspaceViewManager.injections.injections['overviewControls.ControlsManager.prototype._init']
+                        .call(this);
                     Me.workspaceViewManager.overviewControls = this;
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox;
                 });
 
             this.injections.add('workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails',
                 function (start, count) {
-                    Me.workspaceViewManager.injections.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails'].call(this, start, count);
+                    Me.workspaceViewManager.injections.injections['workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails']
+                        .call(this, start, count);
                     this.connect('destroy', () => {
                         if (this._bgManager) { this._bgManager.destroy(); this._bgManager = null; }
                     });
@@ -139,7 +156,8 @@ var WorkspaceViewManager = class WorkspaceViewManager {
             // This is needed in addition to above to ensure the correct starting overlay state with gestures
             this.injections.add('overviewControls.ControlsManager.prototype.gestureBegin',
                 function (tracker) {
-                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"].call(this, tracker);
+                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"]
+                        .call(this, tracker);
                     Me.workspaceViewManager.refreshOverview(2);
                 });
 
@@ -163,15 +181,74 @@ var WorkspaceViewManager = class WorkspaceViewManager {
         } catch (e) { dev.log(e) }
     }
 
+    makeWorksetBg(workset) {
+        try {
+        const newbg = new Meta.Background({ meta_display: Me.gScreen });
+        workset = workset || Me.session.DefaultWorkset;
+        const bgPath = Me.session.isDarkMode
+            ? workset.BackgroundImageDark.replace("file://", "")
+            : workset.BackgroundImage.replace("file://", "");
+        const backgroundStyle = Me.session.isDarkMode
+            ? workset.BackgroundStyleDark.toUpperCase()
+            : workset.BackgroundStyle.toUpperCase()
+        newbg.set_file(
+            Gio.file_new_for_path(bgPath),
+            imports.gi.GDesktopEnums.BackgroundStyle[backgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM
+        );
+        return newbg
+        } catch (e) { dev.log(e) }
+    }
+
+    refreshDesktop() {
+        try {
+        if (Me.session.activeSession.Options.DisableWallpaperManagement)
+            return
+
+        for (const i in this.wsGroups) {
+            const wsGroup = this.wsGroups[i]
+            const metaWorkspace = wsGroup.workspace
+            wsGroup._workset = Me.session.Worksets
+                .find((wset) => wset.WorksetName == Me.session.workspaceMaps['Workspace' + metaWorkspace.index()].currentWorkset)
+
+            if (wsGroup._newbg)
+                delete wsGroup._newbg
+            wsGroup._newbg = this.makeWorksetBg(wsGroup._workset)
+
+            // For larger workspace view and app grid workspace preview
+            const gsWorkspace = this.gsWorkspaces[metaWorkspace];
+            if (gsWorkspace)
+                gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+
+            // For thumbnails on the overview
+            if (wsGroup._bgManager)
+                wsGroup._bgManager.destroy();
+
+            wsGroup._bgManager = new background.BackgroundManager({
+                monitorIndex: wsGroup._monitor.index,
+                container: wsGroup._background,
+                //layoutManager: Main.layoutManager,
+                controlPosition: false,
+                vignette: false,
+            })
+            wsGroup._bgManager.backgroundActor.content.set({
+                background: wsGroup._newbg,
+                vignette: false,
+                vignette_sharpness: 0.5,
+                brightness: 0.5,
+            })
+        }
+        } catch (e) { dev.log(e) }
+    }
+
     refreshOverview(overviewState = overviewControls.ControlsState.WINDOW_PICKER) {
         try {
             if (!Main.overview._visible) return;
 
             for (const i in this.thumbnailBoxes) {
                 const thumbnailBox = this.thumbnailBoxes[i]
-                let metaWorkspace = this.metaWorkspaces[thumbnailBox.metaWorkspace];
-                if (!metaWorkspace)
-                    continue //dev.log("No metaWorkspace for thumbnail")
+                let gsWorkspace = this.gsWorkspaces[thumbnailBox.metaWorkspace];
+                if (!gsWorkspace)
+                    continue //dev.log("No gsWorkspace for thumbnail")
 
                 // Find active workset for thumbnailbox
                 thumbnailBox._workset = Me.session.Worksets
@@ -185,12 +262,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 // New background for thumbnail box
                 if (thumbnailBox._newbg)
                     delete thumbnailBox._newbg
-                thumbnailBox._newbg = new Meta.Background({ meta_display: Me.gScreen });
-                let bg = thumbnailBox._workset || Me.session.DefaultWorkset;
-                let bgPath = Me.session.isDarkMode ? bg.BackgroundImageDark.replace("file://", "") : bg.BackgroundImage.replace("file://", "");
-                const backgroundStyle = Me.session.isDarkMode ? bg.BackgroundStyleDark.toUpperCase() : bg.BackgroundStyle.toUpperCase()
-                thumbnailBox._newbg.set_file(Gio.file_new_for_path(bgPath),
-                    imports.gi.GDesktopEnums.BackgroundStyle[backgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM);
+                thumbnailBox._newbg = this.makeWorksetBg(thumbnailBox._workset)
 
                 if (Me.session.activeSession.Options.DisableWallpaperManagement) {
                     this.updateOverlay(overviewState, thumbnailBox, i)
@@ -198,7 +270,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 }
 
                 // For larger workspace view and app grid workspace preview
-                metaWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+                gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
 
                 // For thumbnails on the overview
                 if (thumbnailBox._bgManager)

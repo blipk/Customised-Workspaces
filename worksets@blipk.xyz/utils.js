@@ -177,7 +177,7 @@ function readStream(stream, callback) {
 }
 
 
-const { workspace, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
+const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
 var InjectionHandler = class InjectionHandler {
     constructor() {
