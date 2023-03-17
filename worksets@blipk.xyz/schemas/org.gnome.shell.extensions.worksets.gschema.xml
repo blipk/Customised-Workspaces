@@ -45,6 +45,11 @@
       <summary>Enable logging</summary>
       <description>Toggles writing log file to ~/.config/worksets@blipk.xyz/debug.log</description>
     </key>
+    <key name="cli-switch" type="s">
+      <default>""</default>
+      <summary>Workspace Switch CLI</summary>
+      <description>Run a CLI command when the workspace is switched. You can use the $CWORKSPACE variable for the customised workspace name</description>
+    </key>
     <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
       <summary>Object represting the current favorite apps on the panel</summary>
