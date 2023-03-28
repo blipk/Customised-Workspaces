@@ -39,7 +39,7 @@ var WorkspaceManager = class WorkspaceManager {
         try {
             Me.workspaceManager = this;
             this.signals = new utils.SignalHandler();
-            this.signals.add(global.window_manager, 'switch-workspace', () => { this._activeWorkspaceChanged() })
+            this.signals.add(global.window_manager, 'switch-workspace', this._activeWorkspaceChanged.bind(this) )
 
             this.loadDefaults = true;
             this.noUpdate = false;
