@@ -271,8 +271,8 @@ var WorkspaceManager = class WorkspaceManager {
                 Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces;
 
             if (Me.session.activeSession.Options.IsolateWorkspaces) {
-                util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
-                util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
+                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
+                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
                 if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED) {
                     if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
                     Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', true);
@@ -284,8 +284,8 @@ var WorkspaceManager = class WorkspaceManager {
                     workspaceIsolater.WorkspaceIsolator.refresh();
                 }
             } else {
-                util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
-                util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
+                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
+                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
                 if (Me.gExtensions.dash2panel.settings)
                     Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', false);
                 if (Me.gExtensions.dash2dock.settings)

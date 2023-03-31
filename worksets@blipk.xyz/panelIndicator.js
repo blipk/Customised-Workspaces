@@ -44,6 +44,8 @@ var WorksetsIndicator = GObject.registerClass({
             super._init(0.0, "WorksetsIndicator");
             Me.worksetsIndicator = this;
 
+            this.signals = new utils.SignalHandler()
+
             // Set up menu box to build into
             let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box worksets-indicator-hbox' });
             this.icon = new St.Icon({ icon_name: 'preferences-desktop-workspaces', style_class: 'system-status-icon worksets-indicator-icon' });
@@ -72,6 +74,12 @@ var WorksetsIndicator = GObject.registerClass({
             });
 
             Main.panel.addToStatusArea('WorksetsIndicator', this, 1);
+        } catch (e) { dev.log(e) }
+    }
+    destroy() {
+        try {
+            this.signals.disconnectAll();
+            delete this.signals;
         } catch (e) { dev.log(e) }
     }
     //main UI builder
@@ -301,12 +309,15 @@ var WorksetsIndicator = GObject.registerClass({
                             mode: Clutter.AnimationMode.EASE_OUT_EXPO,
                         });
                         if (pass) menuItem.worksetPopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
-                        GLib.timeout_add(null, 100, () => { wspopupMenu.destroy(); }); // Wait for the close animation
+                        // Wait for the close animation
+                        this.signals.add(GLib.timeout_add(null, 100, () => { wspopupMenu.destroy(); }));
                         wspopupMenu.menuItem.worksetPopupMenu = null;
                     }, this);
 
                     Me.worksetsIndicator.popUpMenus = [];
-                    if (!pass) GLib.timeout_add(null, 100, () => { Me.worksetsIndicator.optionsMenuItem.show(); }); // Wait for the close animation, only if a new view area menu has not been requested
+
+                    // Wait for the close animation, only if a new view area menu has not been requested
+                    if (!pass) this.signals.add(GLib.timeout_add(null, 100, () => { Me.worksetsIndicator.optionsMenuItem.show(); }))
 
                 } catch (e) { dev.log(e) }
             }
