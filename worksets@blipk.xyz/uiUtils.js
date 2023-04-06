@@ -142,7 +142,7 @@ function createTooltip(widget, tooltip) {
 
     widget.tooltipEnterEvent = widget.connect('enter_event', ()=>{
         widget.hovering = true;
-        GLib.timeout_add(null, widget.tooltip.delay || 700, ()=> {
+        Me.session.signals.add(GLib.timeout_add(null, widget.tooltip.delay || 700, ()=> {
             // Ensure there is only one notification per widget
             if (widget.notificationLabel) return;
             // Create message
@@ -151,8 +151,13 @@ function createTooltip(widget, tooltip) {
                 widget.notificationLabel.attachedTo = widget;
             }
             // Make sure they're eventually removed for any missed cases
-            GLib.timeout_add(null, widget.tooltip.disappearTime || 4000, ()=> { if (widget.notificationLabel) removeUserNotification(widget.notificationLabel, 1);});
-        });
+            Me.session.signals.add(GLib.timeout_add(null, widget.tooltip.disappearTime || 4000, ()=> {
+                if (widget.notificationLabel)
+                    removeUserNotification(widget.notificationLabel, 1);
+                return false
+            }));
+            return false
+        }));
 
         //return Clutter.EVENT_STOP;
     });

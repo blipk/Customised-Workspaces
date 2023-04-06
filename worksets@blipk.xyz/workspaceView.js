@@ -407,6 +407,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                                     Me.workspaceManager.loadDefaults = true;
                                     Me.workspaceManager.noUpdate = false;
                                     Me.workspaceManager._workspaceUpdate();
+                                    return false
                                 }));
                                 btn.menu.bye();
                             });
@@ -438,7 +439,7 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                         }
 
                         Main.uiGroup.add_actor(btn.menu.actor);
-                        this.signals.add(GLib.timeout_add(null, 5000, () => { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); }));
+                        this.signals.add(GLib.timeout_add(null, 5000, () => { if (!utils.isEmpty(btn.menu)) btn.menu.bye(); return false }));
                         btn.menu.open();
                     } catch (e) { dev.log(e) }
                 }, icon_options, { msg: "Choose a custom workspace to load here" });
