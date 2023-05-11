@@ -65,7 +65,7 @@ function enable() {
     // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
     Me.gScreen = global.screen || global.display;
     Me.gWorkspaceManager = global.screen || global.workspace_manager;
-    Me.gMonitorManager = global.screen || Meta.MonitorManager.get();
+    Me.gMonitorManager = global.screen || utils.getMonitorManager();
     Me.gExtensionManager = (uuid)=>{var x = (extensionUtils.extensions)
                                             ? extensionUtils.extensions[uuid].imports.extension || 0
                                             : Main.extensionManager.lookup(uuid) || 0;

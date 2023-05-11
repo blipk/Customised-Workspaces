@@ -176,6 +176,12 @@ function readStream(stream, callback) {
     });
 }
 
+function getMonitorManager() {
+  if (global.backend.get_monitor_manager !== undefined)
+      return global.backend.get_monitor_manager();
+  else
+      return Meta.MonitorManager.get();
+}
 
 const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
