@@ -45,7 +45,7 @@ const wallPaperOptions = [
     { enum: "SPANNED", icon: "zoom-fit-best-symbolic" }
 ]
 
-var SessionManager = class SessionManager {
+const SessionManager = class SessionManager {
     constructor() {
         try {
             Me.session = this;

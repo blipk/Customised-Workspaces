@@ -33,11 +33,11 @@ function log(context, message) {
     if (!_debug_) return;
 
     if (message === undefined) { message = context; context = "() =>"; }
-    if (message === undefined) { message = "UNDEFINED value" }
-    if (message === null) { message = "NULL value" }
+    if (message === undefined) { message = "`UNDEFINED`" }
+    if (message === null) { message = "`NULL`" }
 
-    let timestamp = new Date().toLocaleString();
-    let prefix = '(' + Me.uuid.toString() + ') [' + timestamp + ']:';
+    const timestamp = new Date().toLocaleString();
+    const prefix = '(' + Me.uuid.toString() + ') [' + timestamp + ']:';
     let out = prefix;
 
     if (message instanceof Error) {
@@ -45,7 +45,7 @@ function log(context, message) {
         global.log(out);
         global.logError(message)
     } else if (typeof message === 'object') {
-        out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
+        out += "@Object  | " + context.toString() + " |\r\n" + message.toString() + '\r\n';
         let seen = [];
         out += JSON.stringify(message, function (key, val) {
             if (val != null && typeof val == "object") {
@@ -59,7 +59,7 @@ function log(context, message) {
         global.log(out);
     }
 
-    fileUtils.saveToFile(out, 'debug.log', fileUtils.CONF_DIR, true, true);
+    fileUtils.saveToFile(out, "debug.log", fileUtils.CONF_DIR, true, true);
 }
 
 

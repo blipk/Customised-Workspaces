@@ -132,12 +132,8 @@ const WorkspaceManager = class WorkspaceManager {
             let found = false;
             Me.session.Worksets.forEach(function (workset, worksetIndex) {
                 let map = Me.session.workspaceMaps['Workspace' + this.activeWorkspaceIndex];
-                if (map.defaultWorkset == workset.WorksetName && map.currentWorkset == '') {
-                    Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
-                    Me.session.workspaceMaps['Workspace' + this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
-                    found = true;
-                }
-                if (map.currentWorkset == workset.WorksetName) {
+                if (map.currentWorkset == workset.WorksetName ||
+                    (map.currentWorkset == '' && map.defaultWorkset == workset.WorksetName)) {
                     Me.session.displayWorkset(Me.session.Worksets[worksetIndex]);
                     Me.session.workspaceMaps['Workspace' + this.activeWorkspaceIndex].currentWorkset = workset.WorksetName;
                     found = true;
@@ -151,9 +147,10 @@ const WorkspaceManager = class WorkspaceManager {
         try {
             if (utils.isEmpty(workspaceIndex)) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
-            let workspace = Me.gWorkspaceManager.get_workspace_by_index(workspaceIndex);
-            let windows = workspace.list_windows();
-            windows = windows.filter(function (w) { return !w.is_skip_taskbar() && !w.is_on_all_workspaces(); });
+            const workspace = Me.gWorkspaceManager.get_workspace_by_index(workspaceIndex);
+            const windows = workspace
+                .list_windows()
+                .filter(function (w) { return !w.is_skip_taskbar() && !w.is_on_all_workspaces(); });
             return windows;
         } catch (e) { dev.log(e) }
     }
@@ -211,8 +208,8 @@ const WorkspaceManager = class WorkspaceManager {
         try {
             if (utils.isEmpty(workspaceIndex)) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index();
 
-            let windowTracker = Shell.WindowTracker.get_default();
-            let windows = this.getWorkspaceWindows(workspaceIndex);
+            const windowTracker = Shell.WindowTracker.get_default();
+            const windows = this.getWorkspaceWindows(workspaceIndex);
             let appIDs = [];
 
             windows.forEach(function (w) {
