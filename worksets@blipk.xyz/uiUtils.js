@@ -85,27 +85,26 @@ function createIconButton(parentItem, iconNames, callback, options, tooltip) { /
     } catch (e) { dev.log(e) }
 }
 
-//Display a short overlay message on the screen for user feedback etc..
+// Notifications - Gnome Notification - Or a Tooltip that overlays the screen
 let messages = [];
 function showUserNotification(input, overviewMessage = false, fadeTime = 2.9) {
     dev.log('Notification', input);
     removeAllUserNotifications();
 
     if (overviewMessage) {
-        var label = null;
         Main.overview.setMessage(_(input), { forFeedback: true });
-    } else {
-        var label = new St.Label({ style_class: 'feedback-label', text: _(input) });
-        messages.push(label);
-        var lastItem = messages.length - 1;
-        Main.uiGroup.add_actor(messages[lastItem]);
-        messages[lastItem].opacity = 255;
-        let monitor = Main.layoutManager.primaryMonitor;
-        messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
-        if (fadeTime > 0) removeUserNotification(label, fadeTime);
-        return label;
+        return null
     }
+    const label = new St.Label({ style_class: 'feedback-label', text: _(input) });
+    messages.push(label);
+    let lastItem = messages.length - 1;
+    Main.uiGroup.add_actor(messages[lastItem]);
+    messages[lastItem].opacity = 255;
+    let monitor = Main.layoutManager.primaryMonitor;
+    messages[lastItem].set_position(monitor.x + Math.floor(monitor.width / 2 - messages[lastItem].width / 2), monitor.y + Math.floor(monitor.height / 2 - messages[lastItem].height / 2));
+    if (fadeTime > 0) removeUserNotification(label, fadeTime);
 }
+
 function removeUserNotification(label, fadeTime) {
     if (!label) return;
     if (!fadeTime) {
@@ -230,7 +229,7 @@ function setImage(parent, imgFilePath = '') {
 }
 
 // Shader example
-var TextOutlineEffect = GObject.registerClass({
+const TextOutlineEffect = GObject.registerClass({
     GTypeName: 'TextOutlineEffect'
 }, class TextOutlineEffect extends Clutter.ShaderEffect {
     vfunc_get_static_shader_source() {
@@ -263,7 +262,7 @@ var TextOutlineEffect = GObject.registerClass({
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
 //Object Editor Dialog
-var ObjectInterfaceDialog = GObject.registerClass({
+const ObjectInterfaceDialog = GObject.registerClass({
     GTypeName: 'Worksets_ObjectInterfaceDialog'
 }, class ObjectInterfaceDialog extends modalDialog.ModalDialog {
     _init(dialogText = null, callback = null,
@@ -498,7 +497,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
 });
 
 //Object Editor Dialog
-var ObjectEditorDialog = GObject.registerClass({
+const ObjectEditorDialog = GObject.registerClass({
     GTypeName: 'Worksets_ObjectEditorDialog'
 }, class ObjectEditorDialog extends modalDialog.ModalDialog {
     _init(dialogInfoTextStyle = '', callback = null,

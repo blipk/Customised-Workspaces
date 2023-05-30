@@ -82,7 +82,7 @@ function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, re
                 childrenFilePropertiesArray.push({ parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type });
             if (!searchSubDirectories) continue;
             let childDirectory = directoryFile.get_child(fileIterator.get_name());
-            if (searchLevel > 0 || searchLevel <= -1) {
+            if (searchLevel != 0) {
                 childrenFilePropertiesArray.push(enumarateDirectoryChildren(childDirectory, returnDirectories, searchSubDirectories, searchLevel));
                 searchLevel--;
             }

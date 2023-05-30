@@ -39,8 +39,8 @@ function textFormatter(text, options = {/*length: 50*/ }) {
     return text;
 }
 
-var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
-var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+const textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
+const textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 
 //General
 function truncateString(instring, length = 50) {
@@ -50,8 +50,8 @@ function truncateString(instring, length = 50) {
     return shortened;
 }
 
-var special = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
-var deca = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
+const special = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
+const deca = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
 function stringifyNumber(n) {
     n = parseInt(n);
     if (n < 20) return special[n];
@@ -59,7 +59,7 @@ function stringifyNumber(n) {
     return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
 }
 
-var isEmpty = function (v) {
+const isEmpty = function (v) {
     return typeof v === 'undefined' ? true
         : v === null ? true
             : v === [] ? true
@@ -181,7 +181,7 @@ function readStream(stream, callback) {
 
 const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
-var InjectionHandler = class InjectionHandler {
+const InjectionHandler = class InjectionHandler {
     constructor() {
         this.injections = {}
     }
@@ -208,7 +208,7 @@ var InjectionHandler = class InjectionHandler {
     }
 }
 
-var SignalHandler = class SignalHandler {
+const SignalHandler = class SignalHandler {
     constructor() {
         this.signalIds = [];
     }

@@ -30,8 +30,8 @@ const { fileUtils } = Me.imports;
 
 function log(context, message) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-
     if (!_debug_) return;
+
     if (message === undefined) { message = context; context = "() =>"; }
     if (message === undefined) { message = "UNDEFINED value" }
     if (message === null) { message = "NULL value" }
@@ -46,7 +46,7 @@ function log(context, message) {
         global.logError(message)
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
-        var seen = [];
+        let seen = [];
         out += JSON.stringify(message, function (key, val) {
             if (val != null && typeof val == "object") {
                 if (seen.indexOf(val) >= 0) return;
@@ -65,15 +65,14 @@ function log(context, message) {
 
 function dump(object, objectName) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-
     if (!_debug_) return;
 
-    let timestamp = Date.now();
+    const timestamp = Date.now();
 
     //if (typeof object !== 'object') return;
 
     let out = "";
-    var seen = [];
+    let seen = [];
     out += JSON.stringify(object, function (key, val) {
         if (val != null && typeof val == "object") {
             if (seen.indexOf(val) >= 0) return;

@@ -36,7 +36,7 @@ const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, uiUtils, fileUtils } = Me.imports;
 const { workspaceManager } = Me.imports;
 
-var WorksetsIndicator = GObject.registerClass({
+const WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
 }, class WorksetsIndicator extends panelMenu.Button {
     _init() {

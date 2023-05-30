@@ -38,7 +38,7 @@ const dev = Me.imports.dev;
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()
 
 // Credit to nyuki's extension workspace-isolated-dash@n-yuki.v14.shell-extension
-var WorkspaceIsolator = class WorkspaceIsolator {
+const WorkspaceIsolator = class WorkspaceIsolator {
     constructor() {
         try {
             // Extend AppSystem to only return applications running on the active workspace
