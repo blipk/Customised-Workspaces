@@ -29,31 +29,25 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { fileUtils } = Me.imports;
 
 function log(context, message) {
-    // Ubuntu is terrible and is using an old version of GJS which doesnt support these operators yet
-    //let _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true;
-    let _debug_ = Me.session ?
-                    Me.session.activeSession ?
-                        Me.session.activeSession.Options ?
-                            (Me.session.activeSession.Options.DebugMode!=null && Me.session.activeSession.Options.DebugMode!=undefined) ?
-                                    Me.session.activeSession.Options.DebugMode : true : true : true : true;
+    const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
 
     if (!_debug_) return;
-    if (message === undefined) {message = context; context = "() =>";}
-    if (message === undefined) {message = "UNDEFINED value"}
-    if (message === null) {message = "NULL value"}
+    if (message === undefined) { message = context; context = "() =>"; }
+    if (message === undefined) { message = "UNDEFINED value" }
+    if (message === null) { message = "NULL value" }
 
     let timestamp = new Date().toLocaleString();
-    let prefix =  '(' + Me.uuid.toString() + ') [' + timestamp + ']:';
+    let prefix = '(' + Me.uuid.toString() + ') [' + timestamp + ']:';
     let out = prefix;
 
     if (message instanceof Error) {
-        out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name +" "+ message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
+        out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name + " " + message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
         global.log(out);
         global.logError(message)
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " | " + message.toString() + '\r\n';
         var seen = [];
-        out += JSON.stringify(message, function(key, val) {
+        out += JSON.stringify(message, function (key, val) {
             if (val != null && typeof val == "object") {
                 if (seen.indexOf(val) >= 0) return;
                 seen.push(val);
@@ -70,13 +64,7 @@ function log(context, message) {
 
 
 function dump(object, objectName) {
-    // Ubuntu is terrible and is using an old version of GJS which doesnt support these operators yet
-    //let _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true;
-    let _debug_ = Me.session ?
-                    Me.session.activeSession ?
-                        Me.session.activeSession.Options ?
-                            (Me.session.activeSession.Options.DebugMode!=null && Me.session.activeSession.Options.DebugMode!=undefined) ?
-                                    Me.session.activeSession.Options.DebugMode : true : true : true : true;
+    const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
 
     if (!_debug_) return;
 
@@ -86,7 +74,7 @@ function dump(object, objectName) {
 
     let out = "";
     var seen = [];
-    out += JSON.stringify(object, function(key, val) {
+    out += JSON.stringify(object, function (key, val) {
         if (val != null && typeof val == "object") {
             if (seen.indexOf(val) >= 0) return;
             seen.push(val);
@@ -94,5 +82,5 @@ function dump(object, objectName) {
         return val;
     }, 2) + '\r\n\r\n';
 
-    fileUtils.saveToFile(out, objectName+'-'+timestamp+'.json', fileUtils.CONF_DIR, true, false);
+    fileUtils.saveToFile(out, objectName + '-' + timestamp + '.json', fileUtils.CONF_DIR, true, false);
 }

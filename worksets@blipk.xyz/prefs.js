@@ -39,7 +39,7 @@ function init() {
 }
 
 function buildPrefsWidget() {
-    let prefsWidget = new Gtk.Label({label: 'Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.',  visible: true });
+    let prefsWidget = new Gtk.Label({ label: 'Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.', visible: true });
 
     if (!prefsWidget.get_toplevel) return prefsWidget;
     GLib.timeout_add(0, null, () => {

@@ -57,12 +57,12 @@ function checkExists(path) {
     return result;
 }
 // Disk I/O handlers
-function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, returnDirectories=false, searchSubDirectories=false, searchLevel=1/*-1 for infinite*/){
-    let childrenFileProperties = {parentDirectory: directory, fullname: null, name: null, extension: null, type: null};
+function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
+    let childrenFileProperties = { parentDirectory: directory, fullname: null, name: null, extension: null, type: null };
     let childrenFilePropertiesArray = [];
 
     let directoryFile = Gio.file_new_for_path(directory);
-    if (!directoryFile.query_exists(null)) throw Error(directory+' not found');
+    if (!directoryFile.query_exists(null)) throw Error(directory + ' not found');
     let children = directoryFile.enumerate_children('standard::name,standard::type', Gio.FileQueryInfoFlags.NONE, null);
 
     let fileIterator;
@@ -70,16 +70,16 @@ function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, return
         let type = fileIterator.get_file_type();
         let name = fileIterator.get_name();
         let tmpExtension = name.split('.');
-        let extension = tmpExtension[tmpExtension.length-1];
+        let extension = tmpExtension[tmpExtension.length - 1];
         tmpExtension.pop();
         let nameWithoutExtension = tmpExtension.join('.');
 
         if (type == Gio.FileType.REGULAR) {
             if (returnFiles)
-                childrenFilePropertiesArray.push({parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type});
+                childrenFilePropertiesArray.push({ parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type });
         } else if (type == Gio.FileType.DIRECTORY) {
             if (returnDirectories)
-                childrenFilePropertiesArray.push({parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type});
+                childrenFilePropertiesArray.push({ parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type });
             if (!searchSubDirectories) continue;
             let childDirectory = directoryFile.get_child(fileIterator.get_name());
             if (searchLevel > 0 || searchLevel <= -1) {
@@ -91,7 +91,7 @@ function enumarateDirectoryChildren(directory=CONF_DIR, returnFiles=true, return
 
     return childrenFilePropertiesArray;
 }
-function saveToFile(object, filename, directory=CONF_DIR, raw=false, append=false, async=false) {
+function saveToFile(object, filename, directory = CONF_DIR, raw = false, append = false, async = false) {
     let savePath = GLib.build_filenamev([directory, filename]);
     let outBuff;
     if (raw) outBuff = object.toString();
@@ -104,9 +104,9 @@ function saveToFile(object, filename, directory=CONF_DIR, raw=false, append=fals
     let file = Gio.file_new_for_path(savePath);
     if (async) {
         if (append) {
-            file.append_to_async(Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function(obj, res) {aSyncSaveCallback(obj, res, contents);});
+            file.append_to_async(Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (obj, res) { aSyncSaveCallback(obj, res, contents); });
         } else {
-            file.replace_async(null, false, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (obj, res) {aSyncSaveCallback(obj, res, contents);});
+            file.replace_async(null, false, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (obj, res) { aSyncSaveCallback(obj, res, contents); });
         }
     } else {
         if (append) {
@@ -127,15 +127,15 @@ function aSyncSaveCallback(obj, res, contents) {
         w_obj.write_bytes_finish(w_res); stream.close(null);
     });
 }
-function loadJSObjectFromFile(filename=CONF_FILE, directory=CONF_DIR, callback=null, async=false) {
+function loadJSObjectFromFile(filename = CONF_FILE, directory = CONF_DIR, callback = null, async = false) {
     let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;
 
     let file = Gio.file_new_for_path(loadPath);
 
-    if (!GLib.file_test(loadPath, GLib.FileTest.EXISTS)) { throw Error("File does not exist: "+loadPath); }
+    if (!GLib.file_test(loadPath, GLib.FileTest.EXISTS)) { throw Error("File does not exist: " + loadPath); }
     if (async === true) {
-        if (typeof callback !== 'function') {throw TypeError('loadJSObjectFromFile callback must be a function');}
+        if (typeof callback !== 'function') { throw TypeError('loadJSObjectFromFile callback must be a function'); }
 
         file.query_info_async('*', Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, function (src, res) {
             let file_info = src.query_info_finish(res);
@@ -143,7 +143,7 @@ function loadJSObjectFromFile(filename=CONF_FILE, directory=CONF_DIR, callback=n
                 let [success, contents] = obj.load_contents_finish(res);
                 if (success) {
                     jsobject = JSON.parse(ByteArray.toString(contents));
-                    if(jsobject === undefined) {throw SyntaxError('Error parseing file contents to JS Object. Syntax Error?');}
+                    if (jsobject === undefined) { throw SyntaxError('Error parseing file contents to JS Object. Syntax Error?'); }
                     callback(jsobject);
                 }
             });
@@ -153,7 +153,7 @@ function loadJSObjectFromFile(filename=CONF_FILE, directory=CONF_DIR, callback=n
         let buffer = file.load_contents(null);
         let contents = buffer[1];
         jsobject = JSON.parse(ByteArray.toString(contents));
-        if(jsobject === undefined) {throw SyntaxError('Error parseing file contents to JS Object. Syntax Error.');}
+        if (jsobject === undefined) { throw SyntaxError('Error parseing file contents to JS Object. Syntax Error.'); }
     }
 
     return jsobject;

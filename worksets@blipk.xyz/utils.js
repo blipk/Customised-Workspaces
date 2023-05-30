@@ -50,13 +50,13 @@ function truncateString(instring, length = 50) {
     return shortened;
 }
 
-var special = ['zeroth','first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
+var special = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
 var deca = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
 function stringifyNumber(n) {
     n = parseInt(n);
     if (n < 20) return special[n];
-    if (n%10 === 0) return deca[Math.floor(n/10)-2] + 'ieth';
-    return deca[Math.floor(n/10)-2] + 'y-' + special[n%10];
+    if (n % 10 === 0) return deca[Math.floor(n / 10) - 2] + 'ieth';
+    return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
 }
 
 var isEmpty = function (v) {
@@ -69,32 +69,32 @@ var isEmpty = function (v) {
 }
 
 if (!Object.prototype.hasOwnProperty('forEachEntry')) {
-Object.defineProperty(Object.prototype, 'forEachEntry', {
-    value: function (callback, thisArg, recursive = false, recursiveIndex = 0) {
-        if (this === null) throw new TypeError('Not an object');
-        thisArg = thisArg || this;
+    Object.defineProperty(Object.prototype, 'forEachEntry', {
+        value: function (callback, thisArg, recursive = false, recursiveIndex = 0) {
+            if (this === null) throw new TypeError('Not an object');
+            thisArg = thisArg || this;
 
-        Object.entries(this).forEach(function (entryArray, entryIndex) {
-            let [key, value] = entryArray;
-            let entryObj = { [key]: this[key] };
-            let retIndex = entryIndex + recursiveIndex;
-            callback.call(thisArg, key, this[key], retIndex, entryObj, entryArray, this);
-            if (typeof this[key] === 'object' && this[key] !== null && recursive === true) {
-                if (Array.isArray(this[key]) === true) {
-                    this[key].forEach(function (prop, index) {
-                        if (Array.isArray(this[key][index]) === false && typeof this[key][index] === 'object' && this[key][index] !== null) {
-                            recursiveIndex += Object.keys(this).length - 1;
-                            this[key][index].forEachEntry(callback, thisArg, recursive, recursiveIndex);
-                        }
-                    }, this);
-                } else {
-                    recursiveIndex += Object.keys(this).length - 1;
-                    this[key].forEachEntry(callback, thisArg, recursive, recursiveIndex);
+            Object.entries(this).forEach(function (entryArray, entryIndex) {
+                let [key, value] = entryArray;
+                let entryObj = { [key]: this[key] };
+                let retIndex = entryIndex + recursiveIndex;
+                callback.call(thisArg, key, this[key], retIndex, entryObj, entryArray, this);
+                if (typeof this[key] === 'object' && this[key] !== null && recursive === true) {
+                    if (Array.isArray(this[key]) === true) {
+                        this[key].forEach(function (prop, index) {
+                            if (Array.isArray(this[key][index]) === false && typeof this[key][index] === 'object' && this[key][index] !== null) {
+                                recursiveIndex += Object.keys(this).length - 1;
+                                this[key][index].forEachEntry(callback, thisArg, recursive, recursiveIndex);
+                            }
+                        }, this);
+                    } else {
+                        recursiveIndex += Object.keys(this).length - 1;
+                        this[key].forEachEntry(callback, thisArg, recursive, recursiveIndex);
+                    }
                 }
-            }
-        }, this);
-    }
-});
+            }, this);
+        }
+    });
 }
 
 if (!Object.prototype.hasOwnProperty('filterObj')) {
@@ -107,28 +107,30 @@ if (!Object.prototype.hasOwnProperty('filterObj')) {
 
 function splitURI(inURI) {
     try {
-    let regexPattern = /^(([^:/\?#]+):)?(\/\/([^/\?#]*))?([^\?#]*)(\?([^#]*))?(#(.*))?/;
+        let regexPattern = /^(([^:/\?#]+):)?(\/\/([^/\?#]*))?([^\?#]*)(\?([^#]*))?(#(.*))?/;
 
-    let re = RegExp(regexPattern)
-    let output = re.exec(inURI);
+        let re = RegExp(regexPattern)
+        let output = re.exec(inURI);
 
-    if (output[3] == undefined)
-        inURI = 'foo://' + inURI;
+        if (output[3] == undefined)
+            inURI = 'foo://' + inURI;
         output = re.exec(inURI);
 
-    // Named capture groups not working on gjs :(
-    let splitURI = {'scheme': output[1], 'schemeTrim': output[2],
-                'authority': output[3], 'authorityTrim': output[4],
-                'path': output[5],
-                'query': output[6], 'queryTrim': output[7],
-                'fragment': output[8], 'fragmentTrim': output[9]}
+        // Named capture groups not working on gjs :(
+        let splitURI = {
+            'scheme': output[1], 'schemeTrim': output[2],
+            'authority': output[3], 'authorityTrim': output[4],
+            'path': output[5],
+            'query': output[6], 'queryTrim': output[7],
+            'fragment': output[8], 'fragmentTrim': output[9]
+        }
 
-    if (splitURI['scheme'] == 'foo:')
-        splitURI['scheme'] = '';
+        if (splitURI['scheme'] == 'foo:')
+            splitURI['scheme'] = '';
         inURI = inURI.substring(6);
 
-    return splitURI;
-    } catch(e) { dev.log(e); }
+        return splitURI;
+    } catch (e) { dev.log(e); }
 }
 
 // Combines the benefits of spawn_sync (easy retrieval of output)
@@ -186,23 +188,23 @@ var InjectionHandler = class InjectionHandler {
 
     add(srcProto, dstFunc) {
         try {
-        this.injections[srcProto] = eval(srcProto);
-        eval(srcProto + '= dstFunc');
-        } catch(e) { dev.log(e); }
+            this.injections[srcProto] = eval(srcProto);
+            eval(srcProto + '= dstFunc');
+        } catch (e) { dev.log(e); }
     }
 
     removeAll() {
         try {
-        this.injections.forEachEntry(function(srcProto, srcObject){
-            eval(srcProto + '= srcObject');
-        }, this);
-        } catch(e) { dev.log(e); }
+            this.injections.forEachEntry(function (srcProto, srcObject) {
+                eval(srcProto + '= srcObject');
+            }, this);
+        } catch (e) { dev.log(e); }
     }
 
     destroy() {
         try {
-        this.removeAll()
-        } catch(e) { dev.log(e); }
+            this.removeAll()
+        } catch (e) { dev.log(e); }
     }
 }
 
@@ -213,20 +215,20 @@ var SignalHandler = class SignalHandler {
 
     add(target, signal = null, fn = null) {
         try {
-        let signalId = target.connect ? target.connect(signal, fn) : target;
-        this.signalIds[signalId] = target;
-        } catch(e) { dev.log(e); }
+            let signalId = target.connect ? target.connect(signal, fn) : target;
+            this.signalIds[signalId] = target;
+        } catch (e) { dev.log(e); }
     }
 
     disconnectAll() {
         try {
-        this.signalIds.forEach((target, id) => target.disconnect ? target.disconnect(id) : GLib.Source.remove(id))
-        } catch(e) { dev.log(e); }
+            this.signalIds.forEach((target, id) => target.disconnect ? target.disconnect(id) : GLib.Source.remove(id))
+        } catch (e) { dev.log(e); }
     }
 
     destroy() {
         try {
-        this.disconnectAll()
-        } catch(e) { dev.log(e); }
+            this.disconnectAll()
+        } catch (e) { dev.log(e); }
     }
 }

@@ -183,60 +183,60 @@ var WorkspaceViewManager = class WorkspaceViewManager {
 
     makeWorksetBg(workset) {
         try {
-        const newbg = new Meta.Background({ meta_display: Me.gScreen });
-        workset = workset || Me.session.DefaultWorkset;
-        const bgPath = Me.session.isDarkMode
-            ? workset.BackgroundImageDark.replace("file://", "")
-            : workset.BackgroundImage.replace("file://", "");
-        const backgroundStyle = Me.session.isDarkMode
-            ? workset.BackgroundStyleDark.toUpperCase()
-            : workset.BackgroundStyle.toUpperCase()
-        newbg.set_file(
-            Gio.file_new_for_path(bgPath),
-            imports.gi.GDesktopEnums.BackgroundStyle[backgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM
-        );
-        return newbg
+            const newbg = new Meta.Background({ meta_display: Me.gScreen });
+            workset = workset || Me.session.DefaultWorkset;
+            const bgPath = Me.session.isDarkMode
+                ? workset.BackgroundImageDark.replace("file://", "")
+                : workset.BackgroundImage.replace("file://", "");
+            const backgroundStyle = Me.session.isDarkMode
+                ? workset.BackgroundStyleDark.toUpperCase()
+                : workset.BackgroundStyle.toUpperCase()
+            newbg.set_file(
+                Gio.file_new_for_path(bgPath),
+                imports.gi.GDesktopEnums.BackgroundStyle[backgroundStyle] || imports.gi.GDesktopEnums.BackgroundStyle.ZOOM
+            );
+            return newbg
         } catch (e) { dev.log(e) }
     }
 
     refreshDesktop() {
         try {
-        if (Me.session.activeSession.Options.DisableWallpaperManagement)
-            return
+            if (Me.session.activeSession.Options.DisableWallpaperManagement)
+                return
 
-        for (const i in this.wsGroups) {
-            const wsGroup = this.wsGroups[i]
-            const metaWorkspace = wsGroup.workspace
-            wsGroup._workset = Me.session.Worksets
-                .find((wset) => wset.WorksetName == Me.session.workspaceMaps['Workspace' + metaWorkspace.index()].currentWorkset)
+            for (const i in this.wsGroups) {
+                const wsGroup = this.wsGroups[i]
+                const metaWorkspace = wsGroup.workspace
+                wsGroup._workset = Me.session.Worksets
+                    .find((wset) => wset.WorksetName == Me.session.workspaceMaps['Workspace' + metaWorkspace.index()].currentWorkset)
 
-            if (wsGroup._newbg)
-                delete wsGroup._newbg
-            wsGroup._newbg = this.makeWorksetBg(wsGroup._workset)
+                if (wsGroup._newbg)
+                    delete wsGroup._newbg
+                wsGroup._newbg = this.makeWorksetBg(wsGroup._workset)
 
-            // For larger workspace view and app grid workspace preview
-            const gsWorkspace = this.gsWorkspaces[metaWorkspace];
-            if (gsWorkspace)
-                gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
+                // For larger workspace view and app grid workspace preview
+                const gsWorkspace = this.gsWorkspaces[metaWorkspace];
+                if (gsWorkspace)
+                    gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
 
-            // For thumbnails on the overview
-            if (wsGroup._bgManager)
-                wsGroup._bgManager.destroy();
+                // For thumbnails on the overview
+                if (wsGroup._bgManager)
+                    wsGroup._bgManager.destroy();
 
-            wsGroup._bgManager = new background.BackgroundManager({
-                monitorIndex: wsGroup._monitor.index,
-                container: wsGroup._background,
-                //layoutManager: Main.layoutManager,
-                controlPosition: false,
-                vignette: false,
-            })
-            wsGroup._bgManager.backgroundActor.content.set({
-                background: wsGroup._newbg,
-                vignette: false,
-                vignette_sharpness: 0.5,
-                brightness: 0.5,
-            })
-        }
+                wsGroup._bgManager = new background.BackgroundManager({
+                    monitorIndex: wsGroup._monitor.index,
+                    container: wsGroup._background,
+                    //layoutManager: Main.layoutManager,
+                    controlPosition: false,
+                    vignette: false,
+                })
+                wsGroup._bgManager.backgroundActor.content.set({
+                    background: wsGroup._newbg,
+                    vignette: false,
+                    vignette_sharpness: 0.5,
+                    brightness: 0.5,
+                })
+            }
         } catch (e) { dev.log(e) }
     }
 

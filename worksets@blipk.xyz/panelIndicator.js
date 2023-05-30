@@ -311,14 +311,14 @@ var WorksetsIndicator = GObject.registerClass({
                         });
                         if (pass) menuItem.worksetPopupMenu.menu.close(boxpointer.PopupAnimation.FULL);
                         // Wait for the close animation
-                        Me.worksetsIndicator.signals.add(GLib.timeout_add(null, 100, function() { wspopupMenu.destroy(); return false }));
+                        Me.worksetsIndicator.signals.add(GLib.timeout_add(null, 100, function () { wspopupMenu.destroy(); return false }));
                         wspopupMenu.menuItem.worksetPopupMenu = null;
                     }, this);
 
                     Me.worksetsIndicator.popUpMenus = [];
 
                     // Wait for the close animation, only if a new view area menu has not been requested
-                    if (!pass) Me.worksetsIndicator.signals.add(GLib.timeout_add(null, 100, function() { Me.worksetsIndicator.optionsMenuItem.show(); return false }))
+                    if (!pass) Me.worksetsIndicator.signals.add(GLib.timeout_add(null, 100, function () { Me.worksetsIndicator.optionsMenuItem.show(); return false }))
 
                 } catch (e) { dev.log(e) }
             }

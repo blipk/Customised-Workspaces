@@ -53,53 +53,53 @@ const scopeName = "cw-shell-extension";
 
 function init() {
     extensionUtils.initTranslations();
-    dev.log(scopeName+'.'+arguments.callee.name, "@```````````````````````````````````|");
+    dev.log(scopeName + '.' + arguments.callee.name, "@```````````````````````````````````|");
 }
 
 function enable() {
     try {
-    dev.log(scopeName+'.'+arguments.callee.name, "@---------------------------------|");
-    if (Me.session) return; // Already initialized
-    global.shellVersion = shellVersion;
+        dev.log(scopeName + '.' + arguments.callee.name, "@---------------------------------|");
+        if (Me.session) return; // Already initialized
+        global.shellVersion = shellVersion;
 
-    // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
-    Me.gScreen = global.screen || global.display;
-    Me.gWorkspaceManager = global.screen || global.workspace_manager;
-    Me.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
-    Me.gExtensionManager = (uuid)=>{var x = (extensionUtils.extensions)
-                                            ? extensionUtils.extensions[uuid].imports.extension || 0
-                                            : Main.extensionManager.lookup(uuid) || 0;
-                                    return x};
+        // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
+        Me.gScreen = global.screen || global.display;
+        Me.gWorkspaceManager = global.screen || global.workspace_manager;
+        Me.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
+        Me.gExtensionManager = (uuid) =>
+            (extensionUtils.extensions)
+                && (extensionUtils.extensions[uuid].imports.extension || 0)
+                && (Main.extensionManager.lookup(uuid) || 0)
 
-    // To tune behaviour based on other extensions
-    Me.gExtensions = new Object();
-    Me.gExtensions.dash2panel = Me.gExtensionManager('dash-to-panel@jderose9.github.com');
-    Me.gExtensions.dash2dock = Me.gExtensionManager('dash-to-dock@micxgx.gmail.com');
+        // To tune behaviour based on other extensions
+        Me.gExtensions = new Object();
+        Me.gExtensions.dash2panel = Me.gExtensionManager('dash-to-panel@jderose9.github.com');
+        Me.gExtensions.dash2dock = Me.gExtensionManager('dash-to-dock@micxgx.gmail.com');
 
-    if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
-    Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
+        if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
+        Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
 
-    // Spawn session
-    Me.session = new sessionManager.SessionManager();
+        // Spawn session
+        Me.session = new sessionManager.SessionManager();
 
-    dev.log(scopeName+'.'+arguments.callee.name, "@~................................|");
-    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
+        dev.log(scopeName + '.' + arguments.callee.name, "@~................................|");
+    } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
 }
 function disable() {
     try {
-    dev.log(scopeName+'.'+arguments.callee.name, "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|");
+        dev.log(scopeName + '.' + arguments.callee.name, "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|");
 
-    Me.session.saveSession();
-    if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator'];
-    if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
-    if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
-    if (Me.workspaceViewManager) Me.workspaceViewManager.destroy(); delete Me.workspaceViewManager;
-    if (Me.session) Me.session.destroy(); delete Me.session;
-    if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
-    if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
+        Me.session.saveSession();
+        if (Me.worksetsIndicator) Me.worksetsIndicator.destroy(); delete Me.worksetsIndicator; delete Main.panel.statusArea['WorksetsIndicator'];
+        if (Me.workspaceIsolater) Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater;
+        if (Me.workspaceManager) Me.workspaceManager.destroy(); delete Me.workspaceManager;
+        if (Me.workspaceViewManager) Me.workspaceViewManager.destroy(); delete Me.workspaceViewManager;
+        if (Me.session) Me.session.destroy(); delete Me.session;
+        if (Me.settings) Me.settings.run_dispose(); delete Me.settings;
+        if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
 
-    dev.log(scopeName+'.'+arguments.callee.name, "!^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|"+'\r\n');
-    } catch(e) { dev.log(scopeName+'.'+arguments.callee.name, e); }
+        dev.log(scopeName + '.' + arguments.callee.name, "!^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^|" + '\r\n');
+    } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
 
 }
 

@@ -39,7 +39,7 @@ function get_datadir() {
     return Gio.File.new_for_path(m[1]).get_parent().get_parent().get_path();
 }
 
-window.worksets = {extdatadir: GLib.build_filenamev([get_datadir(), 'worksets@blipk.xyz'])};
+window.worksets = { extdatadir: GLib.build_filenamev([get_datadir(), 'worksets@blipk.xyz']) };
 imports.searchPath.unshift(worksets.extdatadir);
 
 worksets.metadata = (() => {
@@ -51,9 +51,9 @@ worksets.app_path = worksets.metadata['resource-path'];
 worksets.is_local = worksets.extdatadir.startsWith(GLib.get_user_data_dir());
 window._ = imports.gettext.domain(worksets.metadata['gettext-domain']).gettext;
 
-class worksetsAppChooser  {
+class worksetsAppChooser {
     constructor(ARGV) {
-        this.application = new Gtk.Application ({
+        this.application = new Gtk.Application({
             application_id: worksets.app_id,
             flags: Gio.ApplicationFlags.FLAGS_NONE
         });
@@ -80,11 +80,13 @@ class worksetsAppChooser  {
     }
 
     _buildUI() {
-        this.dialog = new Gtk.AppChooserDialog({ title: "Select an application",
-                                                    heading: "Will be added to '"+this.WorksetName+"' favourites",
-                                                    content_type: "any",
-                                                    icon_name: 'xapp-prefs-toolbar-symbolic',
-                                                    type: 0});
+        this.dialog = new Gtk.AppChooserDialog({
+            title: "Select an application",
+            heading: "Will be added to '" + this.WorksetName + "' favourites",
+            content_type: "any",
+            icon_name: 'xapp-prefs-toolbar-symbolic',
+            type: 0
+        });
         this.dialog.get_widget().default_text = '';
         //this.dialog.get_widget().show_default = true;
         //this.dialog.get_widget().show_fallback = true;
@@ -106,11 +108,13 @@ class worksetsAppChooser  {
                 let icon = '';
                 if (app.get_icon()) icon = app.get_icon().to_string();
 
-                let newFav = {'name': id,
-                        'displayName': name,
-                        'icon': icon,
-                        'exec': exec };
-                print (JSON.stringify(newFav));
+                let newFav = {
+                    'name': id,
+                    'displayName': name,
+                    'icon': icon,
+                    'exec': exec
+                };
+                print(JSON.stringify(newFav));
             }
         }
         this.dialog.close();
