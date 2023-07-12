@@ -61,7 +61,10 @@ var WorksetsIndicator = GObject.registerClass({
             this.popUpMenus = [];
             this.menu.connect('menu-closed', () => {
                 try {
-                    Me.worksetsIndicator.popUpMenus.forEach(pm => { pm.menuItem.isShowing = false; pm.actor.destroy(); pm.destroy() });
+                    Me.worksetsIndicator.popUpMenus.forEach(pm => {
+                        pm.menuItem.isShowing = false;
+                        pm.destroy()
+                    });
                     Me.worksetsIndicator.popUpMenus = [];
                     Me.worksetsIndicator.optionsMenuItem.show();
                 } catch (e) { dev.log(e) }

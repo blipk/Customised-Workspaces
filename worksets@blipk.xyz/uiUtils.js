@@ -25,7 +25,7 @@
  */
 
 // External imports
-const { GObject, St, Clutter, Gio, GLib, Gtk, Cogl } = imports.gi;
+const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi;
 const Main = imports.ui.main;
 const CheckBox = imports.ui.checkBox.CheckBox;
 const { modalDialog, shellEntry, popupMenu } = imports.ui;
@@ -196,9 +196,7 @@ function setImage(parent, imgFilePath = '') {
         if (knownImages[imgFilePath]) {
             image = knownImages[imgFilePath];
         } else if (imgFilePath) {
-            let img = new Gtk.Image({ file: imgFilePath });
-
-            let pixbuf = img.get_pixbuf()
+            let pixbuf = GdkPixbuf.Pixbuf.new_from_file(imgFilePath)
             if (pixbuf === null) // file doesnt exist
                 return (imgFilePath = '');
 
