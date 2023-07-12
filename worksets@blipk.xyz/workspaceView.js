@@ -214,11 +214,6 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                     delete wsGroup._newbg
                 wsGroup._newbg = this.makeWorksetBg(wsGroup._workset)
 
-                // For larger workspace view and app grid workspace preview
-                const gsWorkspace = this.gsWorkspaces[metaWorkspace];
-                if (gsWorkspace)
-                    gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
-
                 // For thumbnails on the overview
                 if (wsGroup._bgManager)
                     wsGroup._bgManager.destroy();
@@ -263,6 +258,10 @@ var WorkspaceViewManager = class WorkspaceViewManager {
                 if (thumbnailBox._newbg)
                     delete thumbnailBox._newbg
                 thumbnailBox._newbg = this.makeWorksetBg(thumbnailBox._workset)
+
+                // For larger workspace view and app grid workspace preview
+                if (gsWorkspace)
+                    gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg;
 
                 if (Me.session.activeSession.Options.DisableWallpaperManagement) {
                     this.updateOverlay(overviewState, thumbnailBox, i)
