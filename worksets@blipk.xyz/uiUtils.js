@@ -229,7 +229,7 @@ function setImage(parent, imgFilePath = '') {
 }
 
 // Shader example
-const TextOutlineEffect = GObject.registerClass({
+var TextOutlineEffect = GObject.registerClass({
     GTypeName: 'TextOutlineEffect'
 }, class TextOutlineEffect extends Clutter.ShaderEffect {
     vfunc_get_static_shader_source() {
@@ -262,7 +262,7 @@ const TextOutlineEffect = GObject.registerClass({
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
 //Object Editor Dialog
-const ObjectInterfaceDialog = GObject.registerClass({
+var ObjectInterfaceDialog = GObject.registerClass({
     GTypeName: 'Worksets_ObjectInterfaceDialog'
 }, class ObjectInterfaceDialog extends modalDialog.ModalDialog {
     _init(dialogText = null, callback = null,
@@ -497,7 +497,7 @@ const ObjectInterfaceDialog = GObject.registerClass({
 });
 
 //Object Editor Dialog
-const ObjectEditorDialog = GObject.registerClass({
+var ObjectEditorDialog = GObject.registerClass({
     GTypeName: 'Worksets_ObjectEditorDialog'
 }, class ObjectEditorDialog extends modalDialog.ModalDialog {
     _init(dialogInfoTextStyle = '', callback = null,

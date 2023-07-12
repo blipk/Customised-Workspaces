@@ -34,7 +34,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { dev, utils, uiUtils } = Me.imports;
 const { sessionManager } = Me.imports;
 
-const WorkspaceViewManager = class WorkspaceViewManager {
+var WorkspaceViewManager = class WorkspaceViewManager {
     constructor() {
         try {
             Me.workspaceViewManager = this

@@ -66,15 +66,11 @@ function enable() {
         Me.gScreen = global.screen || global.display;
         Me.gWorkspaceManager = global.screen || global.workspace_manager;
         Me.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
-        Me.gExtensionManager = (uuid) =>
-            (extensionUtils.extensions)
-            && (extensionUtils.extensions[uuid].imports.extension || 0)
-            && (Main.extensionManager.lookup(uuid) || 0)
 
         // To tune behaviour based on other extensions
         Me.gExtensions = new Object();
-        Me.gExtensions.dash2panel = Me.gExtensionManager('dash-to-panel@jderose9.github.com');
-        Me.gExtensions.dash2dock = Me.gExtensionManager('dash-to-dock@micxgx.gmail.com');
+        Me.gExtensions.dash2panel = Main.extensionManager.lookup('dash-to-panel@jderose9.github.com');
+        Me.gExtensions.dash2dock = Main.extensionManager.lookup('dash-to-dock@micxgx.gmail.com');
 
         if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
         Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
@@ -85,6 +81,7 @@ function enable() {
         dev.log(scopeName + '.' + arguments.callee.name, "@~..........|");
     } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
 }
+
 function disable() {
     try {
         dev.log(scopeName + '.' + arguments.callee.name, "!~~~~~~~~~~|");

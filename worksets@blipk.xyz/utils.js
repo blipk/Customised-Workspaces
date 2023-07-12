@@ -39,8 +39,8 @@ function textFormatter(text, options = {/*length: 50*/ }) {
     return text;
 }
 
-const textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
-const textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
+var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 
 //General
 function truncateString(instring, length = 50) {
@@ -59,7 +59,7 @@ function stringifyNumber(n) {
     return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
 }
 
-const isEmpty = function (v) {
+var isEmpty = function (v) {
     return typeof v === 'undefined' ? true
         : v === null ? true
             : v === [] ? true
@@ -181,7 +181,7 @@ function readStream(stream, callback) {
 
 const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
-const InjectionHandler = class InjectionHandler {
+var InjectionHandler = class InjectionHandler {
     constructor() {
         this.injections = {}
     }
@@ -208,7 +208,7 @@ const InjectionHandler = class InjectionHandler {
     }
 }
 
-const SignalHandler = class SignalHandler {
+var SignalHandler = class SignalHandler {
     constructor() {
         this.signalIds = [];
     }

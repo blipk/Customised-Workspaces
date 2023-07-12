@@ -56,6 +56,7 @@ function checkExists(path) {
     }
     return result;
 }
+
 // Disk I/O handlers
 function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
     let childrenFileProperties = { parentDirectory: directory, fullname: null, name: null, extension: null, type: null };
@@ -91,6 +92,7 @@ function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, re
 
     return childrenFilePropertiesArray;
 }
+
 function saveToFile(object, filename, directory = CONF_DIR, raw = false, append = false, async = false) {
     let savePath = GLib.build_filenamev([directory, filename]);
     let outBuff;
@@ -121,12 +123,14 @@ function saveToFile(object, filename, directory = CONF_DIR, raw = false, append 
         }
     }
 }
+
 function aSyncSaveCallback(obj, res, contents) {
     let stream = obj.replace_finish(res);
     stream.write_bytes_async(contents, GLib.PRIORITY_DEFAULT, null, function (w_obj, w_res) {
         w_obj.write_bytes_finish(w_res); stream.close(null);
     });
 }
+
 function loadJSObjectFromFile(filename = CONF_FILE, directory = CONF_DIR, callback = null, async = false) {
     let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;

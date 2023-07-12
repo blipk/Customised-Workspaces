@@ -34,7 +34,7 @@ const { GObject, Meta, Shell, GLib } = imports.gi;
 const Me = extensionUtils.getCurrentExtension();
 const { dev, utils, workspaceIsolater } = Me.imports;
 
-const WorkspaceManager = class WorkspaceManager {
+var WorkspaceManager = class WorkspaceManager {
     constructor() {
         try {
             Me.workspaceManager = this;
