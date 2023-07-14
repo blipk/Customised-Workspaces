@@ -81,7 +81,7 @@ var SessionManager = class SessionManager {
         this.signals.add(Me.settings, 'changed::isolate-workspaces', () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean('isolate-workspaces');
         });
-        if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED)
+        if (Me.gExtensions.dash2panel?.settings && Me.gExtensions?.dash2panel.state === extensionUtils.ExtensionState.ENABLED)
             this.signals.add(Me.gExtensions.dash2panel.settings, 'changed::isolate-workspaces', () => {
                 Me.settings.set_boolean('isolate-workspaces', Me.gExtensions.dash2panel.settings.get_boolean('isolate-workspaces'));
                 Me.session.saveSession();

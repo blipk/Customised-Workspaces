@@ -35,7 +35,6 @@ const { extensionUtils, util } = imports.misc;
 const Me = extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 const { dev, utils, fileUtils } = Me.imports;
-const tweener = imports.tweener.tweener || imports.ui.tweener;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
 function createIconButton(parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT

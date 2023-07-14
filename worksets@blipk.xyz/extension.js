@@ -106,9 +106,3 @@ function disable() {
     } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
 
 }
-
-// 3.0 API backward compatibility
-function main() {
-    init();
-    enable();
-}

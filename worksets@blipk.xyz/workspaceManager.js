@@ -270,10 +270,10 @@ var WorkspaceManager = class WorkspaceManager {
             if (Me.session.activeSession.Options.IsolateWorkspaces) {
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
-                if (Me.gExtensions.dash2panel.settings && Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED) {
+                if (Me.gExtensions.dash2panel?.settings && Me.gExtensions.dash2panel?.state === extensionUtils.ExtensionState.ENABLED) {
                     if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
                     Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', true);
-                } else if (Me.gExtensions.dash2dock.settings && Me.gExtensions.dash2dock.state === extensionUtils.ExtensionState.ENABLED) {
+                } else if (Me.gExtensions?.dash2dock.settings && Me.gExtensions?.dash2dock.state === extensionUtils.ExtensionState.ENABLED) {
                     if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
                     Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', true);
                 } else {
@@ -283,9 +283,9 @@ var WorkspaceManager = class WorkspaceManager {
             } else {
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
-                if (Me.gExtensions.dash2panel.settings)
+                if (Me.gExtensions.dash2panel?.settings)
                     Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', false);
-                if (Me.gExtensions.dash2dock.settings)
+                if (Me.gExtensions.dash2dock?.settings)
                     Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', false);
                 if (Me.workspaceIsolater) {
                     Me.workspaceIsolater.destroy();
