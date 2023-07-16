@@ -79,7 +79,10 @@ function enable() {
         Me.session = new sessionManager.SessionManager();
 
         dev.log(scopeName + '.' + arguments.callee.name, "@~..........|");
-    } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
+    } catch (e) {
+        dev.log(scopeName + '.' + arguments.callee.name, e);
+        throw e; // Allow gnome-shell to still catch extension exceptions
+    }
 }
 
 function disable() {
@@ -103,6 +106,9 @@ function disable() {
         if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
 
         dev.log(scopeName + '.' + arguments.callee.name, "!^^^^^^^^^^|" + '\r\n');
-    } catch (e) { dev.log(scopeName + '.' + arguments.callee.name, e); }
+    } catch (e) {
+        dev.log(scopeName + '.' + arguments.callee.name, e);
+        throw e; // Allow gnome-shell to still catch extension exceptions
+    }
 
 }
