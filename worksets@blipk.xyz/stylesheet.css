@@ -133,6 +133,7 @@ entry:indeterminate {
 
 
 .bg-display {
+    min-width: 320px;
     background-color: rgba(255, 255, 255, 0);
 }
 .bg-display:focus {
