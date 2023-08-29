@@ -273,7 +273,7 @@ var WorkspaceManager = class WorkspaceManager {
                 if (Me.gExtensions.dash2panel?.settings && Me.gExtensions.dash2panel?.state === extensionUtils.ExtensionState.ENABLED) {
                     if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
                     Me.gExtensions.dash2panel.settings.set_boolean('isolate-workspaces', true);
-                } else if (Me.gExtensions?.dash2dock.settings && Me.gExtensions?.dash2dock.state === extensionUtils.ExtensionState.ENABLED) {
+                } else if (Me.gExtensions.dash2dock?.settings && Me.gExtensions.dash2dock?.state === extensionUtils.ExtensionState.ENABLED) {
                     if (Me.workspaceIsolater) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater; }
                     Me.gExtensions.dash2dock.settings.set_boolean('isolate-workspaces', true);
                 } else {
