@@ -387,7 +387,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                     //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: St.Align.MIDDLE });
                     this.contentLayout.add(this._objectsSetBoxes[i]);
 
-                    this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-error-label' });
+                    this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-backup-file-label' });
                     this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true;
 
                     let setDisplayName = 'Object Set ' + i;

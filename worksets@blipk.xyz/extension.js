@@ -37,7 +37,7 @@
  */
 
 // External imports
-const Main = imports.ui.main;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const ExtensionSystem = imports.ui.extensionSystem;
 const { extensionUtils, config } = imports.misc;
 const { Meta, GLib, Gio, Shell } = imports.gi;
