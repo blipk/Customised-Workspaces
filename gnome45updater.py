@@ -23,16 +23,14 @@ def main(extension_directory: str):
     for file in source_files:
         with open(os.path.join(extension_directory, file)) as f:
             file_contents = f.read()
+            new_file_contents = file_contents
             matches: list[re.Match] = list(re.finditer(pattern, file_contents))
-            print("  |$>", file)
+            print("\n  |$>", file)
             for match in matches:
                 spos, epos = match.span()
                 match_groups: dict[str, str] = match.groupdict()
                 new_import_target = ""
                 old_import_target = file_contents[spos:epos]
-
-                print(match)
-                print(match_groups)
 
                 var_names = (
                     match_groups["var_names"]
@@ -50,17 +48,27 @@ def main(extension_directory: str):
                     if "getCurrentExtension" in match_groups["import_path"]:
                         new_import_target = "import * as Me from './extension.js';"
                 elif match_groups["import_path"] == "gi":
-                    ver = ""
+                    version_pattern = r"(?P<import_path_full>imports.(?P<import_path>[\w.]+))\s+=\s+?['|\"](?P<version_number>[\d.]+)['|\"]"
+                    version_matches: list[re.Match] = list(re.finditer(version_pattern, file_contents))
+
                     new_import_target = ""
                     for var_name in var_names:
                         var_name = var_name.strip()
+
+                        version = ""
+                        for version_match in version_matches:
+                            version_match_groups = version_match.groupdict()
+                            lib_name = version_match_groups["import_path"].split(".")[-1]
+                            if lib_name.strip() == var_name:
+                                version = version_match_groups["version_number"]
+
                         new_import_target += (
                             old_import_target.replace(
                                 match_groups["var_names"], var_name
                             )
                             .replace(
                                 match_groups["import_path_full"],
-                                f"from 'gi://{var_name}?version={ver}';",
+                                f"from 'gi://{var_name}{f'?version={version}' if version else ''}';",
                             )
                             .replace(match_groups["decleration_type"], "import")
                             + "\n"
@@ -78,10 +86,17 @@ def main(extension_directory: str):
                         .replace("Util", "* as Util")
                     )
 
-                    # file_contents = file_contents.replace(file_contents[spos:epos], new_import_target)
-                    # file_contents = file_contents[:spos] + new_import_target + file_contents[:epos]
-                print(old_import_target)
-                print(new_import_target)
+                print(match)
+                print(match_groups)
+
+                if not new_import_target:
+                    print("NO CHANGE")
+                else:
+                    print("OLD:", old_import_target)
+                    print("NEW:", new_import_target)
+
+                new_file_contents = file_contents[:spos] + new_import_target + file_contents[epos:]
+                # print(new_file_contents)
 
 
 if __name__ == "__main__":
