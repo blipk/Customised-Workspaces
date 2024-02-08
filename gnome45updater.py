@@ -17,17 +17,31 @@ def main(extension_directory: str):
             f"Provided extension directory is not a valid directory ({extension_directory})"
         )
 
+    source_paths = os.listdir(extension_directory)
+
     source_files = [
-        f
-        for f in os.listdir(extension_directory)
-        if os.path.isfile(os.path.join(extension_directory, f))
-        and f.endswith(".js")
-        and ".UPDATED" not in f
+        os.path.join(f)
+        for f in source_paths
+        if os.path.isfile(os.path.join(extension_directory, f)) and f.endswith(".js")
     ]
 
+    for sub_directory in [
+        f for f in source_paths if os.path.isdir(os.path.join(extension_directory, f))
+    ]:
+        source_files += [
+            os.path.join(sub_directory, f)
+            for f in os.listdir(os.path.join(extension_directory, sub_directory))
+            if os.path.isfile(os.path.join(extension_directory, sub_directory, f))
+            and f.endswith(".js")
+        ]
+
+    print(source_files)
     with open(os.path.join(extension_directory, "metadata.json")) as f:
         metadata = json.load(f)
         # print(metadata)
+
+    update_directory = extension_directory + ".GNOME45"
+    os.makedirs(update_directory, exist_ok=True)
 
     user_messages = {}
 
@@ -38,20 +52,23 @@ def main(extension_directory: str):
 
     errors = {}
     changed_imports = {}
-    for file_name in source_files:
-        file_path = os.path.join(extension_directory, file_name)
-        print("\n  |$>", file_name)
-        errors[file_name] = []
+    for relative_file_path in source_files:
+        file_name = os.path.basename(relative_file_path)
+        file_path = os.path.join(extension_directory, relative_file_path)
+        print("\n  |$>", relative_file_path)
+        errors[relative_file_path] = []
         import_use_remaps = []
-        changed_imports[file_name] = []
+        changed_imports[relative_file_path] = []
         with open(file_path) as f:
             file_contents = f.read()
             new_file_contents = file_contents
             module_imported = False
+            extension_imported = False
 
             # Update the extension.js functions into
             if file_name == "prefs.js":
-                user_messages["Please manually updated `prefs.js`"] = True
+                user_messages["Please manually update `prefs.js`"] = True
+                print("Please manually update this file")
                 continue
 
             if file_name == "extension.js":
@@ -60,7 +77,11 @@ def main(extension_directory: str):
                     re.finditer(extension_pattern, file_contents, flags=re.MULTILINE)
                 )
 
-                new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
+                new_class_contents = ""
+                if not extension_imported:
+                    new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
+                    extension_imported = True
+
                 new_class_contents += f"export default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
@@ -120,14 +141,17 @@ def main(extension_directory: str):
                             len(var_names) == 1
                         ), "Mismatching var_names length in gettext import"
                         gettext_import_name = var_names[0].capitalize()
-                        new_import_target = f"import {{ Extension, gettext as {gettext_import_name} }} from 'resource:///org/gnome/shell/extensions/extension.js';"
+                        new_import_target = ""
+                        if not extension_imported:
+                            new_import_target = f"import {{ Extension, gettext as {gettext_import_name} }} from 'resource:///org/gnome/shell/extensions/extension.js';"
+                            extension_imported = True
                         user_messages[
                             "Please set the `gettext-domain` key in `metadata.json`"
                         ] = True
                         # TODO: Handle other ways of importing gettext e.g. from extensionUtils.getText method
 
                     else:
-                        errors[file_name].append(
+                        errors[relative_file_path].append(
                             ("Unhandled Function Import", match, match_groups)
                         )
                 elif match_groups["import_path"] == "gi":
@@ -172,9 +196,15 @@ def main(extension_directory: str):
                             match_text = import_use_match.string[s:e]
                             if "extensionUtils" in match_text:
                                 if "getSettings" in match_text:
-                                    import_use_remaps.append(
-                                        (match_text, "Extension.getSettings")
-                                    )
+                                    if not extension_imported:
+                                        new_import_target += "\nimport { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
+                                        extension_imported = True
+                                        import_use_remaps.append(
+                                            (
+                                                "extensionUtils.getSettings",
+                                                "Extension.getSettings",
+                                            )
+                                        )
                                 if "getCurrentExtension" in match_text:
                                     if not module_imported:
                                         new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name};\n"
@@ -198,10 +228,12 @@ def main(extension_directory: str):
                     )
 
                 if new_import_target is None:
-                    errors[file_name].append(("Unhandled import", match, match_groups))
+                    errors[relative_file_path].append(
+                        ("Unhandled import", match, match_groups)
+                    )
                 else:
                     new_import_target = new_import_target.strip()
-                    changed_imports[file_name].append(
+                    changed_imports[relative_file_path].append(
                         (
                             match,
                             old_import_target,
@@ -218,7 +250,8 @@ def main(extension_directory: str):
             for old_text, new_text in import_use_remaps:
                 new_file_contents = new_file_contents.replace(old_text, new_text)
 
-            import_changes = changed_imports[file_name]
+            import_changes = changed_imports[relative_file_path]
+            print(len(import_changes), "imports updated")
             for change in import_changes:
                 m, old, new = change
                 # print(m)
@@ -227,8 +260,12 @@ def main(extension_directory: str):
                 # print("NEW:", new)
                 # print()
 
-            with open(file_path.replace(".js", ".UPDATED.js"), "w") as nf:
+            new_file_path = os.path.join(update_directory, relative_file_path)
+            os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+            with open(new_file_path.replace(".js", ".UPDATED.js"), "w") as nf:
                 nf.write(new_file_contents)
+
+    print()
     all_import_changes = sum(
         [imports for imports in list(changed_imports.values())], []
     )
@@ -239,8 +276,9 @@ def main(extension_directory: str):
         len([c for filename, c in changed_imports.items() if len(c) > 0]),
         "of",
         len(source_files),
-        "files",
+        "files.",
     )
+    print("Updates saved to:", update_directory)
     print(list(user_messages.keys()))
     pprint({fname: errors for fname, errors in errors.items() if len(errors)})
 
