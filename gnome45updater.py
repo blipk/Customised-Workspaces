@@ -2,6 +2,8 @@
 import os
 import re
 import sys
+from pprint import pprint
+
 
 
 def main(extension_directory: str):
@@ -18,18 +20,24 @@ def main(extension_directory: str):
         and f != "prefs.js"
     ]
 
+    user_messages = {}
+
     # Get and remap imports with regex
     pattern = r"(?P<decleration_type>(const)|(let)|(var))\s+(?P<var_names>[{]?[\w\s,]+[}]?)\s+(?P<import_path_full>=\s+(?P<local_import>Me.)?imports.(?P<import_path>[\w.]+))(?P<function>\(.+)?"
-    for file in source_files:
-        with open(os.path.join(extension_directory, file)) as f:
+
+    changed_imports = {}
+
+    for file_name in source_files:
+        changed_imports[file_name] = []
+        with open(os.path.join(extension_directory, file_name)) as f:
             file_contents = f.read()
             new_file_contents = file_contents
             matches: list[re.Match] = list(re.finditer(pattern, file_contents))
-            print("\n  |$>", file)
+            print("\n  |$>", file_name)
             for match in matches:
                 spos, epos = match.span()
                 match_groups: dict[str, str] = match.groupdict()
-                new_import_target = ""
+                new_import_target = None
                 old_import_target = file_contents[spos:epos]
 
                 var_names = (
@@ -47,6 +55,11 @@ def main(extension_directory: str):
                     fn = match_groups["function"]
                     if "getCurrentExtension" in match_groups["import_path"]:
                         new_import_target = "import * as Me from './extension.js';"
+                    elif "gettext.domain" in match_groups["import_path"]:
+                        new_import_target = ""
+                        user_messages["Please set the `gettext-domain` key in `metadata.json`"] = True
+                    else:
+                        print("Unhandled Function Import", match, match_groups)
                 elif match_groups["import_path"] == "gi":
                     version_pattern = r"(?P<import_path_full>imports.(?P<import_path>[\w.]+))\s+=\s+?['|\"](?P<version_number>[\d.]+)['|\"]"
                     version_matches: list[re.Match] = list(re.finditer(version_pattern, file_contents))
@@ -76,27 +89,39 @@ def main(extension_directory: str):
                 else:
                     import_path_parts = match_groups["import_path"].split(".")
                     new_import_target = "/".join(import_path_parts) + ".js"
+                    new_import_target = new_import_target.strip()
                     new_import_target = (
                         old_import_target.replace(
                             match_groups["import_path_full"],
                             f"from 'resource:///org/gnome/shell/{new_import_target}';",
                         )
                         .replace(match_groups["decleration_type"], "import")
-                        .replace("Main", "* as Main")
-                        .replace("Util", "* as Util")
+                        .replace(" Main", " * as Main")
+                        .replace(" Util", " * as Util")
                     )
 
-                print(match)
-                print(match_groups)
-
-                if not new_import_target:
-                    print("NO CHANGE")
+                if new_import_target is None:
+                    print("Unhandled import", match, match_groups)
                 else:
-                    print("OLD:", old_import_target)
-                    print("NEW:", new_import_target)
+                    new_import_target = new_import_target.strip()
+                    changed_imports[file_name].append((match, old_import_target, new_import_target,))
+
+
 
                 new_file_contents = file_contents[:spos] + new_import_target + file_contents[epos:]
                 # print(new_file_contents)
+
+                import_changes = changed_imports[file_name]
+                for change in import_changes:
+                    m, old, new = change
+                    print(m)
+                    print("OLD:", old)
+                    print("NEW:", new)
+                    print()
+    all_import_changes = sum([imports for imports in list(changed_imports.values())], [])
+    # pprint(all_import_changes)
+    print(len(all_import_changes), "imports updated in", len(changed_imports), "of", len(source_files), "files")
+    print(list(user_messages.keys()))
 
 
 if __name__ == "__main__":

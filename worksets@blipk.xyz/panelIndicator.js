@@ -27,7 +27,7 @@
 //External imports
 const Main = imports.ui.main;
 const { extensionUtils, util } = imports.misc;
-const { extensionSystem, popupMenu, panelMenu, boxpointer } = imports.ui;
+const { popupMenu, panelMenu, boxpointer } = imports.ui;
 const { GObject, St, Clutter, Gtk, GLib } = imports.gi;
 
 //Internal imports

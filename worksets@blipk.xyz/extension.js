@@ -38,7 +38,6 @@
 
 // External imports
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-const ExtensionSystem = imports.ui.extensionSystem;
 const { extensionUtils, config } = imports.misc;
 const { Meta, GLib, Gio, Shell } = imports.gi;
 const [major] = config.PACKAGE_VERSION.split('.');
@@ -72,7 +71,6 @@ function enable() {
         Me.gExtensions.dash2panel = Main.extensionManager.lookup('dash-to-panel@jderose9.github.com');
         Me.gExtensions.dash2dock = Main.extensionManager.lookup('dash-to-dock@micxgx.gmail.com');
 
-        if (ExtensionSystem.connect) Me.extensionChangedHandler = ExtensionSystem.connect('extension-state-changed', enable);
         Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
 
         // Spawn session
@@ -103,7 +101,6 @@ function disable() {
         delete Me.session;
         if (Me.settings) Me.settings.run_dispose();
         delete Me.settings;
-        if (Me.extensionChangedHandler) ExtensionSystem.disconnect(extensionChangedHandler);
 
         dev.log(scopeName + '.' + arguments.callee.name, "!^^^^^^^^^^|" + '\r\n');
     } catch (e) {

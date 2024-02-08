@@ -26,7 +26,7 @@
 
 // External imports
 const Main = imports.ui.main;
-const { extensionSystem, appFavorites } = imports.ui;
+const { appFavorites } = imports.ui;
 const { extensionUtils, util } = imports.misc;
 const { GObject, Gio, Clutter, Shell, Meta, GLib } = imports.gi;
 
