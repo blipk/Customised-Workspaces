@@ -50,10 +50,6 @@ const { dev, utils, uiUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "cw-shell-extension";
 
-function init() {
-    extensionUtils.initTranslations();
-    dev.log(scopeName + '.' + arguments.callee.name, "@``````````|");
-}
 
 function enable() {
     try {

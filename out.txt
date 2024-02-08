@@ -1,0 +1,659 @@
+
+  |$> utils.js
+<re.Match object; span=(1505, 1537), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1505, 1537), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1560, 1621), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1505, 1537), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1560, 1621), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1622, 1694), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+<re.Match object; span=(1505, 1537), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1560, 1621), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1622, 1694), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+<re.Match object; span=(1695, 1721), match='const dev = Me.imports.dev'>
+OLD: const dev = Me.imports.dev
+NEW: import * as dev from './dev.js';
+
+<re.Match object; span=(1505, 1537), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1560, 1621), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1622, 1694), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+<re.Match object; span=(1695, 1721), match='const dev = Me.imports.dev'>
+OLD: const dev = Me.imports.dev
+NEW: import * as dev from './dev.js';
+
+<re.Match object; span=(7357, 7504), match='const { workspace, workspaceAnimation, workspaces>
+OLD: const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui
+NEW: import { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } from 'resource:///org/gnome/shell/ui.js';
+
+
+  |$> panelIndicator.js
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1534, 1579), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1534, 1579), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1581, 1636), match='const { popupMenu, panelMenu, boxpointer } = impo>
+OLD: const { popupMenu, panelMenu, boxpointer } = imports.ui
+NEW: import { popupMenu, panelMenu, boxpointer } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1534, 1579), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1581, 1636), match='const { popupMenu, panelMenu, boxpointer } = impo>
+OLD: const { popupMenu, panelMenu, boxpointer } = imports.ui
+NEW: import { popupMenu, panelMenu, boxpointer } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1638, 1692), match='const { GObject, St, Clutter, Gtk, GLib } = impor>
+OLD: const { GObject, St, Clutter, Gtk, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gtk from 'gi://Gtk';
+import GLib from 'gi://GLib';
+
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1534, 1579), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1581, 1636), match='const { popupMenu, panelMenu, boxpointer } = impo>
+OLD: const { popupMenu, panelMenu, boxpointer } = imports.ui
+NEW: import { popupMenu, panelMenu, boxpointer } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1638, 1692), match='const { GObject, St, Clutter, Gtk, GLib } = impor>
+OLD: const { GObject, St, Clutter, Gtk, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gtk from 'gi://Gtk';
+import GLib from 'gi://GLib';
+
+<re.Match object; span=(1714, 1775), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1504, 1532), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1534, 1579), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1581, 1636), match='const { popupMenu, panelMenu, boxpointer } = impo>
+OLD: const { popupMenu, panelMenu, boxpointer } = imports.ui
+NEW: import { popupMenu, panelMenu, boxpointer } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1638, 1692), match='const { GObject, St, Clutter, Gtk, GLib } = impor>
+OLD: const { GObject, St, Clutter, Gtk, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gtk from 'gi://Gtk';
+import GLib from 'gi://GLib';
+
+<re.Match object; span=(1714, 1775), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1776, 1848), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+
+  |$> workspaceManager.js
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1567), match='const { workspace } = imports.ui'>
+OLD: const { workspace } = imports.ui
+NEW: import { workspace } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1567), match='const { workspace } = imports.ui'>
+OLD: const { workspace } = imports.ui
+NEW: import { workspace } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1569, 1614), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1567), match='const { workspace } = imports.ui'>
+OLD: const { workspace } = imports.ui
+NEW: import { workspace } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1569, 1614), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1616, 1665), match='const { GObject, Meta, Shell, GLib } = imports.gi>
+OLD: const { GObject, Meta, Shell, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
+
+
+  |$> workspaceIsolater.js
+<re.Match object; span=(1505, 1550), match='const AppIcon = imports.ui.appDisplay.AppIcon'>
+OLD: const AppIcon = imports.ui.appDisplay.AppIcon
+NEW: import AppIcon from 'resource:///org/gnome/shell/ui/appDisplay/AppIcon.js';
+
+<re.Match object; span=(1505, 1550), match='const AppIcon = imports.ui.appDisplay.AppIcon'>
+OLD: const AppIcon = imports.ui.appDisplay.AppIcon
+NEW: import AppIcon from 'resource:///org/gnome/shell/ui/appDisplay/AppIcon.js';
+
+<re.Match object; span=(1552, 1580), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1505, 1550), match='const AppIcon = imports.ui.appDisplay.AppIcon'>
+OLD: const AppIcon = imports.ui.appDisplay.AppIcon
+NEW: import AppIcon from 'resource:///org/gnome/shell/ui/appDisplay/AppIcon.js';
+
+<re.Match object; span=(1552, 1580), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1582, 1625), match='const { GObject, Meta, Shell } = imports.gi'>
+OLD: const { GObject, Meta, Shell } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(1505, 1550), match='const AppIcon = imports.ui.appDisplay.AppIcon'>
+OLD: const AppIcon = imports.ui.appDisplay.AppIcon
+NEW: import AppIcon from 'resource:///org/gnome/shell/ui/appDisplay/AppIcon.js';
+
+<re.Match object; span=(1552, 1580), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1582, 1625), match='const { GObject, Meta, Shell } = imports.gi'>
+OLD: const { GObject, Meta, Shell } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(1697, 1758), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1505, 1550), match='const AppIcon = imports.ui.appDisplay.AppIcon'>
+OLD: const AppIcon = imports.ui.appDisplay.AppIcon
+NEW: import AppIcon from 'resource:///org/gnome/shell/ui/appDisplay/AppIcon.js';
+
+<re.Match object; span=(1552, 1580), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1582, 1625), match='const { GObject, Meta, Shell } = imports.gi'>
+OLD: const { GObject, Meta, Shell } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(1697, 1758), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1759, 1785), match='const dev = Me.imports.dev'>
+OLD: const dev = Me.imports.dev
+NEW: import * as dev from './dev.js';
+
+
+  |$> sessionManager.js
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1570), match='const { appFavorites } = imports.ui'>
+OLD: const { appFavorites } = imports.ui
+NEW: import { appFavorites } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1570), match='const { appFavorites } = imports.ui'>
+OLD: const { appFavorites } = imports.ui
+NEW: import { appFavorites } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1572, 1617), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1570), match='const { appFavorites } = imports.ui'>
+OLD: const { appFavorites } = imports.ui
+NEW: import { appFavorites } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1572, 1617), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1619, 1682), match='const { GObject, Gio, Clutter, Shell, Meta, GLib >
+OLD: const { GObject, Gio, Clutter, Shell, Meta, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import Clutter from 'gi://Clutter';
+import Shell from 'gi://Shell';
+import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1570), match='const { appFavorites } = imports.ui'>
+OLD: const { appFavorites } = imports.ui
+NEW: import { appFavorites } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1572, 1617), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1619, 1682), match='const { GObject, Gio, Clutter, Shell, Meta, GLib >
+OLD: const { GObject, Gio, Clutter, Shell, Meta, GLib } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import Clutter from 'gi://Clutter';
+import Shell from 'gi://Shell';
+import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+
+<re.Match object; span=(1705, 1766), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+
+  |$> dev.js
+<re.Match object; span=(1505, 1566), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+
+  |$> appChooser.js
+<re.Match object; span=(1550, 1601), match='const { GObject, GLib, Gtk, Gio, Gdk } = imports.>
+OLD: const { GObject, GLib, Gtk, Gio, Gdk } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import GLib from 'gi://GLib';
+import Gtk from 'gi://Gtk?version=3.0';
+import Gio from 'gi://Gio';
+import Gdk from 'gi://Gdk?version=3.0';
+
+
+  |$> uiUtils.js
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1578, 1606), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1578, 1606), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1608, 1653), match='const CheckBox = imports.ui.checkBox.CheckBox'>
+OLD: const CheckBox = imports.ui.checkBox.CheckBox
+NEW: import CheckBox from 'resource:///org/gnome/shell/ui/checkBox/CheckBox.js';
+
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1578, 1606), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1608, 1653), match='const CheckBox = imports.ui.checkBox.CheckBox'>
+OLD: const CheckBox = imports.ui.checkBox.CheckBox
+NEW: import CheckBox from 'resource:///org/gnome/shell/ui/checkBox/CheckBox.js';
+
+<re.Match object; span=(1655, 1712), match='const { modalDialog, shellEntry, popupMenu } = im>
+OLD: const { modalDialog, shellEntry, popupMenu } = imports.ui
+NEW: import { modalDialog, shellEntry, popupMenu } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1578, 1606), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1608, 1653), match='const CheckBox = imports.ui.checkBox.CheckBox'>
+OLD: const CheckBox = imports.ui.checkBox.CheckBox
+NEW: import CheckBox from 'resource:///org/gnome/shell/ui/checkBox/CheckBox.js';
+
+<re.Match object; span=(1655, 1712), match='const { modalDialog, shellEntry, popupMenu } = im>
+OLD: const { modalDialog, shellEntry, popupMenu } = imports.ui
+NEW: import { modalDialog, shellEntry, popupMenu } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1714, 1759), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1505, 1576), match='const { GObject, St, Clutter, Gio, GLib, GdkPixbu>
+OLD: const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Cogl from 'gi://Cogl';
+
+<re.Match object; span=(1578, 1606), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1608, 1653), match='const CheckBox = imports.ui.checkBox.CheckBox'>
+OLD: const CheckBox = imports.ui.checkBox.CheckBox
+NEW: import CheckBox from 'resource:///org/gnome/shell/ui/checkBox/CheckBox.js';
+
+<re.Match object; span=(1655, 1712), match='const { modalDialog, shellEntry, popupMenu } = im>
+OLD: const { modalDialog, shellEntry, popupMenu } = imports.ui
+NEW: import { modalDialog, shellEntry, popupMenu } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1714, 1759), match='const { extensionUtils, util } = imports.misc'>
+OLD: const { extensionUtils, util } = imports.misc
+NEW: import { extensionUtils, util } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(1831, 1903), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+
+  |$> fileUtils.js
+<re.Match object; span=(1505, 1540), match='const ByteArray = imports.byteArray'>
+OLD: const ByteArray = imports.byteArray
+NEW: import ByteArray from 'resource:///org/gnome/shell/byteArray.js';
+
+<re.Match object; span=(1505, 1540), match='const ByteArray = imports.byteArray'>
+OLD: const ByteArray = imports.byteArray
+NEW: import ByteArray from 'resource:///org/gnome/shell/byteArray.js';
+
+<re.Match object; span=(1542, 1574), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1505, 1540), match='const ByteArray = imports.byteArray'>
+OLD: const ByteArray = imports.byteArray
+NEW: import ByteArray from 'resource:///org/gnome/shell/byteArray.js';
+
+<re.Match object; span=(1542, 1574), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1597, 1658), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1505, 1540), match='const ByteArray = imports.byteArray'>
+OLD: const ByteArray = imports.byteArray
+NEW: import ByteArray from 'resource:///org/gnome/shell/byteArray.js';
+
+<re.Match object; span=(1542, 1574), match='const { GLib, Gio } = imports.gi'>
+OLD: const { GLib, Gio } = imports.gi
+NEW: import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1597, 1658), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(1659, 1731), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+
+  |$> workspaceView.js
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1682), match='const { workspace, workspaceAnimation, workspaces>
+OLD: const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui
+NEW: import { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1682), match='const { workspace, workspaceAnimation, workspaces>
+OLD: const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui
+NEW: import { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1684, 1756), match='const { GObject, Meta, Shell, GLib, St, Clutter, >
+OLD: const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1505, 1533), match='const Main = imports.ui.main'>
+OLD: const Main = imports.ui.main
+NEW: import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+<re.Match object; span=(1535, 1682), match='const { workspace, workspaceAnimation, workspaces>
+OLD: const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui
+NEW: import { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } from 'resource:///org/gnome/shell/ui.js';
+
+<re.Match object; span=(1684, 1756), match='const { GObject, Meta, Shell, GLib, St, Clutter, >
+OLD: const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi
+NEW: import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
+
+<re.Match object; span=(1779, 1840), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+
+  |$> extension.js
+<re.Match object; span=(2084, 2131), match='const { extensionUtils, config } = imports.misc'>
+OLD: const { extensionUtils, config } = imports.misc
+NEW: import { extensionUtils, config } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(2084, 2131), match='const { extensionUtils, config } = imports.misc'>
+OLD: const { extensionUtils, config } = imports.misc
+NEW: import { extensionUtils, config } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(2133, 2178), match='const { Meta, GLib, Gio, Shell } = imports.gi'>
+OLD: const { Meta, GLib, Gio, Shell } = imports.gi
+NEW: import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(2084, 2131), match='const { extensionUtils, config } = imports.misc'>
+OLD: const { extensionUtils, config } = imports.misc
+NEW: import { extensionUtils, config } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(2133, 2178), match='const { Meta, GLib, Gio, Shell } = imports.gi'>
+OLD: const { Meta, GLib, Gio, Shell } = imports.gi
+NEW: import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(2297, 2358), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(2084, 2131), match='const { extensionUtils, config } = imports.misc'>
+OLD: const { extensionUtils, config } = imports.misc
+NEW: import { extensionUtils, config } from 'resource:///org/gnome/shell/misc.js';
+
+<re.Match object; span=(2133, 2178), match='const { Meta, GLib, Gio, Shell } = imports.gi'>
+OLD: const { Meta, GLib, Gio, Shell } = imports.gi
+NEW: import Meta from 'gi://Meta';
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
+
+<re.Match object; span=(2297, 2358), match='const Me = imports.misc.extensionUtils.getCurrent>
+OLD: const Me = imports.misc.extensionUtils.getCurrentExtension();
+NEW: import * as MeModule from './extension.js'; 
+const Me = MeModule.Worksets;
+
+<re.Match object; span=(2359, 2431), match="const _ = imports.gettext.domain(Me.metadata['get>
+OLD: const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+NEW: import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+
+  |$> prefs.js
+45 imports updated in 11 of 12 files
+['Please set the `gettext-domain` key in `metadata.json`', 'Please manually updated `prefs.js`']
