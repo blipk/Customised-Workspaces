@@ -12,13 +12,13 @@ import shutil
 from pprint import pprint
 
 
-def main(extension_directory: str):
+def main(extension_directory: str, output_directory: str | None = None):
     if not os.path.isdir(extension_directory):
         print(
             f"Provided extension directory is not a valid directory ({extension_directory})"
         )
 
-    update_directory = extension_directory + ".GNOME45"
+    output_directory = output_directory or extension_directory + ".GNOME45"
 
     all_source_files = []
     for path, subdirs, files in os.walk(extension_directory):
@@ -31,13 +31,13 @@ def main(extension_directory: str):
         if os.path.isfile(os.path.join(extension_directory, f)) and f.endswith(".js")
     ]
 
-    shutil.copytree(extension_directory, update_directory, dirs_exist_ok=True)
+    shutil.copytree(extension_directory, output_directory, dirs_exist_ok=True)
 
     with open(os.path.join(extension_directory, "metadata.json")) as f:
         metadata = json.load(f)
         # print(metadata)
 
-    os.makedirs(update_directory, exist_ok=True)
+    os.makedirs(output_directory, exist_ok=True)
 
     user_messages = {}
 
@@ -78,7 +78,7 @@ def main(extension_directory: str):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                new_class_contents += f"const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export class {extension_class_name} extends Extension {{\n\nconstructor() {{\n{extension_class_name}Instance = this;\n}}\n\n"
+                new_class_contents += f"const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [
@@ -94,6 +94,13 @@ def main(extension_directory: str):
                 s, e = ext_matches[0].span()
                 new_file_contents = (
                     new_file_contents[:s] + new_class_contents + new_file_contents[e:]
+                )
+
+                import_use_remaps.append(
+                    (
+                        "Me.",
+                        "this.",
+                    )
                 )
                 # print(new_file_contents)
 
@@ -187,13 +194,14 @@ def main(extension_directory: str):
                     new_import_target = ""
                     for var_name in var_names:
                         new_import_target += f"import * as {var_name} from 'resource:///org/gnome/shell/{dir}/{var_name[0].lower() + var_name[1:]}.js';\n"
-                        import_use_pattern = rf"(?P<decleration>.*)(?P<var_name>{var_name}).(?P<fn_name>\w+)(?P<fn_args>\(.*\))[;?]"
+                        import_use_pattern = rf"(?P<decleration>.*)(?P<var_name>{var_name}).(?P<fn_name>\w+)\((?P<fn_args>.*)\)[;?]"
                         import_use_matches = list(
                             re.finditer(import_use_pattern, new_file_contents)
                         )
 
                         # Replace usage
                         for import_use_match in import_use_matches:
+                            import_use_match_groups = import_use_match.groupdict()
                             s, e = import_use_match.span()
                             match_text = import_use_match.string[s:e]
                             if "extensionUtils" in match_text:
@@ -203,8 +211,8 @@ def main(extension_directory: str):
                                         extension_imported = True
                                     import_use_remaps.append(
                                         (
-                                            "extensionUtils.getSettings",
-                                            "Extension.getSettings",
+                                            f"extensionUtils.getSettings({import_use_match_groups['fn_args']})",
+                                            f"Extension.getSettings({import_use_match_groups['fn_args']})",
                                         )
                                     )
                                 if "getCurrentExtension" in match_text:
@@ -262,7 +270,7 @@ def main(extension_directory: str):
                 # print("NEW:", new)
                 # print()
 
-            new_file_path = os.path.join(update_directory, relative_file_path)
+            new_file_path = os.path.join(output_directory, relative_file_path)
             os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
             with open(new_file_path, "w") as nf:
                 nf.write(new_file_contents)
@@ -280,13 +288,13 @@ def main(extension_directory: str):
         len(source_files),
         "files.",
     )
-    print("Updates saved to:", update_directory)
+    print("Updates saved to:", output_directory)
     print(list(user_messages.keys()))
     pprint({fname: errors for fname, errors in errors.items() if len(errors)})
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print("Please provide the extension directory as the first console argument")
     else:
-        main(sys.argv[1])
+        main(sys.argv[1], sys.argv[2] or None)

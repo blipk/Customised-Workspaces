@@ -38,41 +38,54 @@
 
 // External imports
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-const { extensionUtils, config } = imports.misc;
-const { Meta, GLib, Gio, Shell } = imports.gi;
+import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+
+import * as MeModule from './extension.js'; 
+const Me = MeModule.WorksetsInstance;
+import * as config from 'resource:///org/gnome/shell/misc/config.js';;
+import Meta from 'gi://Meta'
+import GLib from 'gi://GLib'
+import Gio from 'gi://Gio'
+import Shell from 'gi://Shell';
 const [major] = config.PACKAGE_VERSION.split('.');
 const shellVersion = Number.parseInt(major);
 
 // Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+
+
 import * as sessionManager from './sessionManager.js';
 
 const scopeName = "cw-shell-extension";
 
 
-function enable() {
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
+
+ export default class Worksets extends Extension {
+
+ enable() {
     try {
 
 
         console.log(scopeName, "@----------|");
-        if (Me.session) return; // Already initialized
+        if (this.session) return; // Already initialized
         global.shellVersion = shellVersion;
 
         // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
-        Me.gScreen = global.screen || global.display;
-        Me.gWorkspaceManager = global.screen || global.workspace_manager;
-        Me.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
+        this.gScreen = global.screen || global.display;
+        this.gWorkspaceManager = global.screen || global.workspace_manager;
+        this.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
 
         // To tune behaviour based on other extensions
-        Me.gExtensions = new Object();
-        Me.gExtensions.dash2panel = Main.extensionManager.lookup('dash-to-panel@jderose9.github.com');
-        Me.gExtensions.dash2dock = Main.extensionManager.lookup('dash-to-dock@micxgx.gmail.com');
+        this.gExtensions = new Object();
+        this.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
+        this.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
 
-        Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
+        this.settings = Extension.getSettings('org.gnome.shell.extensions.worksets');
 
         // Spawn session
-        Me.session = new sessionManager.SessionManager();
+        this.session = new sessionManager.SessionManager();
 
         console.log(scopeName, "@~..........|");
     } catch (e) {
@@ -81,24 +94,24 @@ function enable() {
     }
 }
 
-function disable() {
+ disable() {
     try {
         console.log(scopeName, "!~~~~~~~~~~|");
 
-        Me.session.saveSession();
-        if (Me.worksetsIndicator) Me.worksetsIndicator.destroy();
-        delete Me.worksetsIndicator;
+        this.session.saveSession();
+        if (this.worksetsIndicator) this.worksetsIndicator.destroy();
+        delete this.worksetsIndicator;
         delete Main.panel.statusArea['WorksetsIndicator'];
-        if (Me.workspaceIsolater) Me.workspaceIsolater.destroy();
-        delete Me.workspaceIsolater;
-        if (Me.workspaceManager) Me.workspaceManager.destroy();
-        delete Me.workspaceManager;
-        if (Me.workspaceViewManager) Me.workspaceViewManager.destroy();
-        delete Me.workspaceViewManager;
-        if (Me.session) Me.session.destroy();
-        delete Me.session;
-        if (Me.settings) Me.settings.run_dispose();
-        delete Me.settings;
+        if (this.workspaceIsolater) this.workspaceIsolater.destroy();
+        delete this.workspaceIsolater;
+        if (this.workspaceManager) this.workspaceManager.destroy();
+        delete this.workspaceManager;
+        if (this.workspaceViewManager) this.workspaceViewManager.destroy();
+        delete this.workspaceViewManager;
+        if (this.session) this.session.destroy();
+        delete this.session;
+        if (this.settings) this.settings.run_dispose();
+        delete this.settings;
 
         console.log(scopeName, "!^^^^^^^^^^|" + '\r\n');
     } catch (e) {
@@ -107,3 +120,8 @@ function disable() {
     }
 
 }
+
+}
+
+
+

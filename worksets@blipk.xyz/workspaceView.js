@@ -25,14 +25,32 @@
  */
 
 // External imports
-const Main = imports.ui.main;
-const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
-const { GObject, Meta, Shell, GLib, St, Clutter, Gtk, Gio } = imports.gi;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
+import * as workspace from 'resource:///org/gnome/shell/ui/workspace.js';
+import * as workspaceAnimation from 'resource:///org/gnome/shell/ui/workspaceAnimation.js';
+import * as workspacesView from 'resource:///org/gnome/shell/ui/workspacesView.js';
+import * as workspaceThumbnail from 'resource:///org/gnome/shell/ui/workspaceThumbnail.js';
+import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as background from 'resource:///org/gnome/shell/ui/background.js';
+import * as layout from 'resource:///org/gnome/shell/ui/layout.js';
+import * as overview from 'resource:///org/gnome/shell/ui/overview.js';
+import * as overviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js';;
+import GObject from 'gi://GObject'
+import Meta from 'gi://Meta'
+import Shell from 'gi://Shell'
+import GLib from 'gi://GLib'
+import St from 'gi://St'
+import Clutter from 'gi://Clutter'
+import Gtk from 'gi://Gtk'
+import Gio from 'gi://Gio';
 
 // Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const { dev, utils, uiUtils } = Me.imports;
-const { sessionManager } = Me.imports;
+import * as MeModule from './extension.js'; 
+const Me = MeModule.WorksetsInstance;
+import * as dev from './dev.js';
+import * as utils from './utils.js';
+import * as uiUtils from './uiUtils.js';
+import * as sessionManager from './sessionManager.js';
 
 class WorkspaceViewManager {
     constructor() {

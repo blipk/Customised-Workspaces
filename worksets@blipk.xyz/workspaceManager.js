@@ -25,14 +25,23 @@
  */
 
 // External imports
-const Main = imports.ui.main;
-const { workspace } = imports.ui;
-const { extensionUtils, util } = imports.misc;
-const { GObject, Meta, Shell, GLib } = imports.gi;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
+import * as workspace from 'resource:///org/gnome/shell/ui/workspace.js';;
+import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
+
+import * as MeModule from './extension.js'; 
+const Me = MeModule.WorksetsInstance;
+import * as util from 'resource:///org/gnome/shell/misc/util.js';;
+import GObject from 'gi://GObject'
+import Meta from 'gi://Meta'
+import Shell from 'gi://Shell'
+import GLib from 'gi://GLib';
 
 // Internal imports
-const Me = extensionUtils.getCurrentExtension();
-const { dev, utils, workspaceIsolater } = Me.imports;
+
+import * as dev from './dev.js';
+import * as utils from './utils.js';
+import * as workspaceIsolater from './workspaceIsolater.js';
 
 class WorkspaceManager {
     constructor() {
