@@ -11,6 +11,8 @@ import json
 import shutil
 from pprint import pprint
 
+# TODO: exports on classes and top level functions
+
 
 def main(extension_directory: str, output_directory: str | None = None):
     if not os.path.isdir(extension_directory):
@@ -78,7 +80,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                new_class_contents += f"export const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
+                new_class_contents += f"export let {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [
@@ -135,7 +137,8 @@ def main(extension_directory: str, output_directory: str | None = None):
                         ), "Mismatching var_names length in local import"
                         extension_import_name = var_names[0].capitalize()
                         if not module_imported:
-                            new_import_target = f"import * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;"
+                            # new_import_target = f"import * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;"
+                            new_import_target = f"import {{ {extension_class_name}Instance as Me }} from './extension.js';"
                             module_imported = True
                         else:
                             new_import_target = ""
@@ -217,7 +220,8 @@ def main(extension_directory: str, output_directory: str | None = None):
                                     )
                                 if "getCurrentExtension" in match_text:
                                     if not module_imported:
-                                        new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;\n"
+                                        # new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;\n"
+                                        new_import_target += f"import {{ {extension_class_name}Instance as Me }} from './extension.js';"
                                         module_imported = True
                                     import_use_remaps.append((match_text, ""))
                         # print(var_name, "XXXX", import_use_match, match_text)

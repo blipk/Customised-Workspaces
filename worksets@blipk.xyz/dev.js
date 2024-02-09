@@ -25,8 +25,7 @@
  */
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
+import { WorksetsInstance as Me } from './extension.js';
 import * as fileUtils from './fileUtils.js';
 
 function log(context, message) {

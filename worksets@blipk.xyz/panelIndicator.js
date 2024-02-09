@@ -27,10 +27,7 @@
 //External imports
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
 import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
-import * as util from 'resource:///org/gnome/shell/misc/util.js';;
+import { WorksetsInstance as Me } from './extension.js';import * as util from 'resource:///org/gnome/shell/misc/util.js';;
 import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as boxpointer from 'resource:///org/gnome/shell/ui/boxpointer.js';;

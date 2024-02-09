@@ -39,9 +39,6 @@
 // External imports
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js';
-const Me = MeModule.WorksetsInstance;
 import * as config from 'resource:///org/gnome/shell/misc/config.js';;
 import Meta from 'gi://Meta'
 import GLib from 'gi://GLib'
@@ -52,7 +49,6 @@ const shellVersion = Number.parseInt(major);
 
 // Internal imports
 
-
 import * as sessionManager from './sessionManager.js';
 
 const scopeName = "cw-shell-extension";
@@ -60,7 +56,7 @@ const scopeName = "cw-shell-extension";
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export const WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
+export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
 
  export default class Worksets extends Extension {
 
@@ -82,7 +78,7 @@ export const WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
         this.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
         this.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
 
-        this.settings = Extension.getSettings('org.gnome.shell.extensions.worksets');
+        this.settings = this.getSettings('org.gnome.shell.extensions.worksets');
 
         // Spawn session
         this.session = new sessionManager.SessionManager();

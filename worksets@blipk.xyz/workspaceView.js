@@ -45,8 +45,7 @@ import Gtk from 'gi://Gtk'
 import Gio from 'gi://Gio';
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
+import { WorksetsInstance as Me } from './extension.js';
 import * as dev from './dev.js';
 import * as utils from './utils.js';
 import * as uiUtils from './uiUtils.js';

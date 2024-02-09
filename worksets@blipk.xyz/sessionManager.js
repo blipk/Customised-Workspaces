@@ -28,10 +28,7 @@
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
 import * as appFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';;
 import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
-
+import { WorksetsInstance as Me } from './extension.js';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import * as util from 'resource:///org/gnome/shell/misc/util.js';;

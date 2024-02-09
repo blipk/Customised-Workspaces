@@ -29,8 +29,7 @@ import GLib from 'gi://GLib'
 import Gio from 'gi://Gio';
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
+import { WorksetsInstance as Me } from './extension.js';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as dev from './dev.js';;
 

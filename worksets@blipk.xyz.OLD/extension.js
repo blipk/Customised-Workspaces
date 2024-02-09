@@ -44,7 +44,6 @@ const [major] = config.PACKAGE_VERSION.split('.');
 const shellVersion = Number.parseInt(major);
 
 // Internal imports
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
 import * as sessionManager from './sessionManager.js';
 

@@ -34,8 +34,7 @@ import Shell from 'gi://Shell';
 const AppSystem = Shell.AppSystem.get_default();
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.WorksetsInstance;
+import { WorksetsInstance as Me } from './extension.js';
 import * as dev from './dev.js';;
 
 //This removes running apps from workspaces they don't have any windows on when using standard gnome-shell dash

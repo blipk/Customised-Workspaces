@@ -29,10 +29,7 @@ import GLib from 'gi://GLib'
 import Gio from 'gi://Gio';
 
 // Internal imports
-import * as MeModule from './extension.js';
-const Me = Extension.lookupByUUID('worksets@blipk.xyz');
-console.log("Extension", "Worksets", Me)
-console.log("Extension", "Worksets", MeModule.WorksetsInstance)
+import { WorksetsInstance as Me } from './extension.js';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as dev from './dev.js';
 
@@ -41,10 +38,10 @@ var USER_CONF_DIR = GLib.get_user_config_dir();
 var USER_CACHE_DIR = GLib.get_user_cache_dir();
 var USER_DATA_DIR = GLib.get_user_data_dir();
 var SYS_DATA_DIRS = GLib.get_system_data_dirs();
-var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
-var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
-var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
-var APP_CHOOSER_EXEC = GLib.build_filenamev([INSTALL_DIR, 'appChooser.js']);
+// var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
+// var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
+// var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
+// var APP_CHOOSER_EXEC = GLib.build_filenamev([INSTALL_DIR, 'appChooser.js']);
 
 function checkExists(path) {
     let result = false;
@@ -61,7 +58,8 @@ function checkExists(path) {
 }
 
 // Disk I/O handlers
-function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
+function enumarateDirectoryChildren(directory = null, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
+    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
     let childrenFileProperties = { parentDirectory: directory, fullname: null, name: null, extension: null, type: null };
     let childrenFilePropertiesArray = [];
 
@@ -96,7 +94,8 @@ function enumarateDirectoryChildren(directory = CONF_DIR, returnFiles = true, re
     return childrenFilePropertiesArray;
 }
 
-function saveToFile(object, filename, directory = CONF_DIR, raw = false, append = false, async = false) {
+function saveToFile(object, filename, directory = null, raw = false, append = false, async = false) {
+    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
     let savePath = GLib.build_filenamev([directory, filename]);
     let outBuff;
     if (raw) outBuff = object.toString();
@@ -134,7 +133,8 @@ function aSyncSaveCallback(obj, res, contents) {
     });
 }
 
-function loadJSObjectFromFile(filename = CONF_FILE, directory = CONF_DIR, callback = null, async = false) {
+function loadJSObjectFromFile(filename = CONF_FILE, directory = null, callback = null, async = false) {
+    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
     let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;
 
