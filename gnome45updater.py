@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import json
+import shutil
 from pprint import pprint
 
 
@@ -17,30 +18,25 @@ def main(extension_directory: str):
             f"Provided extension directory is not a valid directory ({extension_directory})"
         )
 
-    source_paths = os.listdir(extension_directory)
+    update_directory = extension_directory + ".GNOME45"
+
+    all_source_files = []
+    for path, subdirs, files in os.walk(extension_directory):
+        relative_path = path.replace(extension_directory, "")
+        all_source_files += [os.path.join(relative_path, f) for f in files]
 
     source_files = [
-        os.path.join(f)
-        for f in source_paths
+        f
+        for f in all_source_files
         if os.path.isfile(os.path.join(extension_directory, f)) and f.endswith(".js")
     ]
 
-    for sub_directory in [
-        f for f in source_paths if os.path.isdir(os.path.join(extension_directory, f))
-    ]:
-        source_files += [
-            os.path.join(sub_directory, f)
-            for f in os.listdir(os.path.join(extension_directory, sub_directory))
-            if os.path.isfile(os.path.join(extension_directory, sub_directory, f))
-            and f.endswith(".js")
-        ]
+    shutil.copytree(extension_directory, update_directory, dirs_exist_ok=True)
 
-    print(source_files)
     with open(os.path.join(extension_directory, "metadata.json")) as f:
         metadata = json.load(f)
         # print(metadata)
 
-    update_directory = extension_directory + ".GNOME45"
     os.makedirs(update_directory, exist_ok=True)
 
     user_messages = {}
@@ -182,15 +178,21 @@ def main(extension_directory: str):
                             .replace(match_groups["decleration_type"], "import")
                             + "\n"
                         )
-                elif "misc" in match_groups["import_path"]:
+                elif (
+                    "misc" in match_groups["import_path"]
+                    or "imports.ui" in match_groups["import_path_full"]
+                ):
+                    dir = "misc" if "misc" in match_groups["import_path"] else "ui"
                     # Handle imports.misc structure remapping
                     new_import_target = ""
                     for var_name in var_names:
-                        new_import_target += f"import * as {var_name} from 'resource:///org/gnome/shell/misc/{var_name}.js';\n"
+                        new_import_target += f"import * as {var_name} from 'resource:///org/gnome/shell/{dir}/{var_name[0].lower() + var_name[1:]}.js';\n"
                         import_use_pattern = rf"(?P<decleration>.*)(?P<var_name>{var_name}).(?P<fn_name>\w+)(?P<fn_args>\(.*\))[;?]"
                         import_use_matches = list(
                             re.finditer(import_use_pattern, new_file_contents)
                         )
+
+                        # Replace usage
                         for import_use_match in import_use_matches:
                             s, e = import_use_match.span()
                             match_text = import_use_match.string[s:e]
@@ -262,7 +264,7 @@ def main(extension_directory: str):
 
             new_file_path = os.path.join(update_directory, relative_file_path)
             os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
-            with open(new_file_path.replace(".js", ".UPDATED.js"), "w") as nf:
+            with open(new_file_path, "w") as nf:
                 nf.write(new_file_contents)
 
     print()

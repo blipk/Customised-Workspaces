@@ -25,18 +25,15 @@
  */
 
 // External imports
-import * as AppDisplay from 'resource:///org/gnome/shell/ui/appDisplay.js';;
+const AppDisplay = imports.ui.appDisplay;
 const AppIcon = AppDisplay.AppIcon;
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
-import GObject from 'gi://GObject'
-import Meta from 'gi://Meta'
-import Shell from 'gi://Shell';
+const Main = imports.ui.main;
+const { GObject, Meta, Shell } = imports.gi;
 const AppSystem = Shell.AppSystem.get_default();
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import * as dev from './dev.js';;
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const dev = Me.imports.dev;
 
 //This removes running apps from workspaces they don't have any windows on when using standard gnome-shell dash
 //Dash-to-panel and dash-to-dock have their own mechanisms for this, see panelIndicator._onIsolateSwitch()

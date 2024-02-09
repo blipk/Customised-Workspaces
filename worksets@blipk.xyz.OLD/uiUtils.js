@@ -25,30 +25,16 @@
  */
 
 // External imports
-import GObject from 'gi://GObject'
-import St from 'gi://St'
-import Clutter from 'gi://Clutter'
-import Gio from 'gi://Gio'
-import GLib from 'gi://GLib'
-import GdkPixbuf from 'gi://GdkPixbuf'
-import Cogl from 'gi://Cogl';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
-import * as CheckBox from 'resource:///org/gnome/shell/ui/checkBox.js';;
-import * as modalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
-import * as shellEntry from 'resource:///org/gnome/shell/ui/shellEntry.js';
-import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';;
-import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import * as util from 'resource:///org/gnome/shell/misc/util.js';;
+const { GObject, St, Clutter, Gio, GLib, GdkPixbuf, Cogl } = imports.gi;
+const Main = imports.ui.main;
+const CheckBox = imports.ui.checkBox.CheckBox;
+const { modalDialog, shellEntry, popupMenu } = imports.ui;
+const { extensionUtils, util } = imports.misc;
 
 // Internal imports
-
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as dev from './dev.js';
-import * as utils from './utils.js';
-import * as fileUtils from './fileUtils.js';
+const Me = extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+const { dev, utils, fileUtils } = Me.imports;
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
 function createIconButton(parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT

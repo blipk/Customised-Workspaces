@@ -31,11 +31,7 @@ imports.gi.versions.Gdk = '3.0';
 imports.gi.versions.Gtk = '3.0';
 
 // External imports
-import GObject from 'gi://GObject'
-import GLib from 'gi://GLib'
-import Gtk from 'gi://Gtk?version=3.0'
-import Gio from 'gi://Gio'
-import Gdk from 'gi://Gdk?version=3.0';
+const { GObject, GLib, Gtk, Gio, Gdk } = imports.gi;
 
 // Find the root datadir of the extension
 function get_datadir() {

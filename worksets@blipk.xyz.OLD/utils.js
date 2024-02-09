@@ -25,14 +25,12 @@
  */
 
 // External imports
-import GLib from 'gi://GLib'
-import Gio from 'gi://Gio';
+const { GLib, Gio } = imports.gi;
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as dev from './dev.js';;
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+const dev = Me.imports.dev;
 
 function textFormatter(text, options = {/*length: 50*/ }) {
     text = _(text);
@@ -181,15 +179,7 @@ function readStream(stream, callback) {
 }
 
 
-import * as workspace from 'resource:///org/gnome/shell/ui/workspace.js';
-import * as workspaceAnimation from 'resource:///org/gnome/shell/ui/workspaceAnimation.js';
-import * as workspacesView from 'resource:///org/gnome/shell/ui/workspacesView.js';
-import * as workspaceThumbnail from 'resource:///org/gnome/shell/ui/workspaceThumbnail.js';
-import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as background from 'resource:///org/gnome/shell/ui/background.js';
-import * as layout from 'resource:///org/gnome/shell/ui/layout.js';
-import * as overview from 'resource:///org/gnome/shell/ui/overview.js';
-import * as overviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js';;
+const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
 var InjectionHandler = class InjectionHandler {
     constructor() {

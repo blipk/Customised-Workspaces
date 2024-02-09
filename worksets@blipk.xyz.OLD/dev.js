@@ -25,9 +25,8 @@
  */
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import * as fileUtils from './fileUtils.js';
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const { fileUtils } = Me.imports;
 
 function log(context, message) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true

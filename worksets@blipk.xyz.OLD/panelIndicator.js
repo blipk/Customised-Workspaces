@@ -25,29 +25,16 @@
  */
 
 //External imports
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
-import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import * as util from 'resource:///org/gnome/shell/misc/util.js';;
-import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import * as boxpointer from 'resource:///org/gnome/shell/ui/boxpointer.js';;
-import GObject from 'gi://GObject'
-import St from 'gi://St'
-import Clutter from 'gi://Clutter'
-import Gtk from 'gi://Gtk'
-import GLib from 'gi://GLib';
+const Main = imports.ui.main;
+const { extensionUtils, util } = imports.misc;
+const { popupMenu, panelMenu, boxpointer } = imports.ui;
+const { GObject, St, Clutter, Gtk, GLib } = imports.gi;
 
 //Internal imports
-
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as dev from './dev.js';
-import * as utils from './utils.js';
-import * as uiUtils from './uiUtils.js';
-import * as fileUtils from './fileUtils.js';
-import * as workspaceManager from './workspaceManager.js';
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+const { dev, utils, uiUtils, fileUtils } = Me.imports;
+const { workspaceManager } = Me.imports;
 
 var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'

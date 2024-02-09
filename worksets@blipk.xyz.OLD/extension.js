@@ -38,36 +38,20 @@
 
 // External imports
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import * as config from 'resource:///org/gnome/shell/misc/config.js';;
-import Meta from 'gi://Meta'
-import GLib from 'gi://GLib'
-import Gio from 'gi://Gio'
-import Shell from 'gi://Shell';
+const { extensionUtils, config } = imports.misc;
+const { Meta, GLib, Gio, Shell } = imports.gi;
 const [major] = config.PACKAGE_VERSION.split('.');
 const shellVersion = Number.parseInt(major);
 
 // Internal imports
-
-
-import * as dev from './dev.js';
-import * as utils from './utils.js';
-import * as uiUtils from './uiUtils.js';
-import * as panelIndicator from './panelIndicator.js';
-import * as workspaceManager from './workspaceManager.js';
-import * as workspaceView from './workspaceView.js';
-import * as sessionManager from './sessionManager.js';
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+const { dev, utils, uiUtils } = Me.imports;
+const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "cw-shell-extension";
 
 
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-
-export default class Worksets extends Extension {
-
- enable() {
+function enable() {
     try {
         dev.log(scopeName + '.' + arguments.callee.name, "@----------|");
         if (Me.session) return; // Already initialized
@@ -80,8 +64,8 @@ export default class Worksets extends Extension {
 
         // To tune behaviour based on other extensions
         Me.gExtensions = new Object();
-        Me.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
-        Me.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
+        Me.gExtensions.dash2panel = Main.extensionManager.lookup('dash-to-panel@jderose9.github.com');
+        Me.gExtensions.dash2dock = Main.extensionManager.lookup('dash-to-dock@micxgx.gmail.com');
 
         Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
 
@@ -95,7 +79,7 @@ export default class Worksets extends Extension {
     }
 }
 
- disable() {
+function disable() {
     try {
         dev.log(scopeName + '.' + arguments.callee.name, "!~~~~~~~~~~|");
 
@@ -121,8 +105,3 @@ export default class Worksets extends Extension {
     }
 
 }
-
-}
-
-
-

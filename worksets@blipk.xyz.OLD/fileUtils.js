@@ -25,14 +25,12 @@
  */
 
 // External imports
-import GLib from 'gi://GLib'
-import Gio from 'gi://Gio';
+const { GLib, Gio } = imports.gi;
 
 // Internal imports
-import * as MeModule from './extension.js'; 
-const Me = MeModule.Worksets;
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as dev from './dev.js';
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
+const { dev } = Me.imports;
 
 // Directory and file paths for resources
 var USER_CONF_DIR = GLib.get_user_config_dir();
