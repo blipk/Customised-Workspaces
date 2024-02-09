@@ -78,7 +78,7 @@ export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
         this.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
         this.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
 
-        this.settings = this.getSettings('org.gnome.shell.extensions.worksets');
+        this.settings = Extension.getSettings('org.gnome.shell.extensions.worksets');
 
         // Spawn session
         this.session = new sessionManager.SessionManager();
