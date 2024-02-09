@@ -78,7 +78,7 @@ def main(extension_directory: str):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                new_class_contents += f"export default class {extension_class_name} extends Extension {{\n\n"
+                new_class_contents += f"const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export class {extension_class_name} extends Extension {{\n\nconstructor() {{\n{extension_class_name}Instance = this;\n}}\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [
@@ -128,7 +128,7 @@ def main(extension_directory: str):
                         ), "Mismatching var_names length in local import"
                         extension_import_name = var_names[0].capitalize()
                         if not module_imported:
-                            new_import_target = f"import * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name};"
+                            new_import_target = f"import * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;"
                             module_imported = True
                         else:
                             new_import_target = ""
@@ -201,15 +201,15 @@ def main(extension_directory: str):
                                     if not extension_imported:
                                         new_import_target += "\nimport { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                                         extension_imported = True
-                                        import_use_remaps.append(
-                                            (
-                                                "extensionUtils.getSettings",
-                                                "Extension.getSettings",
-                                            )
+                                    import_use_remaps.append(
+                                        (
+                                            "extensionUtils.getSettings",
+                                            "Extension.getSettings",
                                         )
+                                    )
                                 if "getCurrentExtension" in match_text:
                                     if not module_imported:
-                                        new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name};\n"
+                                        new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;\n"
                                         module_imported = True
                                     import_use_remaps.append((match_text, ""))
                         # print(var_name, "XXXX", import_use_match, match_text)

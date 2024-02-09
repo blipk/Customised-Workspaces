@@ -46,14 +46,13 @@ const shellVersion = Number.parseInt(major);
 // Internal imports
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const _ = imports.gettext.domain(Me.metadata['gettext-domain']).gettext;
-const { dev, utils, uiUtils } = Me.imports;
 const { panelIndicator, workspaceManager, workspaceView, sessionManager } = Me.imports;
 const scopeName = "cw-shell-extension";
 
 
 function enable() {
     try {
-        dev.log(scopeName + '.' + arguments.callee.name, "@----------|");
+        console.log(scopeName + '.' + arguments.callee.name, "@----------|");
         if (Me.session) return; // Already initialized
         global.shellVersion = shellVersion;
 
@@ -72,16 +71,16 @@ function enable() {
         // Spawn session
         Me.session = new sessionManager.SessionManager();
 
-        dev.log(scopeName + '.' + arguments.callee.name, "@~..........|");
+        console.log(scopeName + '.' + arguments.callee.name, "@~..........|");
     } catch (e) {
-        dev.log(scopeName + '.' + arguments.callee.name, e);
+        console.log(scopeName + '.' + arguments.callee.name, e);
         throw e; // Allow gnome-shell to still catch extension exceptions
     }
 }
 
 function disable() {
     try {
-        dev.log(scopeName + '.' + arguments.callee.name, "!~~~~~~~~~~|");
+        console.log(scopeName + '.' + arguments.callee.name, "!~~~~~~~~~~|");
 
         Me.session.saveSession();
         if (Me.worksetsIndicator) Me.worksetsIndicator.destroy();
@@ -98,9 +97,9 @@ function disable() {
         if (Me.settings) Me.settings.run_dispose();
         delete Me.settings;
 
-        dev.log(scopeName + '.' + arguments.callee.name, "!^^^^^^^^^^|" + '\r\n');
+        console.log(scopeName + '.' + arguments.callee.name, "!^^^^^^^^^^|" + '\r\n');
     } catch (e) {
-        dev.log(scopeName + '.' + arguments.callee.name, e);
+        console.log(scopeName + '.' + arguments.callee.name, e);
         throw e; // Allow gnome-shell to still catch extension exceptions
     }
 
