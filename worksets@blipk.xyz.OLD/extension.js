@@ -52,8 +52,6 @@ const scopeName = "cw-shell-extension";
 
 function enable() {
     try {
-
-
         console.log(scopeName, "@----------|");
         if (Me.session) return; // Already initialized
         global.shellVersion = shellVersion;

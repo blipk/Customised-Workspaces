@@ -40,7 +40,7 @@ import * as dev from './dev.js';
 import * as utils from './utils.js';
 import * as workspaceIsolater from './workspaceIsolater.js';
 
-class WorkspaceManager {
+export class WorkspaceManager {
     constructor() {
         try {
             Me.workspaceManager = this;

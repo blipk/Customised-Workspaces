@@ -34,16 +34,16 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 import * as dev from './dev.js';
 
 // Directory and file paths for resources
-var USER_CONF_DIR = GLib.get_user_config_dir();
-var USER_CACHE_DIR = GLib.get_user_cache_dir();
-var USER_DATA_DIR = GLib.get_user_data_dir();
-var SYS_DATA_DIRS = GLib.get_system_data_dirs();
-// var INSTALL_DIR = GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
-// var RES_DIR = GLib.build_pathv('/', [INSTALL_DIR, 'res'])
-// var CONF_DIR = GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
-// var APP_CHOOSER_EXEC = GLib.build_filenamev([INSTALL_DIR, 'appChooser.js']);
+export var USER_CONF_DIR = GLib.get_user_config_dir();
+export var USER_CACHE_DIR = GLib.get_user_cache_dir();
+export var USER_DATA_DIR = GLib.get_user_data_dir();
+export var SYS_DATA_DIRS = GLib.get_system_data_dirs();
+export var INSTALL_DIR = () => GLib.build_pathv('/', [USER_DATA_DIR, 'gnome-shell', 'extensions', Me.uuid]);
+export var RES_DIR = () => GLib.build_pathv('/', [INSTALL_DIR(), 'res'])
+export var CONF_DIR = () => GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid]);
+export var APP_CHOOSER_EXEC = () => GLib.build_filenamev([INSTALL_DIR(), 'appChooser.js']);
 
-function checkExists(path) {
+export function checkExists(path) {
     let result = false;
     if (typeof path == 'string') {
         let directoryFile = Gio.file_new_for_path(path);
@@ -58,8 +58,8 @@ function checkExists(path) {
 }
 
 // Disk I/O handlers
-function enumarateDirectoryChildren(directory = null, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
-    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
+export function enumarateDirectoryChildren(directory = null, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1/*-1 for infinite*/) {
+    directory = directory || CONF_DIR()
     let childrenFileProperties = { parentDirectory: directory, fullname: null, name: null, extension: null, type: null };
     let childrenFilePropertiesArray = [];
 
@@ -94,8 +94,8 @@ function enumarateDirectoryChildren(directory = null, returnFiles = true, return
     return childrenFilePropertiesArray;
 }
 
-function saveToFile(object, filename, directory = null, raw = false, append = false, async = false) {
-    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
+export function saveToFile(object, filename, directory = null, raw = false, append = false, async = false) {
+    directory = directory || CONF_DIR()
     let savePath = GLib.build_filenamev([directory, filename]);
     let outBuff;
     if (raw) outBuff = object.toString();
@@ -126,15 +126,15 @@ function saveToFile(object, filename, directory = null, raw = false, append = fa
     }
 }
 
-function aSyncSaveCallback(obj, res, contents) {
+export function aSyncSaveCallback(obj, res, contents) {
     let stream = obj.replace_finish(res);
     stream.write_bytes_async(contents, GLib.PRIORITY_DEFAULT, null, function (w_obj, w_res) {
         w_obj.write_bytes_finish(w_res); stream.close(null);
     });
 }
 
-function loadJSObjectFromFile(filename = CONF_FILE, directory = null, callback = null, async = false) {
-    directory = directory || GLib.build_pathv('/', [USER_CONF_DIR, Me.uuid])
+export function loadJSObjectFromFile(filename = CONF_FILE, directory = null, callback = null, async = false) {
+    directory = directory || CONF_DIR()
     let loadPath = GLib.build_filenamev([directory, filename]);
     let jsobject;
 

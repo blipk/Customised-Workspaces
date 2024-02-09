@@ -58,12 +58,13 @@ import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/
 
 export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
 
- export default class Worksets extends Extension {
+export default class Worksets extends Extension {
 
  enable() {
+    WorksetsInstance = this;
+
+
     try {
-
-
         console.log(scopeName, "@----------|");
         if (this.session) return; // Already initialized
         global.shellVersion = shellVersion;
@@ -78,7 +79,7 @@ export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
         this.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
         this.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
 
-        this.settings = Extension.getSettings('org.gnome.shell.extensions.worksets');
+        this.settings = this.getSettings('org.gnome.shell.extensions.worksets');
 
         // Spawn session
         this.session = new sessionManager.SessionManager();
@@ -91,6 +92,9 @@ export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
 }
 
  disable() {
+    WorksetsInstance = this;
+
+
     try {
         console.log(scopeName, "!~~~~~~~~~~|");
 

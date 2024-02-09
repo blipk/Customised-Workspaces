@@ -60,7 +60,7 @@ const wallPaperOptions = [
     { enum: "SPANNED", icon: "zoom-fit-best-symbolic" }
 ]
 
-class SessionManager {
+export class SessionManager {
     constructor() {
         try {
             Me.session = this;
@@ -74,11 +74,11 @@ class SessionManager {
             this.signals.add(appFavorites.getAppFavorites(), 'changed', () => { this._favoritesChanged() })
 
             // Make sure our GTK App chooser is executable
-            util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC]);
+            util.spawn(['chmod', '+x', fileUtils.APP_CHOOSER_EXEC()]);
 
             // Create sesion or initialize from session file if it exists
-            if (fileUtils.checkExists(fileUtils.CONF_DIR + '/session.json')) {
-                let obj = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
+            if (fileUtils.checkExists(fileUtils.CONF_DIR() + '/session.json')) {
+                let obj = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR());
                 this._setup(obj);
             } else {
                 this.newSession(true);
@@ -304,7 +304,7 @@ class SessionManager {
     loadSession(sessionsObject) {
         try {
             if (utils.isEmpty(sessionsObject))
-                sessionsObject = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR);
+                sessionsObject = fileUtils.loadJSObjectFromFile('session.json', fileUtils.CONF_DIR());
             this._setup(sessionsObject)
 
             if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
@@ -321,7 +321,7 @@ class SessionManager {
             let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
             let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
             let filename = (backup ? 'session-backup-' + timestamp + '.json' : 'session.json');
-            fileUtils.saveToFile(sessionCopy, filename, fileUtils.CONF_DIR);
+            fileUtils.saveToFile(sessionCopy, filename, fileUtils.CONF_DIR());
 
             if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         } catch (e) { dev.log(e) }
@@ -743,7 +743,7 @@ class SessionManager {
     // Storage management
     loadObject() {
         try {
-            let worksetsDirectory = fileUtils.CONF_DIR + '/envbackups';
+            let worksetsDirectory = fileUtils.CONF_DIR() + '/envbackups';
             let loadObjectDialog = new uiUtils.ObjectInterfaceDialog("Select a backup to load in to the session", (returnObject) => {
                 if (returnObject.WorksetName) {
                     let exists = false;
@@ -770,7 +770,7 @@ class SessionManager {
             let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
             let filename = (backup ? 'env-' + workset.WorksetName + '-' + timestamp + '.json' : 'env-' + workset.WorksetName + '.json');
 
-            fileUtils.saveToFile(workset, filename, fileUtils.CONF_DIR + '/envbackups');
+            fileUtils.saveToFile(workset, filename, fileUtils.CONF_DIR() + '/envbackups');
             if (!backup) uiUtils.showUserNotification("Environment saved to " + filename);
 
             return filename;

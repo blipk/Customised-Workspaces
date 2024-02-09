@@ -33,7 +33,7 @@ import { WorksetsInstance as Me } from './extension.js';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as dev from './dev.js';;
 
-function textFormatter(text, options = {/*length: 50*/ }) {
+export function textFormatter(text, options = {/*length: 50*/ }) {
     text = _(text);
     if (isEmpty(text)) return text;
     if (options.length) text = truncateString(text, options.length);
@@ -44,7 +44,7 @@ var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerC
 var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 
 //General
-function truncateString(instring, length = 50) {
+export function truncateString(instring, length = 50) {
     let shortened = instring.replace(/\s+/g, ' ');
     if (shortened.length > length)
         shortened = shortened.substring(0, length - 1) + '...';
@@ -53,14 +53,14 @@ function truncateString(instring, length = 50) {
 
 const special = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
 const deca = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
-function stringifyNumber(n) {
+export function stringifyNumber(n) {
     n = parseInt(n);
     if (n < 20) return special[n];
     if (n % 10 === 0) return deca[Math.floor(n / 10) - 2] + 'ieth';
     return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
 }
 
-var isEmpty = function (v) {
+export function isEmpty (v) {
     return typeof v === 'undefined' ? true
         : v === null ? true
             : v === [] ? true
@@ -106,7 +106,7 @@ if (!Object.prototype.hasOwnProperty('filterObj')) {
     });
 }
 
-function splitURI(inURI) {
+export function splitURI(inURI) {
     try {
         let regexPattern = /^(([^:/\?#]+):)?(\/\/([^/\?#]*))?([^\?#]*)(\?([^#]*))?(#(.*))?/;
 
@@ -138,7 +138,7 @@ function splitURI(inURI) {
 // with those of spawn_async (non-blocking execution).
 // Based on https://github.com/optimisme/gjs-examples/blob/master/assets/spawn.js.
 // https://github.com/p-e-w/argos/blob/master/argos%40pew.worldwidemann.com/utilities.js
-function spawnWithCallback(workingDirectory, argv, envp, flags, childSetup, callback) {
+export function spawnWithCallback(workingDirectory, argv, envp, flags, childSetup, callback) {
     let [success, pid, stdinFile, stdoutFile, stderrFile] = GLib.spawn_async_with_pipes(
         workingDirectory, argv, envp, flags, childSetup);
 
@@ -166,7 +166,7 @@ function spawnWithCallback(workingDirectory, argv, envp, flags, childSetup, call
     });
 }
 
-function readStream(stream, callback) {
+export function readStream(stream, callback) {
     stream.read_line_async(GLib.PRIORITY_LOW, null, function (source, result) {
         let [line] = source.read_line_finish(result);
 
@@ -190,7 +190,7 @@ import * as layout from 'resource:///org/gnome/shell/ui/layout.js';
 import * as overview from 'resource:///org/gnome/shell/ui/overview.js';
 import * as overviewControls from 'resource:///org/gnome/shell/ui/overviewControls.js';;
 
-var InjectionHandler = class InjectionHandler {
+export class InjectionHandler {
     constructor() {
         this.injections = {}
     }
@@ -217,7 +217,7 @@ var InjectionHandler = class InjectionHandler {
     }
 }
 
-var SignalHandler = class SignalHandler {
+export class SignalHandler {
     constructor() {
         this.signalIds = [];
     }

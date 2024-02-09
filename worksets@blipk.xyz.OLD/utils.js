@@ -59,7 +59,7 @@ function stringifyNumber(n) {
     return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
 }
 
-var isEmpty = function (v) {
+function isEmpty (v) {
     return typeof v === 'undefined' ? true
         : v === null ? true
             : v === [] ? true
@@ -181,7 +181,7 @@ function readStream(stream, callback) {
 
 const { workspace, workspaceAnimation, workspacesView, workspaceThumbnail, popupMenu, background, layout, overview, overviewControls } = imports.ui;
 
-var InjectionHandler = class InjectionHandler {
+class InjectionHandler {
     constructor() {
         this.injections = {}
     }
@@ -208,7 +208,7 @@ var InjectionHandler = class InjectionHandler {
     }
 }
 
-var SignalHandler = class SignalHandler {
+class SignalHandler {
     constructor() {
         this.signalIds = [];
     }

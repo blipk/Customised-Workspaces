@@ -38,7 +38,7 @@ import Gio from 'gi://Gio'
 import Gdk from 'gi://Gdk?version=3.0';
 
 // Find the root datadir of the extension
-function get_datadir() {
+export function get_datadir() {
     let m = /@(.+):\d+/.exec((new Error()).stack.split('\n')[1]);
     return Gio.File.new_for_path(m[1]).get_parent().get_parent().get_path();
 }
@@ -55,7 +55,7 @@ worksets.app_path = worksets.metadata['resource-path'];
 worksets.is_local = worksets.extdatadir.startsWith(GLib.get_user_data_dir());
 window._ = imports.gettext.domain(worksets.metadata['gettext-domain']).gettext;
 
-class worksetsAppChooser {
+export class worksetsAppChooser {
     constructor(ARGV) {
         this.application = new Gtk.Application({
             application_id: worksets.app_id,

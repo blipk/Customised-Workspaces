@@ -48,7 +48,7 @@ import * as utils from './utils.js';
 import * as fileUtils from './fileUtils.js';
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
-function createIconButton(parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
+export function createIconButton(parentItem, iconNames, callback, options, tooltip) { //St.Side.RIGHT
     try {
         if (Array.isArray(iconNames))
             var [iconNameURI, alternateIconName] = iconNames;
@@ -97,7 +97,7 @@ function createIconButton(parentItem, iconNames, callback, options, tooltip) { /
 
 // Notifications - Gnome Notification - Or a Tooltip that overlays the screen
 let messages = [];
-function showUserNotification(input, overviewMessage = false, fadeTime = 2.9) {
+export function showUserNotification(input, overviewMessage = false, fadeTime = 2.9) {
     dev.log('Notification', input);
     removeAllUserNotifications();
 
@@ -117,7 +117,7 @@ function showUserNotification(input, overviewMessage = false, fadeTime = 2.9) {
     return label
 }
 
-function removeUserNotification(label, fadeTime) {
+export function removeUserNotification(label, fadeTime) {
     if (!label) return;
     if (!fadeTime) {
         Main.uiGroup.remove_actor(label);
@@ -138,13 +138,13 @@ function removeUserNotification(label, fadeTime) {
         });
     }
 }
-function removeAllUserNotifications(fadeTime) {
+export function removeAllUserNotifications(fadeTime) {
     messages.forEach(function (message, i) {
         removeUserNotification(message, fadeTime)
     }, this);
 }
 
-function createTooltip(widget, tooltip) {
+export function createTooltip(widget, tooltip) {
     try {
         if (!tooltip) return;
         widget.tooltip = tooltip;
@@ -203,7 +203,7 @@ function createTooltip(widget, tooltip) {
 }
 
 let knownImages = {}; // Save on resources generating these in menu refreshes
-function setImage(parent, imgFilePath = '') {
+export function setImage(parent, imgFilePath = '') {
     try {
         imgFilePath = imgFilePath.replace("file://", "");
         let image;

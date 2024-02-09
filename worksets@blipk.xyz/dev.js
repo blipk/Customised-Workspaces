@@ -28,7 +28,7 @@
 import { WorksetsInstance as Me } from './extension.js';
 import * as fileUtils from './fileUtils.js';
 
-function log(context, message) {
+export function log(context, message) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
     if (!_debug_) return;
 
@@ -42,8 +42,8 @@ function log(context, message) {
 
     if (message instanceof Error) {
         out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name + " " + message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
-        global.log(out);
-        global.logError(message)
+        console.log(out);
+        console.error(message)
     } else if (typeof message === 'object') {
         out += "@Object  | " + context.toString() + " |\r\n" + message.toString() + '\r\n';
         let seen = [];
@@ -56,14 +56,14 @@ function log(context, message) {
         }, 2) + '\r\n\r\n';
     } else {
         out += ":Info    | " + context.toString() + " | " + message.toString() + '\r\n';
-        global.log(out);
+        console.log(out);
     }
 
-    fileUtils.saveToFile(out, "debug.log", fileUtils.CONF_DIR, true, true);
+    fileUtils.saveToFile(out, "debug.log", fileUtils.CONF_DIR(), true, true);
 }
 
 
-function dump(object, objectName) {
+export function dump(object, objectName) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
     if (!_debug_) return;
 
@@ -81,5 +81,5 @@ function dump(object, objectName) {
         return val;
     }, 2) + '\r\n\r\n';
 
-    fileUtils.saveToFile(out, objectName + '-' + timestamp + '.json', fileUtils.CONF_DIR, true, false);
+    fileUtils.saveToFile(out, objectName + '-' + timestamp + '.json', fileUtils.CONF_DIR(), true, false);
 }

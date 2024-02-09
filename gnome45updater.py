@@ -11,9 +11,6 @@ import json
 import shutil
 from pprint import pprint
 
-# TODO: exports on classes and top level functions
-
-
 def main(extension_directory: str, output_directory: str | None = None):
     if not os.path.isdir(extension_directory):
         print(
@@ -22,6 +19,7 @@ def main(extension_directory: str, output_directory: str | None = None):
 
     output_directory = output_directory or extension_directory + ".GNOME45"
 
+    # Find all the source files and copy them to a new directory
     all_source_files = []
     for path, subdirs, files in os.walk(extension_directory):
         relative_path = path.replace(extension_directory, "")
@@ -69,8 +67,9 @@ def main(extension_directory: str, output_directory: str | None = None):
                 print("Please manually update this file")
                 continue
 
+            # Wrap extension.js methods in a class
             if file_name == "extension.js":
-                extension_pattern = r"function\s*([A-z0-9]+)?\s*\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)\s*\{(?:[^}{]+|\{(?:[^}{]+|\{[^}{]*\})*\})*\}"
+                extension_pattern = r"function(?P<fn_start>\s*([A-z0-9]+)?\s*\((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*\)\s*\{)(?:[^}{]+|\{(?:[^}{]+|\{[^}{]*\})*\})*\}"
                 ext_matches = list(
                     re.finditer(extension_pattern, file_contents, flags=re.MULTILINE)
                 )
@@ -80,12 +79,15 @@ def main(extension_directory: str, output_directory: str | None = None):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                new_class_contents += f"export let {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
+                main_function_matches = [em for em in ext_matches if "enable" in em.groups(0) or "disable" in em.groups(0)]
+
+
+                new_class_contents += f"export let {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\nexport default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [
-                            em.string[em.start() : em.end()].replace("function", "")
-                            for em in ext_matches
+                            em.string[em.start() : em.end()].replace("function", "").replace(em.groupdict()["fn_start"], em.groupdict()["fn_start"] + f"\n    {extension_class_name}Instance = this;\n\n")
+                            for em in main_function_matches
                         ]
                     )
                     + "\n\n}\n"
@@ -121,6 +123,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                     .split(",")
                 )
                 var_names = [v.strip() for v in var_names]
+                # Remap imports local to the extension
                 if match_groups["local_import"]:
                     new_import_target = ""
                     for var_name in var_names:
@@ -128,6 +131,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                             f"import * as {var_name} from './{var_name}.js';\n"
                         )
                     new_import_target = new_import_target.strip()
+                # Remap functions from imports
                 elif match_groups["function"]:
                     fn = match_groups["function"]
 
@@ -160,6 +164,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                         errors[relative_file_path].append(
                             ("Unhandled Function Import", match, match_groups)
                         )
+                # Remap GI imports
                 elif match_groups["import_path"] == "gi":
                     version_pattern = r"(?P<import_path_full>imports.(?P<import_path>[\w.]+))\s+=\s+?['|\"](?P<version_number>[\d.]+)['|\"]"
                     version_matches: list[re.Match] = list(
@@ -188,6 +193,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                             .replace(match_groups["decleration_type"], "import")
                             + "\n"
                         )
+                # Remap imports.misc
                 elif (
                     "misc" in match_groups["import_path"]
                     or "imports.ui" in match_groups["import_path_full"]
@@ -212,10 +218,11 @@ def main(extension_directory: str, output_directory: str | None = None):
                                     if not extension_imported:
                                         new_import_target += "\nimport { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                                         extension_imported = True
+                                    usage = "this" if file_name == "extension.js" else "Extension"
                                     import_use_remaps.append(
                                         (
                                             f"extensionUtils.getSettings({import_use_match_groups['fn_args']})",
-                                            f"Extension.getSettings({import_use_match_groups['fn_args']})",
+                                            f"{usage}.getSettings({import_use_match_groups['fn_args']})",
                                         )
                                     )
                                 if "getCurrentExtension" in match_text:
@@ -227,6 +234,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                         # print(var_name, "XXXX", import_use_match, match_text)
 
                     new_import_target = new_import_target.strip()
+                # Remap all other imports
                 else:
                     import_path_parts = match_groups["import_path"].split(".")
                     new_import_target = "/".join(import_path_parts) + ".js"
@@ -258,9 +266,12 @@ def main(extension_directory: str, output_directory: str | None = None):
                         old_import_target, new_import_target
                     )
 
-            import_use_remaps.append(
-                ("Main.extensionManager.lookup", "Extension.lookupByUUID")
-            )
+            import_use_remaps += [
+                ("Main.extensionManager.lookup", "Extension.lookupByUUID"),
+                ("\nclass", "\nexport class"),
+                ("\nfunction", "\nexport function")
+            ]
+
             for old_text, new_text in import_use_remaps:
                 new_file_contents = new_file_contents.replace(old_text, new_text)
 

@@ -51,7 +51,7 @@ import * as utils from './utils.js';
 import * as uiUtils from './uiUtils.js';
 import * as sessionManager from './sessionManager.js';
 
-class WorkspaceViewManager {
+export class WorkspaceViewManager {
     constructor() {
         try {
             Me.workspaceViewManager = this
