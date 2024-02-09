@@ -78,7 +78,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                new_class_contents += f"const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
+                new_class_contents += f"export const {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\n export default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [

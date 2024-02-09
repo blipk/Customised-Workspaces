@@ -40,7 +40,7 @@
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
 
-import * as MeModule from './extension.js'; 
+import * as MeModule from './extension.js';
 const Me = MeModule.WorksetsInstance;
 import * as config from 'resource:///org/gnome/shell/misc/config.js';;
 import Meta from 'gi://Meta'
@@ -60,7 +60,7 @@ const scopeName = "cw-shell-extension";
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
+export const WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
 
  export default class Worksets extends Extension {
 
