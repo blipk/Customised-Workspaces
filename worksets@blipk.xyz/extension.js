@@ -48,7 +48,7 @@ const [major] = config.PACKAGE_VERSION.split('.');
 const shellVersion = Number.parseInt(major);
 
 // Internal imports
-
+import * as dev from './dev.js';
 import * as sessionManager from './sessionManager.js';
 
 const scopeName = "cw-shell-extension";
@@ -63,9 +63,8 @@ export default class Worksets extends Extension {
  enable() {
     WorksetsInstance = this;
 
-
     try {
-        console.log(scopeName, "@----------|");
+        dev.log(scopeName, "@----------|");
         if (this.session) return; // Already initialized
         global.shellVersion = shellVersion;
 
@@ -84,9 +83,9 @@ export default class Worksets extends Extension {
         // Spawn session
         this.session = new sessionManager.SessionManager();
 
-        console.log(scopeName, "@~..........|");
+        dev.log(scopeName, "@~..........|");
     } catch (e) {
-        console.log(scopeName, e);
+        dev.log(scopeName, e);
         throw e; // Allow gnome-shell to still catch extension exceptions
     }
 }
@@ -96,7 +95,7 @@ export default class Worksets extends Extension {
 
 
     try {
-        console.log(scopeName, "!~~~~~~~~~~|");
+        dev.log(scopeName, "!~~~~~~~~~~|");
 
         this.session.saveSession();
         if (this.worksetsIndicator) this.worksetsIndicator.destroy();
@@ -113,9 +112,9 @@ export default class Worksets extends Extension {
         if (this.settings) this.settings.run_dispose();
         delete this.settings;
 
-        console.log(scopeName, "!^^^^^^^^^^|" + '\r\n');
+        dev.log(scopeName, "!^^^^^^^^^^|" + '\r\n');
     } catch (e) {
-        console.log(scopeName, e);
+        dev.log(scopeName, e);
         throw e; // Allow gnome-shell to still catch extension exceptions
     }
 
