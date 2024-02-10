@@ -37,85 +37,85 @@
  */
 
 // External imports
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-import * as config from 'resource:///org/gnome/shell/misc/config.js';;
-import Meta from 'gi://Meta'
-import GLib from 'gi://GLib'
-import Gio from 'gi://Gio'
-import Shell from 'gi://Shell';
-const [major] = config.PACKAGE_VERSION.split('.');
-const shellVersion = Number.parseInt(major);
+import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
+import * as config from "resource:///org/gnome/shell/misc/config.js"
+import Meta from "gi://Meta"
+import GLib from "gi://GLib"
+import Gio from "gi://Gio"
+import Shell from "gi://Shell"
+const [major] = config.PACKAGE_VERSION.split( "." )
+const shellVersion = Number.parseInt( major )
 
 // Internal imports
-import * as dev from './dev.js';
-import * as sessionManager from './sessionManager.js';
+import * as dev from "./dev.js"
+import * as sessionManager from "./sessionManager.js"
 
-const scopeName = "cw-shell-extension";
+const scopeName = "cw-shell-extension"
 
 
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 
-export let WorksetsInstance = Extension.lookupByUUID('worksets@blipk.xyz');
+export let WorksetsInstance = Extension.lookupByUUID( "worksets@blipk.xyz" )
 
 export default class Worksets extends Extension {
 
  enable() {
-    WorksetsInstance = this;
+    WorksetsInstance = this
 
     try {
-        dev.log(scopeName, "@----------|");
-        if (this.session) return; // Already initialized
-        global.shellVersion = shellVersion;
+        dev.log( scopeName, "@----------|" )
+        if ( this.session ) return // Already initialized
+        global.shellVersion = shellVersion
 
         // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
-        this.gScreen = global.screen || global.display;
-        this.gWorkspaceManager = global.screen || global.workspace_manager;
-        this.gMonitorManager = global.screen || (Meta.MonitorManager.get && Meta.MonitorManager.get()) || global.backend.get_monitor_manager();
+        this.gScreen = global.screen || global.display
+        this.gWorkspaceManager = global.screen || global.workspace_manager
+        this.gMonitorManager = global.screen || ( Meta.MonitorManager.get && Meta.MonitorManager.get() ) || global.backend.get_monitor_manager()
 
         // To tune behaviour based on other extensions
-        this.gExtensions = new Object();
-        this.gExtensions.dash2panel = Extension.lookupByUUID('dash-to-panel@jderose9.github.com');
-        this.gExtensions.dash2dock = Extension.lookupByUUID('dash-to-dock@micxgx.gmail.com');
+        this.gExtensions = new Object()
+        this.gExtensions.dash2panel = Extension.lookupByUUID( "dash-to-panel@jderose9.github.com" )
+        this.gExtensions.dash2dock = Extension.lookupByUUID( "dash-to-dock@micxgx.gmail.com" )
 
-        this.settings = this.getSettings('org.gnome.shell.extensions.worksets');
+        this.settings = this.getSettings( "org.gnome.shell.extensions.worksets" )
 
         // Spawn session
-        this.session = new sessionManager.SessionManager();
+        this.session = new sessionManager.SessionManager()
 
-        dev.log(scopeName, "@~..........|");
-    } catch (e) {
-        dev.log(scopeName, e);
-        throw e; // Allow gnome-shell to still catch extension exceptions
+        dev.log( scopeName, "@~..........|" )
+    } catch ( e ) {
+        dev.log( scopeName, e )
+        throw e // Allow gnome-shell to still catch extension exceptions
     }
 }
 
  disable() {
-    WorksetsInstance = this;
+    WorksetsInstance = this
 
 
     try {
-        dev.log(scopeName, "!~~~~~~~~~~|");
+        dev.log( scopeName, "!~~~~~~~~~~|" )
 
-        this.session.saveSession();
-        if (this.worksetsIndicator) this.worksetsIndicator.destroy();
-        delete this.worksetsIndicator;
-        delete Main.panel.statusArea['WorksetsIndicator'];
-        if (this.workspaceIsolater) this.workspaceIsolater.destroy();
-        delete this.workspaceIsolater;
-        if (this.workspaceManager) this.workspaceManager.destroy();
-        delete this.workspaceManager;
-        if (this.workspaceViewManager) this.workspaceViewManager.destroy();
-        delete this.workspaceViewManager;
-        if (this.session) this.session.destroy();
-        delete this.session;
-        if (this.settings) this.settings.run_dispose();
-        delete this.settings;
+        this.session.saveSession()
+        if ( this.worksetsIndicator ) this.worksetsIndicator.destroy()
+        delete this.worksetsIndicator
+        delete Main.panel.statusArea["WorksetsIndicator"]
+        if ( this.workspaceIsolater ) this.workspaceIsolater.destroy()
+        delete this.workspaceIsolater
+        if ( this.workspaceManager ) this.workspaceManager.destroy()
+        delete this.workspaceManager
+        if ( this.workspaceViewManager ) this.workspaceViewManager.destroy()
+        delete this.workspaceViewManager
+        if ( this.session ) this.session.destroy()
+        delete this.session
+        if ( this.settings ) this.settings.run_dispose()
+        delete this.settings
 
-        dev.log(scopeName, "!^^^^^^^^^^|" + '\r\n');
-    } catch (e) {
-        dev.log(scopeName, e);
-        throw e; // Allow gnome-shell to still catch extension exceptions
+        dev.log( scopeName, "!^^^^^^^^^^|" + "\r\n" )
+    } catch ( e ) {
+        dev.log( scopeName, e )
+        throw e // Allow gnome-shell to still catch extension exceptions
     }
 
 }

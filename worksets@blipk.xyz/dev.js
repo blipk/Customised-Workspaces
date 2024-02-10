@@ -25,61 +25,61 @@
  */
 
 // Internal imports
-import { WorksetsInstance as Me } from './extension.js';
-import * as fileUtils from './fileUtils.js';
+import { WorksetsInstance as Me } from "./extension.js"
+import * as fileUtils from "./fileUtils.js"
 
-export function log(context, message) {
+export function log( context, message ) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-    if (!_debug_) return;
+    if ( !_debug_ ) return
 
-    if (message === undefined) { message = context; context = "() =>"; }
-    if (message === undefined) { message = "`UNDEFINED`" }
-    if (message === null) { message = "`NULL`" }
+    if ( message === undefined ) { message = context; context = "() =>" }
+    if ( message === undefined ) { message = "`UNDEFINED`" }
+    if ( message === null ) { message = "`NULL`" }
 
-    const timestamp = new Date().toLocaleString();
-    const prefix = '(' + Me.uuid.toString() + ') [' + timestamp + ']:';
-    let out = prefix;
+    const timestamp = new Date().toLocaleString()
+    const prefix = "(" + Me.uuid.toString() + ") [" + timestamp + "]:"
+    let out = prefix
 
-    if (message instanceof Error) {
-        out += "!Error   | " + context.toString() + " | " + '\r\n' + "|-" + message.name + " " + message.message + '\r\n' + "|-Stack Trace:" + '\r\n' + message.stack + '\r\n';
-        console.log("Extension", "Worksets", out);
-        console.error("Extension", "Worksets", message)
-    } else if (typeof message === 'object') {
-        out += "@Object  | " + context.toString() + " |\r\n" + message.toString() + '\r\n';
-        let seen = [];
-        out += JSON.stringify(message, function (key, val) {
-            if (val != null && typeof val == "object") {
-                if (seen.indexOf(val) >= 0) return;
-                seen.push(val);
+    if ( message instanceof Error ) {
+        out += "!Error   | " + context.toString() + " | " + "\r\n" + "|-" + message.name + " " + message.message + "\r\n" + "|-Stack Trace:" + "\r\n" + message.stack + "\r\n"
+        console.log( "Extension", "Worksets", out )
+        console.error( "Extension", "Worksets", message )
+    } else if ( typeof message === "object" ) {
+        out += "@Object  | " + context.toString() + " |\r\n" + message.toString() + "\r\n"
+        let seen = []
+        out += JSON.stringify( message, function ( key, val ) {
+            if ( val != null && typeof val == "object" ) {
+                if ( seen.indexOf( val ) >= 0 ) return
+                seen.push( val )
             }
-            return val;
-        }, 2) + '\r\n\r\n';
+            return val
+        }, 2 ) + "\r\n\r\n"
     } else {
-        out += ":Info    | " + context.toString() + " | " + message.toString() + '\r\n';
-        console.log("Extension", "Worksets", out);
+        out += ":Info    | " + context.toString() + " | " + message.toString() + "\r\n"
+        console.log( "Extension", "Worksets", out )
     }
 
-    fileUtils.saveToFile(out, "debug.log", fileUtils.CONF_DIR(), true, true);
+    fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
 }
 
 
-export function dump(object, objectName) {
+export function dump( object, objectName ) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-    if (!_debug_) return;
+    if ( !_debug_ ) return
 
-    const timestamp = Date.now();
+    const timestamp = Date.now()
 
     //if (typeof object !== 'object') return;
 
-    let out = "";
-    let seen = [];
-    out += JSON.stringify(object, function (key, val) {
-        if (val != null && typeof val == "object") {
-            if (seen.indexOf(val) >= 0) return;
-            seen.push(val);
+    let out = ""
+    let seen = []
+    out += JSON.stringify( object, function ( key, val ) {
+        if ( val != null && typeof val == "object" ) {
+            if ( seen.indexOf( val ) >= 0 ) return
+            seen.push( val )
         }
-        return val;
-    }, 2) + '\r\n\r\n';
+        return val
+    }, 2 ) + "\r\n\r\n"
 
-    fileUtils.saveToFile(out, objectName + '-' + timestamp + '.json', fileUtils.CONF_DIR(), true, false);
+    fileUtils.saveToFile( out, objectName + "-" + timestamp + ".json", fileUtils.CONF_DIR(), true, false )
 }

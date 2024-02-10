@@ -25,27 +25,27 @@
  */
 
 // External imports
-const { GLib, Gtk } = imports.gi;
-const { extensionUtils } = imports.misc;
+const { GLib, Gtk } = imports.gi
+const { extensionUtils } = imports.misc
 
 // Internal imports
-const Me = extensionUtils.getCurrentExtension();
-const { dev } = Me.imports;
+const Me = extensionUtils.getCurrentExtension()
+const { dev } = Me.imports
 
 function init() {
-    Me.settings = extensionUtils.getSettings('org.gnome.shell.extensions.worksets');
-    Me.settings.set_boolean('show-panel-indicator', false);
-    Me.settings.set_boolean('show-panel-indicator', true);
+    Me.settings = extensionUtils.getSettings( "org.gnome.shell.extensions.worksets" )
+    Me.settings.set_boolean( "show-panel-indicator", false )
+    Me.settings.set_boolean( "show-panel-indicator", true )
 }
 
 function buildPrefsWidget() {
-    let prefsWidget = new Gtk.Label({ label: 'Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.', visible: true });
+    let prefsWidget = new Gtk.Label( { label: "Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.", visible: true } )
 
-    if (!prefsWidget.get_toplevel) return prefsWidget;
-    GLib.timeout_add(0, null, () => {
-        let window = prefsWidget.get_toplevel();
-        let hb = window.get_titlebar();
-        hb.title = `${Me.metadata.name} Preferences`;
-    });
-    return prefsWidget;
+    if ( !prefsWidget.get_toplevel ) return prefsWidget
+    GLib.timeout_add( 0, null, () => {
+        let window = prefsWidget.get_toplevel()
+        let hb = window.get_titlebar()
+        hb.title = `${Me.metadata.name} Preferences`
+    } )
+    return prefsWidget
 }
