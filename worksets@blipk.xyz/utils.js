@@ -101,8 +101,7 @@ if ( !Object.prototype.hasOwnProperty( "forEachEntry" ) ) {
             thisArg = thisArg || this
 
             Object.entries( this ).forEach( function ( entryArray, entryIndex ) {
-                let [ key,
-value ] = entryArray
+                let [ key, value ] = entryArray
                 let entryObj = { [key]: this[key] }
                 let retIndex = entryIndex + recursiveIndex
                 callback.call( thisArg, key, this[key], retIndex, entryObj, entryArray, this )
@@ -207,6 +206,18 @@ export function readStream( stream, callback ) {
         }
     } )
 }
+
+// these imports are required for the eval() usage in InjectionHandler.add()
+import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
+import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
+import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
+import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
+import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
+import * as background from "resource:///org/gnome/shell/ui/background.js"
+import * as layout from "resource:///org/gnome/shell/ui/layout.js"
+import * as overview from "resource:///org/gnome/shell/ui/overview.js"
+import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
+
 
 export class InjectionHandler {
     constructor() {

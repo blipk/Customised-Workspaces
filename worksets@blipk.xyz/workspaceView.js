@@ -29,11 +29,11 @@ import * as Main from "resource:///org/gnome/shell/ui/main.js"
 // import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
 // import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
 // import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
+// import * as layout from "resource:///org/gnome/shell/ui/layout.js"
+// import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 import * as background from "resource:///org/gnome/shell/ui/background.js"
-// import * as layout from "resource:///org/gnome/shell/ui/layout.js"
-// import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
 import GDesktopEnums from "gi://GDesktopEnums"
 import Meta from "gi://Meta"
@@ -66,29 +66,29 @@ export class WorkspaceViewManager {
 
             // Keep track of the new workspace views so their background can be changed in refreshOverview()
             this.injections.add(
- "workspace.Workspace.prototype._init",
+                "workspace.Workspace.prototype._init",
                 function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
                     Me.workspaceViewManager.injections.injections["workspace.Workspace.prototype._init"]
                         .call( this, metaWorkspace, monitorIndex, overviewAdjustment )
                     Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this
                     this.connect( "destroy", () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace] )
                 }
-)
+            )
 
             // Extra reference to workspace views in overview
             this.injections.add(
- "workspacesView.WorkspacesView.prototype._init",
+                "workspacesView.WorkspacesView.prototype._init",
                 function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
                     Me.workspaceViewManager.injections.injections["workspacesView.WorkspacesView.prototype._init"]
                         .call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
                     Me.workspaceViewManager.wsvWorkspaces = this._workspaces
                     this.connect( "destroy", () => delete Me.workspaceViewManager.wsvWorkspaces )
                 }
-)
+            )
 
             // For gestures from desktop
             this.injections.add(
- "workspaceAnimation.WorkspaceGroup.prototype._init",
+                "workspaceAnimation.WorkspaceGroup.prototype._init",
                 function ( workspace, monitor, movingWindow ) {
                     Me.workspaceViewManager.injections.injections["workspaceAnimation.WorkspaceGroup.prototype._init"]
                         .call( this, workspace, monitor, movingWindow )
@@ -98,20 +98,20 @@ export class WorkspaceViewManager {
                     Me.workspaceViewManager.refreshDesktop()
                     this.connect( "destroy", () => delete Me.workspaceViewManager.wsGroups[workspace] )
                 }
-)
+            )
 
             this.injections.add(
- "overviewControls.ControlsManager.prototype._init",
+                "overviewControls.ControlsManager.prototype._init",
                 function () {
                     Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype._init"]
                         .call( this )
                     Me.workspaceViewManager.overviewControls = this
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox
                 }
-)
+            )
 
             this.injections.add(
- "workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails",
+                "workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails",
                 function ( start, count ) {
                     Me.workspaceViewManager.injections.injections["workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails"]
                         .call( this, start, count )
@@ -122,11 +122,11 @@ export class WorkspaceViewManager {
                     Me.workspaceViewManager.thumbnailBoxes = this._thumbnails
                     Me.workspaceViewManager.refreshOverview()
                 }
-)
+            )
 
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.injections.add(
- "workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone",
+                "workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone",
                 function ( win ) {
                     let clone = new workspaceThumbnail.ThumbnailsBox.WindowClone( win )
                     clone.connect( "selected", ( o, time ) => { this.activate( time ) } )
@@ -140,7 +140,7 @@ export class WorkspaceViewManager {
                     this._windows.push( clone )
                     return clone
                 }
-)
+            )
 
             // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
             /* hidden, hiding, showing */
@@ -181,13 +181,13 @@ export class WorkspaceViewManager {
             } )
             // This is needed in addition to above to ensure the correct starting overlay state with gestures
             this.injections.add(
- "overviewControls.ControlsManager.prototype.gestureBegin",
+                "overviewControls.ControlsManager.prototype.gestureBegin",
                 function ( tracker ) {
                     Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"]
                         .call( this, tracker )
                     Me.workspaceViewManager.refreshOverview( 2 )
                 }
-)
+            )
 
         } catch ( e ) { dev.log( e ) }
     }
@@ -387,7 +387,8 @@ export class WorkspaceViewManager {
             // Action buttons for custom workspaces
             if ( workset ) {
                 uiUtils.createIconButton( iconsBox, "document-edit-symbolic", () => {
-                    Me.session.editWorkset( workset ) }, iconOptions, { msg: "Edit '" + workset.WorksetName + "'" } )
+                    Me.session.editWorkset( workset )
+                }, iconOptions, { msg: "Edit '" + workset.WorksetName + "'" } )
                 uiUtils.createIconButton( iconsBox, "image-x-generic-symbolic", () => {
                     Me.session.setWorksetBackgroundImage( workset, Me.session.isDarkMode )
                 }, iconOptions, { msg: "Change the background for '" + workset.WorksetName + "'" } )
