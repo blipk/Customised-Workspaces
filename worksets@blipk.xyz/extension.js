@@ -72,6 +72,17 @@ export default class Worksets extends Extension {
         // To tune behaviour based on other extensions
         this.gExtensions = new Object()
         this.gExtensions.dash2panel = Extension.lookupByUUID( "dash-to-panel@jderose9.github.com" )
+        try {
+            this.gExtensions.dash2panelSettings = this.getSettings("org.gnome.shell.extensions.dash-to-panel")
+        } catch(e) {
+            this.gExtensions.dash2panelSettings = null
+        }
+        try {
+            this.gExtensions.dash2dockSettings = this.getSettings("org.gnome.shell.extensions.dash-to-dock")
+        } catch(e) {
+            this.gExtensions.dash2panelSettings = null
+        }
+        dev.log(this.gExtensions.dash2panelSettings)
         this.gExtensions.dash2dock = Extension.lookupByUUID( "dash-to-dock@micxgx.gmail.com" )
 
         this.settings = this.getSettings( "org.gnome.shell.extensions.worksets" )
