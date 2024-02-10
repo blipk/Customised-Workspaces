@@ -29,8 +29,7 @@ import GLib from "gi://GLib"
 import Gio from "gi://Gio"
 
 // Internal imports
-import { WorksetsInstance as Me } from "./extension.js"
-import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as dev from "./dev.js"
 
 export function textFormatter( text, options = {/*length: 50*/ } ) {
@@ -102,8 +101,8 @@ if ( !Object.prototype.hasOwnProperty( "forEachEntry" ) ) {
             thisArg = thisArg || this
 
             Object.entries( this ).forEach( function ( entryArray, entryIndex ) {
-                let [key,
-value] = entryArray
+                let [ key,
+value ] = entryArray
                 let entryObj = { [key]: this[key] }
                 let retIndex = entryIndex + recursiveIndex
                 callback.call( thisArg, key, this[key], retIndex, entryObj, entryArray, this )
@@ -170,8 +169,7 @@ export function spawnWithCallback( workingDirectory, argv, envp, flags, childSet
 pid,
 stdinFile,
 stdoutFile,
-stderrFile] = GLib.spawn_async_with_pipes(
-        workingDirectory, argv, envp, flags, childSetup )
+stderrFile] = GLib.spawn_async_with_pipes( workingDirectory, argv, envp, flags, childSetup )
 
     if ( !success )
         return
@@ -209,17 +207,6 @@ export function readStream( stream, callback ) {
         }
     } )
 }
-
-
-import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
-import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
-import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
-import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
-import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
-import * as background from "resource:///org/gnome/shell/ui/background.js"
-import * as layout from "resource:///org/gnome/shell/ui/layout.js"
-import * as overview from "resource:///org/gnome/shell/ui/overview.js"
-import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
 
 export class InjectionHandler {
     constructor() {

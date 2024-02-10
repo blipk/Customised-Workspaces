@@ -37,12 +37,11 @@ import * as CheckBox from "resource:///org/gnome/shell/ui/checkBox.js"
 import * as modalDialog from "resource:///org/gnome/shell/ui/modalDialog.js"
 import * as shellEntry from "resource:///org/gnome/shell/ui/shellEntry.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
-import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
-import { WorksetsInstance as Me } from "./extension.js";import * as util from "resource:///org/gnome/shell/misc/util.js"
+import { WorksetsInstance as Me } from "./extension.js"; import * as util from "resource:///org/gnome/shell/misc/util.js"
 
 // Internal imports
 
-import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as fileUtils from "./fileUtils.js"
@@ -52,7 +51,7 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
     try {
         if ( Array.isArray( iconNames ) )
             var [iconNameURI,
-alternateIconName] = iconNames
+                alternateIconName] = iconNames
         else iconNameURI = iconNames
         let defaults = {
             icon_name   : iconNameURI,
@@ -80,13 +79,19 @@ alternateIconName] = iconNames
         parentItem.iconButtons.push( iconButton )
 
         iconButton.focus = false
-        iconButton.leaveEvent = iconButton.connect( "leave-event", () => { iconButton.focus = false; iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP } )
-        iconButton.enterEvent = iconButton.connect( "enter-event", () => { if ( alternateIconName ) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP } )
+        iconButton.leaveEvent = iconButton.connect( "leave-event", () => {
+            iconButton.focus = false; iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP
+        } )
+        iconButton.enterEvent = iconButton.connect( "enter-event", () => {
+            if ( alternateIconName ) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP
+        } )
         iconButton.pressEvent = iconButton.connect( "button-press-event", () => { iconButton.focus = true; return Clutter.EVENT_STOP } )
-        iconButton.releaseEvent = iconButton.connect( "button-release-event", () => { if ( iconButton.focus == true ) callback(); return Clutter.EVENT_STOP } )
+        iconButton.releaseEvent = iconButton.connect( "button-release-event", () => {
+            if ( iconButton.focus == true ) callback(); return Clutter.EVENT_STOP
+        } )
         parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent,
-iconButton.releaseEvent,
-iconButton.leaveEvent] )
+        iconButton.releaseEvent,
+        iconButton.leaveEvent] )
         parentItem.destroyIconButtons = function () {
             parentItem.iconButtons.forEach( function ( iconButton ) {
                 //iconButton.destroy();
@@ -114,7 +119,12 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
     Main.uiGroup.add_actor( messages[lastItem] )
     messages[lastItem].opacity = 255
     let monitor = Main.layoutManager.primaryMonitor
-    messages[lastItem].set_position( monitor.x + Math.floor( monitor.width / 2 - messages[lastItem].width / 2 ), monitor.y + Math.floor( monitor.height / 2 - messages[lastItem].height / 2 ) )
+    messages[lastItem].set_position(
+        monitor.x +
+            Math.floor( monitor.width / 2 - messages[lastItem].width / 2 ),
+        monitor.y +
+            Math.floor( monitor.height / 2 - messages[lastItem].height / 2 )
+        )
     if ( fadeTime > 0 ) removeUserNotification( label, fadeTime )
 
     return label
@@ -168,7 +178,9 @@ export function createTooltip( widget, tooltip ) {
                 if ( widget.notificationLabel ) return
                 // Create message
                 if ( widget.hovering && !widget.notificationLabel && ( Me.session.activeSession.Options.ShowHelpers || widget.tooltip.force ) ) {
-                    widget.notificationLabel = showUserNotification( widget.tooltip.msg, widget.tooltip.overviewMessage || false, widget.tooltip.fadeTime || 0 )
+                    widget.notificationLabel = showUserNotification(
+                        widget.tooltip.msg, widget.tooltip.overviewMessage || false, widget.tooltip.fadeTime || 0
+                    )
                     widget.notificationLabel.attachedTo = widget
                 }
                 // Make sure they're eventually removed for any missed cases
@@ -218,16 +230,16 @@ export function setImage( parent, imgFilePath = "" ) {
             let pixbuf
             try {
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file( imgFilePath )
-            } catch( e ) {
+            } catch ( e ) {
                 if ( e instanceof GLib.FileError && e.message.includes( "No such file or directory" ) )
                     return [null,
-e]
+                        e]
                 else
                     throw e
             }
             if ( pixbuf === null ) // file doesnt exist
                 return [( imgFilePath = "" ),
-new Error( "Null pixbuf" )]
+                new Error( "Null pixbuf" )]
 
             const { width, height } = pixbuf
             if ( height == 0 ) return
@@ -252,7 +264,7 @@ new Error( "Null pixbuf" )]
 
         knownImages[imgFilePath] = image
         return [image,
-error]
+            error]
     } catch ( e ) { dev.log( e ) }
 }
 
@@ -293,7 +305,8 @@ export var TextOutlineEffect = GObject.registerClass( {
 export var ObjectInterfaceDialog = GObject.registerClass( {
     GTypeName: "Worksets_ObjectInterfaceDialog"
 }, class ObjectInterfaceDialog extends modalDialog.ModalDialog {
-    _init( dialogText = null, callback = null,
+    _init(
+        dialogText = null, callback = null,
         showTextInput = true, disableTextInput = false,
         jsobjectsSets = [], /*array of js objects or of strings to valid directories with .json files*/
         objectSetMasks = [{ objectNameIdentifier: "Object Set Display Name" }],
@@ -389,12 +402,19 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                         jsobjectsSets.push( tmpObjectsSet )
                     }
 
-                    let btn = createIconButton( headerLabelArea, "document-open-symbolic", () => {
-                        this.close()
-                        util.spawn( ["xdg-open",
-jsobjectsSearchDirectories[0]] )
-                        btn.destroy()
-                    }, { icon_size: 20, style_class: "open-backups-icon" }, { leaveFadeTime: 0.7, disappearTime: 4400, delay: 400, force: true, msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")" } )
+                    let btn = createIconButton(
+                        headerLabelArea, "document-open-symbolic",
+                        () => {
+                            this.close()
+                            util.spawn( ["xdg-open",jsobjectsSearchDirectories[0]] )
+                            btn.destroy()
+                        },
+                        { icon_size: 20, style_class: "open-backups-icon" },
+                        {
+                            leaveFadeTime : 0.7, disappearTime : 4400, delay         : 400,
+                            force         : true, msg           : "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")"
+                        }
+                    )
                 }, this )
 
                 if ( !jsobjectsSets[0] ) {
@@ -409,8 +429,12 @@ jsobjectsSearchDirectories[0]] )
             if ( jsobjectsSets ) {
                 //Build an area for each object set
                 jsobjectsSets.forEach( function ( objectSet, i ) {
-                    this._objectsSetBoxes[i] = new St.BoxLayout( { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER } )
-                    this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon( { icon_name: "insert-object-symbolic", icon_size: 18, style_class: "object-dialog-error-icon" } )
+                    this._objectsSetBoxes[i] = new St.BoxLayout(
+                        { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER }
+                    )
+                    this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon(
+                        { icon_name: "insert-object-symbolic", icon_size: 18, style_class: "object-dialog-error-icon" }
+                    )
                     //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
                     this.contentLayout.add( this._objectsSetBoxes[i] )
 
@@ -427,7 +451,9 @@ jsobjectsSearchDirectories[0]] )
                         if ( count == 4 ) {
                             i++
                             count = 0
-                            this._objectsSetBoxes[i] = new St.BoxLayout( { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER } )
+                            this._objectsSetBoxes[i] = new St.BoxLayout(
+                                { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER }
+                            )
                             this.contentLayout.add( this._objectsSetBoxes[i] )
                             this._objectsSetBoxes[i]._objectBoxes = []
                         }
@@ -438,7 +464,9 @@ jsobjectsSearchDirectories[0]] )
                         this._objectsSetBoxes[i].add( this._objectsSetBoxes[i]._objectBoxes[ii] )
 
                         //State/type icon
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon( { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-item-icon" } )
+                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon(
+                            { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-item-icon" }
+                        )
                         this._objectsSetBoxes[i]._objectBoxes[ii].add( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon )
 
                         //Labelled button to select the object
@@ -512,10 +540,10 @@ jsobjectsSearchDirectories[0]] )
 
             if ( !this._errorBox.visible ) {
                 let [errorBoxMinHeight,
-errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
+                    errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
                 let parentActor = this._errorBox.get_parent()
                 parentActor.ease( {
-                    height     : parentActor.height + errorBoxNaturalHeight, time       : DIALOG_GROW_TIME, transition : "easeOutQuad",
+                    height     : parentActor.height + errorBoxNaturalHeight, time       : this.DIALOG_GROW_TIME, transition : "easeOutQuad",
                     onComplete : () => {
                         parentActor.set_height( -1 )
                         this._errorBox.show()
@@ -530,7 +558,8 @@ errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
 export var ObjectEditorDialog = GObject.registerClass( {
     GTypeName: "Worksets_ObjectEditorDialog"
 }, class ObjectEditorDialog extends modalDialog.ModalDialog {
-    _init( dialogInfoTextStyle = "", callback = null,
+    _init(
+        dialogInfoTextStyle = "", callback = null,
         editableObject = null, /*object to edit in the editor */
         editableProperties = [], /* {propertyName: 'Property Display Name', disabled: false, hidden: false, subObjectEditableProperties: editableProperties,  icon: icon-name, hintText: 'Hint text to display for St.Entry', minwidth: 20, subObjectEditableProperties=[]}*/
         buttons = null,
@@ -555,7 +584,11 @@ export var ObjectEditorDialog = GObject.registerClass( {
             this.contentLayout.style_class = contentLayoutBoxStyleClass ? contentLayoutBoxStyleClass : this.contentLayout.style_class
 
             //Label for our dialog/text field with text about the dialog or a prompt for user text input
-            defaults = { style_class: "object-dialog-label", text: _( ( dialogInfoTextStyle.text || dialogInfoTextStyle ).toString() ), x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START }
+            defaults = {
+                style_class : "object-dialog-label",
+                text        : _( ( dialogInfoTextStyle.text || dialogInfoTextStyle ).toString() ),
+                x_align     : Clutter.ActorAlign.START, y_align     : Clutter.ActorAlign.START
+            }
             dialogInfoTextStyle = ( typeof dialogInfoTextStyle == "string" ) ? defaults : { ...defaults, ...dialogInfoTextStyle }
             let stLabelUText = new St.Label( dialogInfoTextStyle )
 
@@ -611,7 +644,11 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     this.propertyDisabled[i] = false
                     this.propertyHidden[i] = false
                     this.propertyLabelOnly[i] = false
-                    this.propertyLabelStyle[i] = { style_class: "spacing7", x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.CENTER }
+                    this.propertyLabelStyle[i] = {
+                        style_class : "spacing7",
+                        x_expand    : true, y_expand    : true,
+                        x_align     : Clutter.ActorAlign.END, y_align     : Clutter.ActorAlign.CENTER
+                    }
                     this.propertyBoxStyle[i] = {}
                     this.propertyIconStyle[i] = {}
                     this.subObjectMasks[i] = []
@@ -620,7 +657,12 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         if ( editableProperties[index][key] ) {
                             this.propertyDisplayName[i] = editableProperties[index][key] || this.propertyDisplayName[i]
 
-                            let { disabled, hidden, labelOnly, labelStyle, boxStyle, iconStyle, subObjectEditableProperties, boxClickCallback } = editableProperties[index]
+                            let {
+                                disabled, hidden,
+                                labelOnly, labelStyle,
+                                boxStyle, iconStyle,
+                                subObjectEditableProperties, boxClickCallback
+                            } = editableProperties[index]
                             this.propertyDisabled[i] = disabled || this.propertyDisabled[i]
                             this.propertyHidden[i] = hidden || this.propertyHidden[i]
                             this.propertyLabelOnly[i] = labelOnly || this.propertyLabelOnly[i]
@@ -628,7 +670,8 @@ export var ObjectEditorDialog = GObject.registerClass( {
                             this.propertyBoxStyle[i] = boxStyle || this.propertyBoxStyle[i]
                             this.propertyIconStyle[i] = iconStyle || this.propertyIconStyle[i]
                             this.subObjectMasks[i] = subObjectEditableProperties || this.subObjectMasks[i]
-                            this.propertyBoxClickCallbacks[i] = boxClickCallback || ( () => { dev.log( "Clicked on " + this.propertyDisplayName[i] ) } )
+                            this.propertyBoxClickCallbacks[i] =
+                                boxClickCallback || ( () => { dev.log( "Clicked on " + this.propertyDisplayName[i] ) } )
                         }
                     }, this )
                     if ( utils.isEmpty( this.propertyDisplayName[i] ) ) return
@@ -668,10 +711,14 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     if ( typeof value === "boolean" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox.CheckBox( "" )
                         this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked = editableObject[key]
-                        this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect( "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked } )
+                        this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect(
+                            "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked }
+                        )
                         this._propertyBoxes[i].add( this._propertyBoxes[i]._propertyBoxEditorElement.actor )
                     } else if ( typeof value === "string" || typeof value === "number" ) {
-                        this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry( { style_class: "object-dialog-label", can_focus: true, text: "", x_align: Clutter.ActorAlign.FILL, x_expand: true } )
+                        this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry(
+                            { style_class: "object-dialog-label", can_focus: true, text: "", x_align: Clutter.ActorAlign.FILL, x_expand: true }
+                        )
                         this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.min_width = 200
                         this._focusElement = this._propertyBoxes[i]._propertyBoxEditorElement // To set initial focus
                         if ( this.propertyDisabled[i] === true ) {
@@ -682,14 +729,17 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         this._propertyBoxes[i]._propertyBoxEditorElement.set_text( value.toString() )
                         this._propertyBoxes[i].add( this._propertyBoxes[i]._propertyBoxEditorElement )
 
-                        this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.get_buffer().connect( "inserted-text", ( o, position, new_text, new_text_length, e ) => {
-                            if ( typeof value !== "number" ) return Clutter.EVENT_PROPAGATE
-                            if ( new_text.search( /^[0-9]+$/i ) === -1 ) {
-                                o.delete_text( position, new_text_length )
-                                return Clutter.EVENT_STOP
+                        this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.get_buffer().connect(
+                            "inserted-text",
+                            ( o, position, new_text, new_text_length, e ) => {
+                                if ( typeof value !== "number" ) return Clutter.EVENT_PROPAGATE
+                                if ( new_text.search( /^[0-9]+$/i ) === -1 ) {
+                                    o.delete_text( position, new_text_length )
+                                    return Clutter.EVENT_STOP
+                                }
+                                return Clutter.EVENT_PROPAGATE
                             }
-                            return Clutter.EVENT_PROPAGATE
-                        } )
+                        )
                         this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.connect( "text-changed", ( o, e ) => {
                             if ( typeof value === "number" ) editableObject[key] = parseInt( o.get_text() )
                             else editableObject[key] = o.get_text()
@@ -721,15 +771,21 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                     subObjectPropertyDisabled = this.subObjectMasks[i][index].disabled || subObjectPropertyDisabled
                                     subObjectPropertyHidden = this.subObjectMasks[i][index].hidden || false
                                     subObjectLabelOnly = this.subObjectMasks[i][index].labelOnly || subObjectLabelOnly
-                                    subObjectToggleValidationCallback = this.subObjectMasks[i][index].toggleValidationCallback || subObjectToggleValidationCallback
+                                    subObjectToggleValidationCallback =
+                                        this.subObjectMasks[i][index].toggleValidationCallback || subObjectToggleValidationCallback
                                 }
                             }, this )
                             if ( subObjectPropertyHidden ) return
 
                             //Vertical box area for each subobject property
                             this._propertyBoxes[i]._boolBox[n] = new St.BoxLayout( {
-                                vertical    : true, reactive    : true,
-                                track_hover : true, x_expand    : true, y_expand    : true, x_align     : Clutter.ActorAlign.FILL, y_align     : Clutter.ActorAlign.FILL
+                                vertical    : true,
+                                reactive    : true,
+                                track_hover : true,
+                                x_expand    : true,
+                                y_expand    : true,
+                                x_align     : Clutter.ActorAlign.FILL,
+                                y_align     : Clutter.ActorAlign.FILL
                             } )
                             this._propertyBoxes[i].add( this._propertyBoxes[i]._boolBox[n] )
                             //, { expand: true, reactive: true, track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL }
@@ -748,7 +804,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                             function togglingFunction() {
                                 // subObjectToggleValidationCallback will return values to set for any other bool in the subobject and whether to toggle the current one
                                 let [allowed,
-boolValues] = subObjectToggleValidationCallback.call( this, value, n )
+                                    boolValues] = subObjectToggleValidationCallback.call( this, value, n )
                                 if ( !boolValues ) boolValues = Object.values( value )
                                 if ( allowed ) boolValues[n] = value[subobjectKey] = value[subobjectKey] ? false : true
                                 this._propertyBoxes[i]._boolBox.forEach( function ( box, x ) {
@@ -770,8 +826,13 @@ boolValues] = subObjectToggleValidationCallback.call( this, value, n )
                             this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement = new CheckBox.CheckBox( "" )
                             this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.set_x_align( Clutter.ActorAlign.CENTER )
                             this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.checked = value[subobjectKey]
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.connect( "clicked", () => { togglingFunction.call( this ) } )
-                            if ( !subObjectLabelOnly ) this._propertyBoxes[i]._boolBox[n].add( this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor )
+                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.connect(
+                                "clicked", () => { togglingFunction.call( this ) }
+                            )
+                            if ( !subObjectLabelOnly )
+                                this._propertyBoxes[i]._boolBox[n].add(
+                                    this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor
+                                )
                             // Toggle when pressing anywhere in the label/checkbox parent BoxLayout
                             this._propertyBoxes[i]._boolBox[n].connect( "button-press-event", () => { togglingFunction.call( this ) } )
 
@@ -782,8 +843,14 @@ boolValues] = subObjectToggleValidationCallback.call( this, value, n )
 
                     if ( !this._propertyBoxes[i]._propertyBoxEditorElement ) return
                     if ( this._propertyBoxes[i]._propertyBoxEditorElement.showIcon ) {
-                        this._propertyBoxes[i]._propertyBoxEditorElement.propertyBoxStElementIcon = new St.Icon( { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-error-icon" } )
-                        if ( this._propertyBoxes[i]._propertyBoxEditorElement.add ) this._propertyBoxes[i]._propertyBoxEditorElement.add( this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: Clutter.ActorAlign.CENTER } )
+                        this._propertyBoxes[i]._propertyBoxEditorElement.propertyBoxStElementIcon = new St.Icon(
+                            { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-error-icon" }
+                        )
+                        if ( this._propertyBoxes[i]._propertyBoxEditorElement.add ) {
+                            this._propertyBoxes[i]._propertyBoxEditorElement.add(
+                                this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: Clutter.ActorAlign.CENTER }
+                            )
+                        }
                     }
                 }, this )
 
@@ -815,8 +882,7 @@ boolValues] = subObjectToggleValidationCallback.call( this, value, n )
             this._errorMessage.set_text( message )
 
             if ( !this._errorBox.visible ) {
-                let [errorBoxMinHeight,
-errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
+                let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
                 let parentActor = this._errorBox.get_parent()
                 parentActor.ease( {
                     height     : parentActor.height + errorBoxNaturalHeight, time       : DIALOG_GROW_TIME, transition : "easeOutQuad",

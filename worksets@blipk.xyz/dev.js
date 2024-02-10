@@ -41,7 +41,9 @@ export function log( context, message ) {
     let out = prefix
 
     if ( message instanceof Error ) {
-        out += "!Error   | " + context.toString() + " | " + "\r\n" + "|-" + message.name + " " + message.message + "\r\n" + "|-Stack Trace:" + "\r\n" + message.stack + "\r\n"
+        out += "!Error   | " + context.toString() + " | " + "\r\n"
+                + "|-" + message.name + " " + message.message + "\r\n"
+                + "|-Stack Trace:" + "\r\n" + message.stack + "\r\n"
         console.log( "Extension", "Worksets", out )
         console.error( "Extension", "Worksets", message )
     } else if ( typeof message === "object" ) {

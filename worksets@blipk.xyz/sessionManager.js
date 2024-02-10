@@ -29,7 +29,6 @@ import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
 import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 import { WorksetsInstance as Me } from "./extension.js"; import * as util from "resource:///org/gnome/shell/misc/util.js"
-import GObject from "gi://GObject"
 import GDesktopEnums from "gi://GDesktopEnums"
 import Gio from "gi://Gio"
 import Clutter from "gi://Clutter"
@@ -45,7 +44,6 @@ import * as uiUtils from "./uiUtils.js"
 import * as fileUtils from "./fileUtils.js"
 import * as panelIndicator from "./panelIndicator.js"
 import * as workspaceManager from "./workspaceManager.js"
-import * as workspaceIsolater from "./workspaceIsolater.js"
 import * as workspaceView from "./workspaceView.js"
 
 const wallPaperOptions = [
@@ -73,8 +71,8 @@ export class SessionManager {
 
             // Make sure our GTK App chooser is executable
             util.spawn( ["chmod",
-"+x",
-fileUtils.APP_CHOOSER_EXEC()] )
+                "+x",
+                fileUtils.APP_CHOOSER_EXEC()] )
 
             // Create sesion or initialize from session file if it exists
             if ( fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" ) ) {
@@ -270,11 +268,15 @@ fileUtils.APP_CHOOSER_EXEC()] )
                 if ( !Array.isArray( worksetBuffer.FavApps ) ) worksetBuffer.FavApps = []
                 if ( typeof worksetBuffer.WorksetName !== "string" ) worksetBuffer.WorksetName = "Workset " + ii
 
-                if ( typeof worksetBuffer.BackgroundImage !== "string" || !worksetBuffer.BackgroundImage ) worksetBuffer.BackgroundImage = this.getBackground()
-                if ( typeof worksetBuffer.BackgroundImageDark !== "string" || !worksetBuffer.BackgroundImageDark ) worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage
+                if ( typeof worksetBuffer.BackgroundImage !== "string" || !worksetBuffer.BackgroundImage )
+                    worksetBuffer.BackgroundImage = this.getBackground()
+                if ( typeof worksetBuffer.BackgroundImageDark !== "string" || !worksetBuffer.BackgroundImageDark )
+                    worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage
 
-                if ( typeof worksetBuffer.BackgroundStyle !== "string" || !worksetBuffer.BackgroundStyle ) worksetBuffer.BackgroundStyle = "ZOOM"
-                if ( typeof worksetBuffer.BackgroundStyleDark !== "string" || !worksetBuffer.BackgroundStyleDark ) worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
+                if ( typeof worksetBuffer.BackgroundStyle !== "string" || !worksetBuffer.BackgroundStyle )
+                    worksetBuffer.BackgroundStyle = "ZOOM"
+                if ( typeof worksetBuffer.BackgroundStyleDark !== "string" || !worksetBuffer.BackgroundStyleDark )
+                    worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
 
                 // Remove duplicate entries
                 filteredWorksets = this.Worksets.filter( function ( item ) {
@@ -414,7 +416,12 @@ fileUtils.APP_CHOOSER_EXEC()] )
 
             currentFavorites.forEach( function ( favorite, i ) {
                 if ( this.allApps[favorite] ) {
-                    newFavorites.push( { "name": favorite, "displayName": this.allApps[favorite].displayName, "icon": this.allApps[favorite].icon || "", "exec": this.allApps[favorite].exec || "" } )
+                    newFavorites.push( {
+                        "name"        : favorite,
+                        "displayName" : this.allApps[favorite].displayName,
+                        "icon"        : this.allApps[favorite].icon || "",
+                        "exec"        : this.allApps[favorite].exec || ""
+                    } )
                 }
             }, this )
 
@@ -474,7 +481,8 @@ fileUtils.APP_CHOOSER_EXEC()] )
             if ( activeIndex > -1 && !displayOnly && !loadInNewWorkspace ) { // Switch to it if already active
                 if ( Me.workspaceManager.activeWorkspaceIndex != activeIndex ) Me.workspaceManager.switchToWorkspace( activeIndex )
                 if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
-                if ( this.activeSession.Options.ShowNotifications ) uiUtils.showUserNotification( "Switched to active environment " + workset.WorksetName, false, 1 )
+                if ( this.activeSession.Options.ShowNotifications )
+                    uiUtils.showUserNotification( "Switched to active environment " + workset.WorksetName, false, 1 )
             } else if ( !displayOnly ) {
                 if ( loadInNewWorkspace ) {
                     //Me.workspaceManager.lastWorkspaceActiveWorksetName = workset.WorksetName;
@@ -486,11 +494,15 @@ fileUtils.APP_CHOOSER_EXEC()] )
                 }
                 Me.workspaceManager.activeWorksetName = workset.WorksetName
                 if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
-                if ( this.activeSession.Options.ShowNotifications ) uiUtils.showUserNotification( "Loaded environment " + workset.WorksetName, false, 1.4 )
+                if ( this.activeSession.Options.ShowNotifications )
+                    uiUtils.showUserNotification( "Loaded environment " + workset.WorksetName, false, 1.4 )
             }
 
             this.setFavorites( workset.FavApps )
-            this.setBackground( this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage, this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle, this.isDarkMode )
+            this.setBackground(
+                this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
+                this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle, this.isDarkMode
+            )
 
             this.saveSession()
         } catch ( e ) { dev.log( e ) }
@@ -513,7 +525,8 @@ fileUtils.APP_CHOOSER_EXEC()] )
             if ( parseInt( closing.substr( -1, 1 ) ) == Me.workspaceManager.activeWorkspaceIndex )
                 this.displayWorkset( this.DefaultWorkset, false, true )
 
-            if ( this.activeSession.Options.ShowNotifications ) uiUtils.showUserNotification( "Environment '" + workset.WorksetName + "' disengaged.", false, 1.8 )
+            if ( this.activeSession.Options.ShowNotifications )
+                uiUtils.showUserNotification( "Environment '" + workset.WorksetName + "' disengaged.", false, 1.8 )
             this.saveSession()
         } catch ( e ) { dev.log( e ) }
     }
@@ -522,9 +535,10 @@ fileUtils.APP_CHOOSER_EXEC()] )
     setWorksetBackgroundImage( workset, darkMode = false ) {
         try {
             let msg = darkMode ? "Dark Mode" : "Light Mode"
-            utils.spawnWithCallback( null, ["/usr/bin/zenity",
-"--file-selection",
-"--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
+            utils.spawnWithCallback(
+                null, ["/usr/bin/zenity",
+                "--file-selection",
+                "--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
                 ( resource ) => {
                     try {
                         if ( !resource ) return
@@ -557,7 +571,8 @@ fileUtils.APP_CHOOSER_EXEC()] )
                         }
                         if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
                     } catch ( e ) { dev.log( e ) }
-                } )
+                }
+            )
         } catch ( e ) { dev.log( e ) }
     }
     newSession( fromEnvironment = false, backup = false ) {
@@ -614,9 +629,9 @@ fileUtils.APP_CHOOSER_EXEC()] )
             worksetObject.BackgroundImageDark = this.getBackgroundDark()
 
             if ( !name ) {
-                let timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
+                // const timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
                 let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
-{ label: "Done", default: true }]
+                { label: "Done", default: true }]
                 let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
                     if ( !returnText ) return
                     returnText = returnText.trim()
@@ -672,13 +687,13 @@ fileUtils.APP_CHOOSER_EXEC()] )
 
             let editables = [
                 { WorksetName: "Name" },
-{ BackgroundImage: " ", hidden: true },
+                { BackgroundImage: " ", hidden: true },
                 { workSpaceOptionsLabel: "Opens on these workspaces automatically:", labelOnly: true },
                 { workSpaceOptions: " ", subObjectEditableProperties: workspaceOptionsEditables },
                 { workSpaceOptions2: " ", subObjectEditableProperties: workspaceOptionsEditables2 }
             ]
             let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.returnObject = false, this.close( true ) } },
-{ label: "Done", default: true }]
+            { label: "Done", default: true }]
 
             let editObjectChooseDialog = new uiUtils.ObjectEditorDialog( "Editing: " + worksetIn.WorksetName, ( returnObject ) => {
                 if ( !returnObject ) return

@@ -38,12 +38,8 @@
 
 // External imports
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
-import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 import * as config from "resource:///org/gnome/shell/misc/config.js"
 import Meta from "gi://Meta"
-import GLib from "gi://GLib"
-import Gio from "gi://Gio"
-import Shell from "gi://Shell"
 const [major] = config.PACKAGE_VERSION.split( "." )
 const shellVersion = Number.parseInt( major )
 

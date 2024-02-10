@@ -40,9 +40,10 @@ module.exports = {
         "ngettext": false
     },
     rules: {
-        "array-element-newline": ["error", "always"],
+        "array-element-newline": ["error", "consistent"],
+        "function-paren-newline": ["error", "consistent"],
         "space-in-parens": ["error", "always"],
-        "func-names": ["warn"],
+        "func-names": ["error", "as-needed"],
         "semi": ["error", "never"],
         // "no-underscore-dangle": ["warn"],
         "key-spacing": ["error", {

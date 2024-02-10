@@ -26,11 +26,10 @@
 
 // External imports
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
-import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
+// import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
 import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
-import { WorksetsInstance as Me } from "./extension.js";import * as util from "resource:///org/gnome/shell/misc/util.js"
-import GObject from "gi://GObject"
-import Meta from "gi://Meta"
+import { WorksetsInstance as Me } from "./extension.js"
+// import Meta from "gi://Meta"
 import Shell from "gi://Shell"
 import GLib from "gi://GLib"
 
@@ -122,7 +121,8 @@ export class WorkspaceManager {
                 }
             }, this )
 
-            //If there's not any active on the workspace, load any that are set to default here, or just display the background/favourites from the default
+            // If there's not any active on the workspace,
+            // load any that are set to default here, or just display the background/favourites from the default
             if ( foundActive === false ) this.loadDefaultWorksets()
 
             this._workspaceUpdate()
@@ -221,7 +221,8 @@ export class WorkspaceManager {
             windows.forEach( function ( w ) {
                 let id = windowTracker.get_window_app( w ).get_id()
 
-                // Snap installed applications are launched as window backed so need to get the hint that is set for ubuntus BAMF daemon from the apps environment vars
+                // Snap installed applications are launched as window backed,
+                // so need to get the hint that is set for ubuntus BAMF daemon from the apps environment vars
                 // Possible alternative if the BAMF method proves unreliable: Shell.AppSystem.search(w.get_wm_class_instance())
                 if ( id.indexOf( "window:" ) > -1 ) {
                     let env = GLib.spawn_command_line_sync( "ps e " + w.get_pid() )[1].toString().toLowerCase()
@@ -309,12 +310,14 @@ export class WorkspaceManager {
 "bash",
 "-c",
 cmd]
-        utils.spawnWithCallback( null, args, GLib.get_environ(), 0, null,
+        utils.spawnWithCallback(
+ null, args, GLib.get_environ(), 0, null,
             ( stdout ) => {
                 try {
                     if ( !stdout ) return
                     dev.log( "Workspace switched command output:", stdout )
                 } catch ( e ) { dev.log( e ) }
-            } )
+            }
+)
     }
 }

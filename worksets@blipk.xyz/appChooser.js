@@ -28,21 +28,24 @@
 "use strict"
 
 // External imports
-import GObject from "gi://GObject"
 import GLib from "gi://GLib"
 import Gtk from "gi://Gtk?version=3.0"
 import Gio from "gi://Gio"
-import Gdk from "gi://Gdk?version=3.0"
 
 // Find the root datadir of the extension
-export function get_datadir() {
+export function getDatadirFromErrorStack() {
     const m = /@(.+):\d+/.exec( ( new Error() ).stack.split( "\n" )[1] )
     const p = m[1].split( ":" )[1]
     return Gio.File.new_for_path( p ).get_parent().get_parent().get_path()
 }
 
-window.worksets = { extdatadir: GLib.build_filenamev( [get_datadir(),
-"worksets@blipk.xyz"] ) }
+window.worksets = {
+    extdatadir: GLib.build_filenamev( [
+        getDatadirFromErrorStack(),
+        "worksets@blipk.xyz"
+    ] )
+}
+let worksets = window.worksets
 imports.searchPath.unshift( worksets.extdatadir )
 
 worksets.metadata = ( () => {
@@ -159,7 +162,7 @@ export class worksetsAppChooser {
             this.application.activate()
             return 0
         } catch ( e ) {
-            logError( e )
+            console.error( e )
             return 1
         }
     }
