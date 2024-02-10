@@ -11,6 +11,7 @@ import json
 import shutil
 from pprint import pprint
 
+
 def main(extension_directory: str, output_directory: str | None = None):
     if not os.path.isdir(extension_directory):
         print(
@@ -79,14 +80,23 @@ def main(extension_directory: str, output_directory: str | None = None):
                     new_class_contents = "import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';\n\n"
                     extension_imported = True
 
-                main_function_matches = [em for em in ext_matches if "enable" in em.groups(0) or "disable" in em.groups(0)]
-
+                main_function_matches = [
+                    em
+                    for em in ext_matches
+                    if "enable" in em.groups(0) or "disable" in em.groups(0)
+                ]
 
                 new_class_contents += f"export let {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\nexport default class {extension_class_name} extends Extension {{\n\n"
                 new_class_contents += (
                     "\n\n".join(
                         [
-                            em.string[em.start() : em.end()].replace("function", "").replace(em.groupdict()["fn_start"], em.groupdict()["fn_start"] + f"\n    {extension_class_name}Instance = this;\n\n")
+                            em.string[em.start() : em.end()]
+                            .replace("function", "")
+                            .replace(
+                                em.groupdict()["fn_start"],
+                                em.groupdict()["fn_start"]
+                                + f"\n    {extension_class_name}Instance = this;\n\n",
+                            )
                             for em in main_function_matches
                         ]
                     )
@@ -214,12 +224,17 @@ def main(extension_directory: str, output_directory: str | None = None):
                             s, e = import_use_match.span()
                             match_text = import_use_match.string[s:e]
                             if "extensionUtils" in match_text:
-                                if not module_imported and not file_name == "extension.js":
+                                if (
+                                    not module_imported
+                                    and not file_name == "extension.js"
+                                ):
                                     # new_import_target += f"\nimport * as {extension_import_name}Module from './extension.js'; \nconst {extension_import_name} = {extension_import_name}Module.{extension_class_name}Instance;\n"
                                     new_import_target += f"import {{ {extension_class_name}Instance as Me }} from './extension.js';"
                                     module_imported = True
                                 if "getSettings" in match_text:
-                                    usage = "this" if file_name == "extension.js" else "Me"
+                                    usage = (
+                                        "this" if file_name == "extension.js" else "Me"
+                                    )
                                     import_use_remaps.append(
                                         (
                                             f"extensionUtils.getSettings({import_use_match_groups['fn_args']})",
@@ -271,7 +286,7 @@ def main(extension_directory: str, output_directory: str | None = None):
                 ("\nvar", "\nexport var"),
                 ("imports.byteArray.toString(", "new TextDecoder().decode("),
                 ("byteArray.toString(", "new TextDecoder().decode("),
-                ("ByteArray.toString(", "new TextDecoder().decode(")
+                ("ByteArray.toString(", "new TextDecoder().decode("),
             ]
 
             for old_text, new_text in import_use_remaps:

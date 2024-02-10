@@ -1,4 +1,4 @@
-#!/usr/bin/env gjs
+#!/usr/bin/env -S gjs -m
 
 /*
  * Customised Workspaces extension for Gnome 3
@@ -39,8 +39,9 @@ import Gdk from 'gi://Gdk?version=3.0';
 
 // Find the root datadir of the extension
 export function get_datadir() {
-    let m = /@(.+):\d+/.exec((new Error()).stack.split('\n')[1]);
-    return Gio.File.new_for_path(m[1]).get_parent().get_parent().get_path();
+    const m = /@(.+):\d+/.exec((new Error()).stack.split('\n')[1]);
+    const p = m[1].split(":")[1]
+    return Gio.File.new_for_path(p).get_parent().get_parent().get_path();
 }
 
 window.worksets = { extdatadir: GLib.build_filenamev([get_datadir(), 'worksets@blipk.xyz']) };
