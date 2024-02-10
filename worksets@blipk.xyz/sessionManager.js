@@ -252,13 +252,16 @@ export class SessionManager {
         Me.worksetsIndicator = new panelIndicator.WorksetsIndicator();
         Me.worksetsIndicator.show();
     }
-    _validateSession() {
+    _validateSession(saveSession = true) {
         try {
             if (utils.isEmpty(this.activeSession.Default))
                 this.activeSession.Default = this.Worksets[0].WorksetName;
             if (typeof this.SessionName !== 'string')
                 this.SessionName = 'Default';
 
+            this.activeSession.Worksets = this.Worksets;
+            this.activeSession.workspaceMaps = this.workspaceMaps;
+            this.activeSession.SessionName = this.SessionName;
             // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
             //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
             let filteredWorksets;
@@ -295,7 +298,7 @@ export class SessionManager {
                     this.workspaceMaps[workspaceMapKey].currentWorkset = '';
             }, this);
 
-            this.saveSession();
+            if (saveSession) this.saveSession();
         } catch (e) { dev.log(e) }
     }
     loadSession(sessionsObject) {
@@ -311,9 +314,7 @@ export class SessionManager {
         try {
             if (utils.isEmpty(this.activeSession)) return;
             this._saveOptions();
-            this.activeSession.Worksets = this.Worksets;
-            this.activeSession.workspaceMaps = this.workspaceMaps;
-            this.activeSession.SessionName = this.SessionName;
+            this._validateSession(false);
 
             let sessionCopy = JSON.parse(JSON.stringify(this.activeSession));
             let timestamp = new Date().toLocaleString().replace(/[^a-zA-Z0-9-. ]/g, '').replace(/ /g, '');
