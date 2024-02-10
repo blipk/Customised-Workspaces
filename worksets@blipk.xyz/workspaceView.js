@@ -36,13 +36,10 @@ import * as layout from "resource:///org/gnome/shell/ui/layout.js"
 import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
 import GDesktopEnums from "gi://GDesktopEnums"
-import GObject from "gi://GObject"
 import Meta from "gi://Meta"
-import Shell from "gi://Shell"
 import GLib from "gi://GLib"
 import St from "gi://St"
 import Clutter from "gi://Clutter"
-import Gtk from "gi://Gtk"
 import Gio from "gi://Gio"
 
 // Internal imports
@@ -50,7 +47,6 @@ import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./uiUtils.js"
-import * as sessionManager from "./sessionManager.js"
 
 export class WorkspaceViewManager {
     constructor() {
@@ -360,7 +356,7 @@ export class WorkspaceViewManager {
             } )
             this.wsvWorkspaces[i]._worksetOverlayBox.add_child( iconsBox )
 
-            let icon_options = {
+            let iconOptions = {
                 style_class: "overlay-icon", icon_size: 24
             }
 
@@ -370,20 +366,20 @@ export class WorkspaceViewManager {
                     Me.session.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.toggleMenu() : null
                     Me.session.activeSession.Options.ShowPanelIndicator = true
                     Me.session.applySession()
-                }, icon_options, { msg: "Customised Workspaces options menu" } )
+                }, iconOptions, { msg: "Customised Workspaces options menu" } )
 
             // Action buttons for custom workspaces
             if ( workset ) {
-                uiUtils.createIconButton( iconsBox, "document-edit-symbolic", () => { Me.session.editWorkset( workset ) }, icon_options, { msg: "Edit '" + workset.WorksetName + "'" } )
-                uiUtils.createIconButton( iconsBox, "image-x-generic-symbolic", () => { Me.session.setWorksetBackgroundImage( workset, Me.session.isDarkMode ) }, icon_options, { msg: "Change the background for '" + workset.WorksetName + "'" } )
-                uiUtils.createIconButton( iconsBox, "window-close-symbolic", () => { Me.session.closeWorkset( workset ); Me.workspaceViewManager.refreshThumbnailBoxes() }, icon_options, { msg: "Disengage '" + workset.WorksetName + "'" } )
+                uiUtils.createIconButton( iconsBox, "document-edit-symbolic", () => { Me.session.editWorkset( workset ) }, iconOptions, { msg: "Edit '" + workset.WorksetName + "'" } )
+                uiUtils.createIconButton( iconsBox, "image-x-generic-symbolic", () => { Me.session.setWorksetBackgroundImage( workset, Me.session.isDarkMode ) }, iconOptions, { msg: "Change the background for '" + workset.WorksetName + "'" } )
+                uiUtils.createIconButton( iconsBox, "window-close-symbolic", () => { Me.session.closeWorkset( workset ); Me.workspaceViewManager.refreshThumbnailBoxes() }, iconOptions, { msg: "Disengage '" + workset.WorksetName + "'" } )
             }
 
             // Image for empty workspace thumbnail
             if ( !workset /* && Me.workspaceManager.NumGlobalWorkspaces == i+1 */ ) {
                 uiUtils.createIconButton( iconsBox, "document-new-symbolic", () => {
                     Me.workspaceManager.switchToWorkspace( i ); Me.session.newWorkset( null, true, true )
-                }, icon_options, { msg: "Create new custom workspace here" } )
+                }, iconOptions, { msg: "Create new custom workspace here" } )
 
                 let btn = uiUtils.createIconButton( iconsBox, "go-jump-symbolic", () => {
                     try {
@@ -459,7 +455,7 @@ export class WorkspaceViewManager {
                         this.signals.add( GLib.timeout_add( null, 5000, () => { if ( !utils.isEmpty( btn.menu ) ) btn.menu.bye(); return false } ) )
                         btn.menu.open()
                     } catch ( e ) { dev.log( e ) }
-                }, icon_options, { msg: "Choose a custom workspace to load here" } )
+                }, iconOptions, { msg: "Choose a custom workspace to load here" } )
                 btn.connect( "destroy", () => { if ( btn.menu ) btn.menu.bye() } )
             }
         } catch ( e ) { dev.log( e ) }

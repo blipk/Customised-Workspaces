@@ -260,9 +260,6 @@ export class SessionManager {
             if ( typeof this.SessionName !== "string" )
                 this.SessionName = "Default"
 
-            this.activeSession.Worksets = this.Worksets
-            this.activeSession.workspaceMaps = this.workspaceMaps
-            this.activeSession.SessionName = this.SessionName
             // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
             //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
             let filteredWorksets
@@ -271,11 +268,11 @@ export class SessionManager {
                 if ( !Array.isArray( worksetBuffer.FavApps ) ) worksetBuffer.FavApps = []
                 if ( typeof worksetBuffer.WorksetName !== "string" ) worksetBuffer.WorksetName = "Workset " + ii
 
-                if ( typeof worksetBuffer.BackgroundImage !== "string" ) worksetBuffer.BackgroundImage = this.getBackground()
-                if ( typeof worksetBuffer.BackgroundImageDark !== "string" ) worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage
+                if ( typeof worksetBuffer.BackgroundImage !== "string" || !worksetBuffer.BackgroundImage ) worksetBuffer.BackgroundImage = this.getBackground()
+                if ( typeof worksetBuffer.BackgroundImageDark !== "string" || !worksetBuffer.BackgroundImageDark ) worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage
 
-                if ( typeof worksetBuffer.BackgroundStyle !== "string" ) worksetBuffer.BackgroundStyle = "ZOOM"
-                if ( typeof worksetBuffer.BackgroundStyleDark !== "string" ) worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
+                if ( typeof worksetBuffer.BackgroundStyle !== "string" || !worksetBuffer.BackgroundStyle ) worksetBuffer.BackgroundStyle = "ZOOM"
+                if ( typeof worksetBuffer.BackgroundStyleDark !== "string" || !worksetBuffer.BackgroundStyleDark ) worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
 
                 // Remove duplicate entries
                 filteredWorksets = this.Worksets.filter( function ( item ) {
@@ -287,6 +284,9 @@ export class SessionManager {
 
             // Apply
             this.Worksets = filteredWorksets
+            this.activeSession.Worksets = this.Worksets
+            this.activeSession.workspaceMaps = this.workspaceMaps
+            this.activeSession.SessionName = this.SessionName
 
             // Clean workspace maps
             let worksetNames = []

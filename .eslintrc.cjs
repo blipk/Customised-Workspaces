@@ -40,9 +40,10 @@ module.exports = {
         "ngettext": false
     },
     rules: {
+
         "space-in-parens": ["error", "always"],
-        semi: ["error", "never"],
-        "@typescript-eslint/semi": ["error", "never"],
+        "func-names": ["warn"],
+        "semi": ["error", "never"],
         // "no-underscore-dangle": ["warn"],
         "key-spacing": ["error", {
             align: {
@@ -53,11 +54,9 @@ module.exports = {
         }],
         "no-multi-spaces": ["error", { exceptions: { VariableDeclarator: true } }],
         "func-names": ["error", "as-needed"],
-        "import/extensions": ["error", "never", { vue: "always" }],
-        quotes: ["error", "double"],
-        "@typescript-eslint/quotes": ["error", "double"],
+        "quotes": ["error", "double"],
         "max-len": ["error", { code: 150 }],
-        camelcase: ["error", {
+        "camelcase": ["error", {
             ignoreImports: true, ignoreDestructuring: true, properties: "never", allow: ["__"],
         }],
     },
