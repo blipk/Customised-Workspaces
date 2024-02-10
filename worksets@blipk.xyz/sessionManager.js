@@ -28,7 +28,7 @@
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
 import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
-import { WorksetsInstance as Me } from "./extension.js";import * as util from "resource:///org/gnome/shell/misc/util.js"
+import { WorksetsInstance as Me } from "./extension.js"; import * as util from "resource:///org/gnome/shell/misc/util.js"
 import GObject from "gi://GObject"
 import GDesktopEnums from "gi://GDesktopEnums"
 import Gio from "gi://Gio"
@@ -72,7 +72,9 @@ export class SessionManager {
             this.signals.add( appFavorites.getAppFavorites(), "changed", () => { this._favoritesChanged() } )
 
             // Make sure our GTK App chooser is executable
-            util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
+            util.spawn( ["chmod",
+"+x",
+fileUtils.APP_CHOOSER_EXEC()] )
 
             // Create sesion or initialize from session file if it exists
             if ( fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" ) ) {
@@ -520,7 +522,9 @@ export class SessionManager {
     setWorksetBackgroundImage( workset, darkMode = false ) {
         try {
             let msg = darkMode ? "Dark Mode" : "Light Mode"
-            utils.spawnWithCallback( null, ["/usr/bin/zenity", "--file-selection", "--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
+            utils.spawnWithCallback( null, ["/usr/bin/zenity",
+"--file-selection",
+"--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
                 ( resource ) => {
                     try {
                         if ( !resource ) return
@@ -611,7 +615,8 @@ export class SessionManager {
 
             if ( !name ) {
                 let timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
-                let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } }, { label: "Done", default: true }]
+                let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
+{ label: "Done", default: true }]
                 let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
                     if ( !returnText ) return
                     returnText = returnText.trim()
@@ -665,11 +670,15 @@ export class SessionManager {
             let workspaceOptionsEditables = [{ Workspace0: "First", Workspace1: "Second", Workspace2: "Third", Workspace3: "Fourth", Workspace4: "Fifth" }]
             let workspaceOptionsEditables2 = [{ Workspace5: "Sixth", Workspace6: "Seventh", Workspace7: "Eighth", Workspace8: "Ninth", Workspace9: "Tenth" }]
 
-            let editables = [{ WorksetName: "Name" }, { BackgroundImage: " ", hidden: true },
-            { workSpaceOptionsLabel: "Opens on these workspaces automatically:", labelOnly: true },
-            { workSpaceOptions: " ", subObjectEditableProperties: workspaceOptionsEditables },
-            { workSpaceOptions2: " ", subObjectEditableProperties: workspaceOptionsEditables2 }]
-            let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.returnObject = false, this.close( true ) } }, { label: "Done", default: true }]
+            let editables = [
+                { WorksetName: "Name" },
+{ BackgroundImage: " ", hidden: true },
+                { workSpaceOptionsLabel: "Opens on these workspaces automatically:", labelOnly: true },
+                { workSpaceOptions: " ", subObjectEditableProperties: workspaceOptionsEditables },
+                { workSpaceOptions2: " ", subObjectEditableProperties: workspaceOptionsEditables2 }
+            ]
+            let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.returnObject = false, this.close( true ) } },
+{ label: "Done", default: true }]
 
             let editObjectChooseDialog = new uiUtils.ObjectEditorDialog( "Editing: " + worksetIn.WorksetName, ( returnObject ) => {
                 if ( !returnObject ) return

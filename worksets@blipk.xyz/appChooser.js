@@ -41,7 +41,8 @@ export function get_datadir() {
     return Gio.File.new_for_path( p ).get_parent().get_parent().get_path()
 }
 
-window.worksets = { extdatadir: GLib.build_filenamev( [get_datadir(), "worksets@blipk.xyz"] ) }
+window.worksets = { extdatadir: GLib.build_filenamev( [get_datadir(),
+"worksets@blipk.xyz"] ) }
 imports.searchPath.unshift( worksets.extdatadir )
 
 worksets.metadata = ( () => {
@@ -66,7 +67,8 @@ export class worksetsAppChooser {
 
         // Extension
         const GioSSS = Gio.SettingsSchemaSource
-        let schemaDir = GLib.build_pathv( "/", [worksets.extdatadir, "schemas"] )
+        let schemaDir = GLib.build_pathv( "/", [worksets.extdatadir,
+"schemas"] )
         let schemaSource = GioSSS.new_from_directory( schemaDir, GioSSS.get_default(), false )
         let schemaObj = schemaSource.lookup( worksets.metadata["settings-schema"], true )
         this.settings = new Gio.Settings( { settings_schema: schemaObj } )

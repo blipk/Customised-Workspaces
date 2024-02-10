@@ -305,7 +305,10 @@ export class WorkspaceManager {
 
     spawnOnSwitch( workset ) {
         const cmd = Me.session.activeSession.Options.CliSwitch.replaceAll( "$CWORKSPACE", workset.WorksetName )
-        const args = ["/usr/bin/env", "bash", "-c", cmd]
+        const args = ["/usr/bin/env",
+"bash",
+"-c",
+cmd]
         utils.spawnWithCallback( null, args, GLib.get_environ(), 0, null,
             ( stdout ) => {
                 try {

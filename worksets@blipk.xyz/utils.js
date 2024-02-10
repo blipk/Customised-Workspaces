@@ -51,8 +51,34 @@ export function truncateString( instring, length = 50 ) {
     return shortened
 }
 
-const special = ["zeroth", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelvth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"]
-const deca = ["twent", "thirt", "fourt", "fift", "sixt", "sevent", "eight", "ninet"]
+const special = ["zeroth",
+"first",
+"second",
+"third",
+"fourth",
+"fifth",
+"sixth",
+"seventh",
+"eighth",
+"ninth",
+"tenth",
+"eleventh",
+"twelvth",
+"thirteenth",
+"fourteenth",
+"fifteenth",
+"sixteenth",
+"seventeenth",
+"eighteenth",
+"nineteenth"]
+const deca = ["twent",
+"thirt",
+"fourt",
+"fift",
+"sixt",
+"sevent",
+"eight",
+"ninet"]
 export function stringifyNumber( n ) {
     n = parseInt( n )
     if ( n < 20 ) return special[n]
@@ -76,7 +102,8 @@ if ( !Object.prototype.hasOwnProperty( "forEachEntry" ) ) {
             thisArg = thisArg || this
 
             Object.entries( this ).forEach( function ( entryArray, entryIndex ) {
-                let [key, value] = entryArray
+                let [key,
+value] = entryArray
                 let entryObj = { [key]: this[key] }
                 let retIndex = entryIndex + recursiveIndex
                 callback.call( thisArg, key, this[key], retIndex, entryObj, entryArray, this )
@@ -139,7 +166,11 @@ export function splitURI( inURI ) {
 // Based on https://github.com/optimisme/gjs-examples/blob/master/assets/spawn.js.
 // https://github.com/p-e-w/argos/blob/master/argos%40pew.worldwidemann.com/utilities.js
 export function spawnWithCallback( workingDirectory, argv, envp, flags, childSetup, callback ) {
-    let [success, pid, stdinFile, stdoutFile, stderrFile] = GLib.spawn_async_with_pipes(
+    let [success,
+pid,
+stdinFile,
+stdoutFile,
+stderrFile] = GLib.spawn_async_with_pipes(
         workingDirectory, argv, envp, flags, childSetup )
 
     if ( !success )

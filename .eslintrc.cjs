@@ -40,7 +40,7 @@ module.exports = {
         "ngettext": false
     },
     rules: {
-
+        "array-element-newline": ["error", "always"],
         "space-in-parens": ["error", "always"],
         "func-names": ["warn"],
         "semi": ["error", "never"],

@@ -51,7 +51,8 @@ import * as fileUtils from "./fileUtils.js"
 export function createIconButton( parentItem, iconNames, callback, options, tooltip ) { //St.Side.RIGHT
     try {
         if ( Array.isArray( iconNames ) )
-            var [iconNameURI, alternateIconName] = iconNames
+            var [iconNameURI,
+alternateIconName] = iconNames
         else iconNameURI = iconNames
         let defaults = {
             icon_name   : iconNameURI,
@@ -83,7 +84,9 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
         iconButton.enterEvent = iconButton.connect( "enter-event", () => { if ( alternateIconName ) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP } )
         iconButton.pressEvent = iconButton.connect( "button-press-event", () => { iconButton.focus = true; return Clutter.EVENT_STOP } )
         iconButton.releaseEvent = iconButton.connect( "button-release-event", () => { if ( iconButton.focus == true ) callback(); return Clutter.EVENT_STOP } )
-        parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent, iconButton.releaseEvent, iconButton.leaveEvent] )
+        parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent,
+iconButton.releaseEvent,
+iconButton.leaveEvent] )
         parentItem.destroyIconButtons = function () {
             parentItem.iconButtons.forEach( function ( iconButton ) {
                 //iconButton.destroy();
@@ -217,12 +220,14 @@ export function setImage( parent, imgFilePath = "" ) {
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file( imgFilePath )
             } catch( e ) {
                 if ( e instanceof GLib.FileError && e.message.includes( "No such file or directory" ) )
-                    return [null, e]
+                    return [null,
+e]
                 else
                     throw e
             }
             if ( pixbuf === null ) // file doesnt exist
-                return [( imgFilePath = "" ), new Error( "Null pixbuf" )]
+                return [( imgFilePath = "" ),
+new Error( "Null pixbuf" )]
 
             const { width, height } = pixbuf
             if ( height == 0 ) return
@@ -246,7 +251,8 @@ export function setImage( parent, imgFilePath = "" ) {
         parent.height = 150
 
         knownImages[imgFilePath] = image
-        return [image, error]
+        return [image,
+error]
     } catch ( e ) { dev.log( e ) }
 }
 
@@ -385,7 +391,8 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
 
                     let btn = createIconButton( headerLabelArea, "document-open-symbolic", () => {
                         this.close()
-                        util.spawn( ["xdg-open", jsobjectsSearchDirectories[0]] )
+                        util.spawn( ["xdg-open",
+jsobjectsSearchDirectories[0]] )
                         btn.destroy()
                     }, { icon_size: 20, style_class: "open-backups-icon" }, { leaveFadeTime: 0.7, disappearTime: 4400, delay: 400, force: true, msg: "Open folder to manage backups (" + jsobjectsSearchDirectories[0] + ")" } )
                 }, this )
@@ -504,7 +511,8 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
             this._errorMessage.set_text( message )
 
             if ( !this._errorBox.visible ) {
-                let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
+                let [errorBoxMinHeight,
+errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
                 let parentActor = this._errorBox.get_parent()
                 parentActor.ease( {
                     height     : parentActor.height + errorBoxNaturalHeight, time       : DIALOG_GROW_TIME, transition : "easeOutQuad",
@@ -739,7 +747,8 @@ export var ObjectEditorDialog = GObject.registerClass( {
                             // Toggling Function
                             function togglingFunction() {
                                 // subObjectToggleValidationCallback will return values to set for any other bool in the subobject and whether to toggle the current one
-                                let [allowed, boolValues] = subObjectToggleValidationCallback.call( this, value, n )
+                                let [allowed,
+boolValues] = subObjectToggleValidationCallback.call( this, value, n )
                                 if ( !boolValues ) boolValues = Object.values( value )
                                 if ( allowed ) boolValues[n] = value[subobjectKey] = value[subobjectKey] ? false : true
                                 this._propertyBoxes[i]._boolBox.forEach( function ( box, x ) {
@@ -806,7 +815,8 @@ export var ObjectEditorDialog = GObject.registerClass( {
             this._errorMessage.set_text( message )
 
             if ( !this._errorBox.visible ) {
-                let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
+                let [errorBoxMinHeight,
+errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
                 let parentActor = this._errorBox.get_parent()
                 parentActor.ease( {
                     height     : parentActor.height + errorBoxNaturalHeight, time       : DIALOG_GROW_TIME, transition : "easeOutQuad",

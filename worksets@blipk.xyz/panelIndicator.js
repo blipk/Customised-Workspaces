@@ -125,7 +125,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                     break
                 case "CliSwitch":
                     apply = () => {
-                        const buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } }, { label: "Done", default: true }]
+                        const buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
+{ label: "Done", default: true }]
                         const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
                         const getWorksetSwitchCLIArgs = new uiUtils.ObjectInterfaceDialog( dialogMsg,
                             ( returnText ) => {
@@ -244,7 +245,8 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             // Create iconbuttons on MenuItem
             let activeIndex = Me.session.getWorksetActiveIndex( menuItem.workset )
-            let icondefault_nameuri = ( Me.session.activeSession.Default == menuItem.workset.WorksetName ) ? "starred-symbolic" : ["non-starred-symbolic", "starred-symbolic"]
+            let icondefault_nameuri = ( Me.session.activeSession.Default == menuItem.workset.WorksetName ) ? "starred-symbolic" : ["non-starred-symbolic",
+"starred-symbolic"]
             let iconOpenNew_nameuri = ( activeIndex > -1 ) ? "window-close-symbolic" : "window-new-symbolic"
             let iconOpenHere_nameuri = ( activeIndex > -1 ) ? "view-reveal-symbolic" : "go-jump-symbolic"
             let openCloseCommand = ( activeIndex > -1 )
@@ -359,7 +361,8 @@ export var WorksetsIndicator = GObject.registerClass( {
             // Background info
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem( { style_class: "bg-display" } )
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
-            const [ img, error ] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
+            const [ img,
+error ] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
             if ( error && error.message.includes( "No such file or directory" ) ) {
                 Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
                 Me.session.applySession()
@@ -385,7 +388,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                     btnDarkMode.viewingDarkMode = btnDarkMode.icon.icon_name === "night-light-symbolic" ? true : false
                     btnDarkMode.viewingDarkMode = !btnDarkMode.viewingDarkMode
                     btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? "night-light-symbolic" : "weather-clear-symbolic"
-                    const [ img, error ] = uiUtils.setImage( menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
+                    const [ img,
+error ] = uiUtils.setImage( menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
                     if ( error && error.message.includes( "No such file or directory" ) ) {
                         btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
                         Me.session.applySession()
@@ -466,7 +470,9 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.infoMenuButton.setOrnament( popupMenu.Ornament.DOT )
             let addApps = () => {
                 this.menu.toggle()
-                utils.spawnWithCallback( null, [fileUtils.APP_CHOOSER_EXEC(), "-w", menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
+                utils.spawnWithCallback( null, [fileUtils.APP_CHOOSER_EXEC(),
+"-w",
+menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
                     ( resource ) => {
                         try {
                             if ( !resource ) return
@@ -492,7 +498,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                 menuItem.favAppsMenuItems[i].label.set_x_expand( true )
                 uiUtils.createTooltip( menuItem.favAppsMenuItems[i], { msg: "Click to launch '" + displayName + "'" } )
                 menuItem.favAppsMenuItems[i].connect( "activate", () => {
-                    let [success, argv] = GLib.shell_parse_argv( exec.replace( "%u", " " ).replace( "%U", " " ) )
+                    let [success,
+argv] = GLib.shell_parse_argv( exec.replace( "%u", " " ).replace( "%U", " " ) )
                     util.spawn( argv )
                     // To do get pid and use AppSystem to focus window - same with the bgmenu editor
                 } )

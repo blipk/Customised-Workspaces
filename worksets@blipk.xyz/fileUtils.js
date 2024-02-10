@@ -38,10 +38,16 @@ export var USER_CONF_DIR = GLib.get_user_config_dir()
 export var USER_CACHE_DIR = GLib.get_user_cache_dir()
 export var USER_DATA_DIR = GLib.get_user_data_dir()
 export var SYS_DATA_DIRS = GLib.get_system_data_dirs()
-export var INSTALL_DIR = () => GLib.build_pathv( "/", [USER_DATA_DIR, "gnome-shell", "extensions", Me.uuid] )
-export var RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
-export var CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
-export var APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "appChooser.js"] )
+export var INSTALL_DIR = () => GLib.build_pathv( "/", [USER_DATA_DIR,
+"gnome-shell",
+"extensions",
+Me.uuid] )
+export var RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(),
+"res"] )
+export var CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR,
+Me.uuid] )
+export var APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(),
+"appChooser.js"] )
 
 export function checkExists( path ) {
     let result = false
@@ -96,7 +102,8 @@ export function enumarateDirectoryChildren( directory = null, returnFiles = true
 
 export function saveToFile( object, filename, directory = null, raw = false, append = false, async = false ) {
     directory = directory || CONF_DIR()
-    let savePath = GLib.build_filenamev( [directory, filename] )
+    let savePath = GLib.build_filenamev( [directory,
+filename] )
     let outBuff
     if ( raw ) outBuff = object.toString()
     else outBuff = JSON.stringify( object, null, 1 )
@@ -135,7 +142,8 @@ export function aSyncSaveCallback( obj, res, contents ) {
 
 export function loadJSObjectFromFile( filename = CONF_FILE, directory = null, callback = null, async = false ) {
     directory = directory || CONF_DIR()
-    let loadPath = GLib.build_filenamev( [directory, filename] )
+    let loadPath = GLib.build_filenamev( [directory,
+filename] )
     let jsobject
 
     let file = Gio.file_new_for_path( loadPath )
@@ -147,7 +155,8 @@ export function loadJSObjectFromFile( filename = CONF_FILE, directory = null, ca
         file.query_info_async( "*", Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, function ( src, res ) {
             let file_info = src.query_info_finish( res )
             file.load_contents_async( null, function ( obj, res ) {
-                let [success, contents] = obj.load_contents_finish( res )
+                let [success,
+contents] = obj.load_contents_finish( res )
                 if ( success ) {
                     jsobject = JSON.parse( new TextDecoder().decode( contents ) )
                     if ( jsobject === undefined ) { throw SyntaxError( "Error parseing file contents to JS Object. Syntax Error?" ) }
