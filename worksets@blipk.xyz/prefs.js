@@ -25,27 +25,24 @@
  */
 
 // External imports
-const { GLib, Gtk } = imports.gi
-const { extensionUtils } = imports.misc
+import Adw from "gi://Adw"
 
-// Internal imports
-const Me = extensionUtils.getCurrentExtension()
-const { dev } = Me.imports
+import { ExtensionPreferences, gettext as _ } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js"
 
-function init() {
-    Me.settings = extensionUtils.getSettings( "org.gnome.shell.extensions.worksets" )
-    Me.settings.set_boolean( "show-panel-indicator", false )
-    Me.settings.set_boolean( "show-panel-indicator", true )
-}
 
-function buildPrefsWidget() {
-    let prefsWidget = new Gtk.Label( { label: "Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there.", visible: true } )
+export default class MyExtensionPreferences extends ExtensionPreferences {
+    fillPreferencesWindow( window ) {
+        this.settings = this.getSettings( "org.gnome.shell.extensions.worksets" )
+        window._settings = this.getSettings()
+        this.settings.set_boolean( "show-panel-indicator", false )
+        this.settings.set_boolean( "show-panel-indicator", true )
 
-    if ( !prefsWidget.get_toplevel ) return prefsWidget
-    GLib.timeout_add( 0, null, () => {
-        let window = prefsWidget.get_toplevel()
-        let hb = window.get_titlebar()
-        hb.title = `${Me.metadata.name} Preferences`
-    } )
-    return prefsWidget
+        const page = new Adw.PreferencesPage( { title: `${this.metadata.name} Preferences` } )
+
+        const group = new Adw.PreferencesGroup( {
+            title: _( "Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there." ),
+        } )
+        page.add( group )
+        window.add( page )
+    }
 }
