@@ -83,7 +83,7 @@ export default class Worksets extends Extension {
         // Spawn session
         this.session = new sessionManager.SessionManager()
 
-        dev.log( scopeName, "@~..........|" )
+        dev.log( scopeName, "@~.........|" )
     } catch ( e ) {
         dev.log( scopeName, e )
         throw e // Allow gnome-shell to still catch extension exceptions
