@@ -46,7 +46,7 @@ import * as uiUtils from './uiUtils.js';
 import * as fileUtils from './fileUtils.js';
 import * as workspaceManager from './workspaceManager.js';
 
-var WorksetsIndicator = GObject.registerClass({
+export var WorksetsIndicator = GObject.registerClass({
     GTypeName: 'WorksetsIndicator'
 }, class WorksetsIndicator extends panelMenu.Button {
     _init() {
@@ -265,10 +265,9 @@ var WorksetsIndicator = GObject.registerClass({
             menuItem.favAppsMenuItems = [];
 
             //if (activeIndex > -1) {
-            menuItem._ornamentLabel.text = '';
-            menuItem._ornamentIcon = new St.BoxLayout({ style_class: 'popup-menu-icon-ornament' });
-            menuItem.replace_child(menuItem._ornamentLabel, menuItem._ornamentIcon);
-            let icon = uiUtils.createIconButton(menuItem._ornamentIcon, iconOpenHere_nameuri, () => { Me.session.displayWorkset(menuItem.workset); this._refreshMenu(); }, { icon_size: 14 }, { msg: viewOpenMessage });
+            let ornamentIcon = new St.BoxLayout({  });
+            menuItem.replace_child(menuItem._ornamentIcon, ornamentIcon);
+            let icon = uiUtils.createIconButton(ornamentIcon, iconOpenHere_nameuri, () => { Me.session.displayWorkset(menuItem.workset); this._refreshMenu(); }, { icon_size: 14 }, { msg: viewOpenMessage });
             icon.translation_x = 3.5;
 
             //Default and currently active always up the top
@@ -360,7 +359,11 @@ var WorksetsIndicator = GObject.registerClass({
             // Background info
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem({ style_class: 'bg-display' });
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT;
-            uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+            const [ img, error ] = uiUtils.setImage(menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+            if (error && error.message.includes("No such file or directory")) {
+                Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
+                Me.session.applySession()
+            }
             viewArea.addMenuItem(menuItem.bgMenuButton);
 
             let backgroundStyleOptionsBox = new St.BoxLayout({
@@ -382,7 +385,11 @@ var WorksetsIndicator = GObject.registerClass({
                     btnDarkMode.viewingDarkMode = btnDarkMode.icon.icon_name === 'night-light-symbolic' ? true : false;
                     btnDarkMode.viewingDarkMode = !btnDarkMode.viewingDarkMode
                     btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? 'night-light-symbolic' : 'weather-clear-symbolic';
-                    uiUtils.setImage(menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+                    const [ img, error ] = uiUtils.setImage(menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage)
+                    if (error && error.message.includes("No such file or directory")) {
+                        btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
+                        Me.session.applySession()
+                    }
                     modeText = btnDarkMode.viewingDarkMode ? 'Dark Mode' : 'Light Mode'
                     btnDarkMode.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
                     //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"

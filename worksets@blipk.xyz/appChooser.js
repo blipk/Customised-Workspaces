@@ -48,7 +48,7 @@ imports.searchPath.unshift(worksets.extdatadir);
 
 worksets.metadata = (() => {
     let data = GLib.file_get_contents(worksets.extdatadir + '/metadata.json')[1];
-    return JSON.parse(ByteArray.toString(data));
+    return JSON.parse(new TextDecoder().decode(data));
 })();
 worksets.app_id = worksets.metadata['application-id'];
 worksets.app_path = worksets.metadata['resource-path'];

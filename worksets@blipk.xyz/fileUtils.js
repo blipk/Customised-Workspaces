@@ -149,7 +149,7 @@ export function loadJSObjectFromFile(filename = CONF_FILE, directory = null, cal
             file.load_contents_async(null, function (obj, res) {
                 let [success, contents] = obj.load_contents_finish(res);
                 if (success) {
-                    jsobject = JSON.parse(ByteArray.toString(contents));
+                    jsobject = JSON.parse(new TextDecoder().decode(contents));
                     if (jsobject === undefined) { throw SyntaxError('Error parseing file contents to JS Object. Syntax Error?'); }
                     callback(jsobject);
                 }
@@ -159,7 +159,7 @@ export function loadJSObjectFromFile(filename = CONF_FILE, directory = null, cal
         //let buffer = file.load_contents(null, null, null);
         let buffer = file.load_contents(null);
         let contents = buffer[1];
-        jsobject = JSON.parse(ByteArray.toString(contents));
+        jsobject = JSON.parse(new TextDecoder().decode(contents));
         if (jsobject === undefined) { throw SyntaxError('Error parseing file contents to JS Object. Syntax Error.'); }
     }
 

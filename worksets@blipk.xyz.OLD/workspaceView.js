@@ -316,7 +316,7 @@ class WorkspaceViewManager {
             this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout({
                 style_class: 'workspace-overlay',
                 x_align: Clutter.ActorAlign.FILL, x_expand: true,
-                y_align: Clutter.ActorAlign.START, y_expand: false,
+                y_align: Clutter.ActorAlign.FILL, y_expand: true,
             });
             this.wsvWorkspaces[i].add_child(this.wsvWorkspaces[i]._worksetOverlayBox);
 
@@ -371,7 +371,7 @@ class WorkspaceViewManager {
                     try {
                         if (btn.menu) return btn.menu.bye();
 
-                        btn.menu = new popupMenu.PopupMenu(btn, St.Align.START, St.Side.TOP);
+                        btn.menu = new popupMenu.PopupMenu(btn, Clutter.ActorAlign.START, St.Side.TOP);
                         this.menus.push(btn.menu)
                         btn.menu.bye = function () {
                             Main.uiGroup.remove_actor(btn.menu.actor);
@@ -394,7 +394,7 @@ class WorkspaceViewManager {
                             menuItem._workset = workset;
                             menuItem.label.set_text(menuItem._workset.WorksetName);
 
-                            menuItem.buttonPressId = menuItem.connect('button-press-event', () => {
+                            menuItem.buttonPressId = menuItem.connect('button_release_event', () => {
                                 Me.workspaceManager.loadDefaults = false;
                                 Me.workspaceManager.noUpdate = true;
                                 Me.workspaceManager.switchToWorkspace(i);

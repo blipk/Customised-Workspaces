@@ -28,10 +28,7 @@
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';;
 import * as appFavorites from 'resource:///org/gnome/shell/ui/appFavorites.js';;
 import * as extensionUtils from 'resource:///org/gnome/shell/misc/extensionUtils.js';
-import { WorksetsInstance as Me } from './extension.js';
-import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
-
-import * as util from 'resource:///org/gnome/shell/misc/util.js';;
+import { WorksetsInstance as Me } from './extension.js';import * as util from 'resource:///org/gnome/shell/misc/util.js';;
 import GObject from 'gi://GObject'
 import Gio from 'gi://Gio'
 import Clutter from 'gi://Clutter'
@@ -110,7 +107,7 @@ export class SessionManager {
             if (Me.workspaceViewManager) Me.workspaceViewManager.refreshOverview();
         });
 
-        this.iSettings = Extension.getSettings('org.gnome.desktop.interface');
+        this.iSettings = Me.getSettings('org.gnome.desktop.interface');
         this.signals.add(this.iSettings, 'changed::color-scheme', () => {
             // switched theme mode
             let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
@@ -122,7 +119,7 @@ export class SessionManager {
             }, this);
         });
 
-        this.bSettings = Extension.getSettings('org.gnome.desktop.background');
+        this.bSettings = Me.getSettings('org.gnome.desktop.background');
         this.signals.add(this.bSettings, 'changed::picture-uri', () => {
             // Update active workset wallpaper info if changed elsewhere in gnome
             let isDarkMode = this.iSettings.get_string('color-scheme') === 'prefer-dark' ? true : false;
@@ -337,14 +334,14 @@ export class SessionManager {
     }
     getBackground() {
         try {
-            if (!this.bSettings) this.bSettings = Extension.getSettings('org.gnome.desktop.background');
+            if (!this.bSettings) this.bSettings = Me.getSettings('org.gnome.desktop.background');
             let bgURI = this.bSettings.get_string('picture-uri');
             return bgURI.replace("file://", "");
         } catch (e) { dev.log(e) }
     }
     getBackgroundDark() {
         try {
-            if (!this.bSettings) this.bSettings = Extension.getSettings('org.gnome.desktop.background');
+            if (!this.bSettings) this.bSettings = Me.getSettings('org.gnome.desktop.background');
             let bgURI = this.bSettings.get_string('picture-uri-dark');
             return bgURI.replace("file://", "");
         } catch (e) { dev.log(e) }
@@ -355,7 +352,7 @@ export class SessionManager {
             bgPath = this.Worksets.filter(w => w.WorksetName == Me.workspaceManager.activeWorksetName)[0].BackgroundImage;
         bgPath = bgPath.replace("file://", "");
 
-        let bSettings = Extension.getSettings('org.gnome.desktop.background');
+        let bSettings = Me.getSettings('org.gnome.desktop.background');
         if (darkMode) {
             bSettings.set_string('picture-uri-dark', 'file://' + bgPath);
         } else {

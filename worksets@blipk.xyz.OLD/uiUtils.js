@@ -194,15 +194,24 @@ function createTooltip(widget, tooltip) {
 let knownImages = {}; // Save on resources generating these in menu refreshes
 function setImage(parent, imgFilePath = '') {
     try {
+        let error;
         imgFilePath = imgFilePath.replace("file://", "");
         let image;
 
         if (knownImages[imgFilePath]) {
             image = knownImages[imgFilePath];
         } else if (imgFilePath) {
-            let pixbuf = GdkPixbuf.Pixbuf.new_from_file(imgFilePath)
+            let pixbuf
+            try {
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(imgFilePath)
+            } catch(e) {
+                if (e instanceof GLib.FileError && e.message.includes("No such file or directory"))
+                    return [null, e]
+                else
+                    throw e
+            }
             if (pixbuf === null) // file doesnt exist
-                return (imgFilePath = '');
+                return [(imgFilePath = ''), new Error("Null pixbuf")];
 
             const { width, height } = pixbuf;
             if (height == 0) return;
@@ -226,7 +235,7 @@ function setImage(parent, imgFilePath = '') {
         parent.height = 150;
 
         knownImages[imgFilePath] = image;
-        return image;
+        return [image, error];
     } catch (e) { dev.log(e) }
 }
 
@@ -382,9 +391,9 @@ var ObjectInterfaceDialog = GObject.registerClass({
             if (jsobjectsSets) {
                 //Build an area for each object set
                 jsobjectsSets.forEach(function (objectSet, i) {
-                    this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
+                    this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER });
                     this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 18, style_class: 'object-dialog-error-icon' });
-                    //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: St.Align.MIDDLE });
+                    //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
                     this.contentLayout.add(this._objectsSetBoxes[i]);
 
                     this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label({ style_class: 'object-dialog-backup-file-label' });
@@ -400,7 +409,7 @@ var ObjectInterfaceDialog = GObject.registerClass({
                         if (count == 4) {
                             i++;
                             count = 0;
-                            this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: St.Align.MIDDLE });
+                            this._objectsSetBoxes[i] = new St.BoxLayout({ style_class: 'object-dialog-error-box', y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER });
                             this.contentLayout.add(this._objectsSetBoxes[i]);
                             this._objectsSetBoxes[i]._objectBoxes = [];
                         }
@@ -527,7 +536,7 @@ var ObjectEditorDialog = GObject.registerClass({
             this.contentLayout.style_class = contentLayoutBoxStyleClass ? contentLayoutBoxStyleClass : this.contentLayout.style_class;
 
             //Label for our dialog/text field with text about the dialog or a prompt for user text input
-            defaults = { style_class: 'object-dialog-label', text: _((dialogInfoTextStyle.text || dialogInfoTextStyle).toString()), x_align: St.Align.START, y_align: St.Align.START };
+            defaults = { style_class: 'object-dialog-label', text: _((dialogInfoTextStyle.text || dialogInfoTextStyle).toString()), x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START };
             dialogInfoTextStyle = (typeof dialogInfoTextStyle == 'string') ? defaults : { ...defaults, ...dialogInfoTextStyle };
             let stLabelUText = new St.Label(dialogInfoTextStyle);
 
@@ -583,7 +592,7 @@ var ObjectEditorDialog = GObject.registerClass({
                     this.propertyDisabled[i] = false;
                     this.propertyHidden[i] = false;
                     this.propertyLabelOnly[i] = false;
-                    this.propertyLabelStyle[i] = { style_class: 'spacing7', x_expand: true, y_expand: true, x_align: St.Align.END, y_align: Clutter.ActorAlign.CENTER };
+                    this.propertyLabelStyle[i] = { style_class: 'spacing7', x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.END, y_align: Clutter.ActorAlign.CENTER };
                     this.propertyBoxStyle[i] = {};
                     this.propertyIconStyle[i] = {};
                     this.subObjectMasks[i] = [];
@@ -638,7 +647,7 @@ var ObjectEditorDialog = GObject.registerClass({
                     //Property value editor element
                     if (this.propertyLabelOnly[i]) return;
                     if (typeof value === 'boolean') {
-                        this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox('');
+                        this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox.CheckBox('');
                         this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked = editableObject[key];
                         this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect('clicked', () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked });
                         this._propertyBoxes[i].add(this._propertyBoxes[i]._propertyBoxEditorElement.actor);
@@ -738,8 +747,8 @@ var ObjectEditorDialog = GObject.registerClass({
                             };
 
                             // Check box
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement = new CheckBox('');
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.set_x_align(St.Align.MIDDLE);
+                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement = new CheckBox.CheckBox('');
+                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.set_x_align(Clutter.ActorAlign.CENTER);
                             this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.checked = value[subobjectKey];
                             this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.connect('clicked', () => { togglingFunction.call(this); });
                             if (!subObjectLabelOnly) this._propertyBoxes[i]._boolBox[n].add(this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor);
@@ -754,7 +763,7 @@ var ObjectEditorDialog = GObject.registerClass({
                     if (!this._propertyBoxes[i]._propertyBoxEditorElement) return;
                     if (this._propertyBoxes[i]._propertyBoxEditorElement.showIcon) {
                         this._propertyBoxes[i]._propertyBoxEditorElement.propertyBoxStElementIcon = new St.Icon({ icon_name: 'insert-object-symbolic', icon_size: 14, style_class: 'object-dialog-error-icon' });
-                        if (this._propertyBoxes[i]._propertyBoxEditorElement.add) this._propertyBoxes[i]._propertyBoxEditorElement.add(this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: St.Align.MIDDLE });
+                        if (this._propertyBoxes[i]._propertyBoxEditorElement.add) this._propertyBoxes[i]._propertyBoxEditorElement.add(this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: Clutter.ActorAlign.CENTER });
                     }
                 }, this);
 

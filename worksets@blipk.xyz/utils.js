@@ -40,8 +40,8 @@ export function textFormatter(text, options = {/*length: 50*/ }) {
     return text;
 }
 
-var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
-var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+export var textToKebabCase = str => str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/^[\-]+|[\-]+$/g, "");
+export var textToPascalCase = str => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 
 //General
 export function truncateString(instring, length = 50) {
@@ -173,7 +173,7 @@ export function readStream(stream, callback) {
         if (line === null) {
             callback(null);
         } else {
-            callback(ByteArray.toString(line) + "\n");
+            callback(new TextDecoder().decode(line) + "\n");
             readStream(source, callback);
         }
     });
