@@ -308,13 +308,13 @@ def main(extension_directory: str, output_directory: str | None = None):
 
             import_changes = changed_imports[relative_file_path]
             print(len(import_changes), "imports updated")
-            for change in import_changes:
-                m, old, new = change
-                # print(m)
-                # print(m.groupdict())
-                # print("OLD:", old)
-                # print("NEW:", new)
-                # print()
+            # for change in import_changes:
+            #     m, old, new = change
+            #     print(m)
+            #     print(m.groupdict())
+            #     print("OLD:", old)
+            #     print("NEW:", new)
+            #     print()
 
             new_file_path = os.path.join(output_directory, relative_file_path)
             os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
