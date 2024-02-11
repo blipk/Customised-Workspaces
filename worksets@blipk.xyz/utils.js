@@ -164,11 +164,13 @@ export function splitURI( inURI ) {
 // Based on https://github.com/optimisme/gjs-examples/blob/master/assets/spawn.js.
 // https://github.com/p-e-w/argos/blob/master/argos%40pew.worldwidemann.com/utilities.js
 export function spawnWithCallback( workingDirectory, argv, envp, flags, childSetup, callback ) {
-    let [success,
-pid,
-stdinFile,
-stdoutFile,
-stderrFile] = GLib.spawn_async_with_pipes( workingDirectory, argv, envp, flags, childSetup )
+    let [
+        success,
+        pid,
+        stdinFile,
+        stdoutFile,
+        stderrFile
+    ] = GLib.spawn_async_with_pipes( workingDirectory, argv, envp, flags, childSetup )
 
     if ( !success )
         return

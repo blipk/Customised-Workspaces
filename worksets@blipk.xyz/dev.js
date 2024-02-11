@@ -28,38 +28,54 @@
 import { WorksetsInstance as Me } from "./extension.js"
 import * as fileUtils from "./fileUtils.js"
 
-export function log( context, message ) {
+export function log( ) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
+    const args = [...arguments]
+    const stack = ( new Error() ).stack.split( "\n" )
+    const context = stack[1]
+
     if ( !_debug_ ) return
 
-    if ( message === undefined ) { message = context; context = "() =>" }
-    if ( message === undefined ) { message = "`UNDEFINED`" }
-    if ( message === null ) { message = "`NULL`" }
+    const printObj = ( obj ) => {
+        let label, output
+        if ( typeof obj === "object" ) {
+            label = "\n@Object |>\n"
+            let seen = []
+            output = JSON.stringify( obj, function ( key, val ) {
+                if ( val != null && typeof val == "object" ) {
+                    if ( seen.indexOf( val ) >= 0 ) return
+                    seen.push( val )
+                }
+                return val
+            }, 2 ) + "\n"
+        } else if ( obj instanceof Error ) {
+            label = "\n!Error  |>\n"
+            output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
+        } else {
+            label = "\n:Info   | "
+            output = obj && obj.toString ? obj.toString() : obj
+            output += ""
+        }
+
+        return [label, output]
+    }
 
     const timestamp = new Date().toLocaleString()
-    const prefix = "(" + Me.uuid.toString() + ") [" + timestamp + "]:"
+    const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${context.toString()}\n`
     let out = prefix
-
-    if ( message instanceof Error ) {
-        out += "!Error   | " + context.toString() + " | " + "\r\n"
-                + "|-" + message.name + " " + message.message + "\r\n"
-                + "|-Stack Trace:" + "\r\n" + message.stack + "\r\n"
-        console.log( "Extension", "Worksets", out )
-        console.error( "Extension", "Worksets", message )
-    } else if ( typeof message === "object" ) {
-        out += "@Object  | " + context.toString() + " |\r\n" + message.toString() + "\r\n"
-        let seen = []
-        out += JSON.stringify( message, function ( key, val ) {
-            if ( val != null && typeof val == "object" ) {
-                if ( seen.indexOf( val ) >= 0 ) return
-                seen.push( val )
-            }
-            return val
-        }, 2 ) + "\r\n\r\n"
-    } else {
-        out += ":Info    | " + context.toString() + " | " + message.toString() + "\r\n"
-        console.log( "Extension", "Worksets", out )
+    let args_out = ""
+    for ( const arg of args ) {
+        const [label, output] = printObj( arg )
+        const arg_out = `${label} ${output}`
+        if ( arg instanceof Error ) {
+            console.log( "Extension", "Worksets", arg_out )
+            console.error( arg )
+        } else {
+            console.log( "Extension", "Worksets", arg_out )
+        }
+        args_out += arg_out
     }
+    out += args_out.trimStart() + "\n"
 
     fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
 }
@@ -81,7 +97,7 @@ export function dump( object, objectName ) {
             seen.push( val )
         }
         return val
-    }, 2 ) + "\r\n\r\n"
+    }, 2 ) + "\n\n"
 
     fileUtils.saveToFile( out, objectName + "-" + timestamp + ".json", fileUtils.CONF_DIR(), true, false )
 }

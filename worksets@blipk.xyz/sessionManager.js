@@ -28,7 +28,6 @@
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
-import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 import GDesktopEnums from "gi://GDesktopEnums"
 import Gio from "gi://Gio"
 import Clutter from "gi://Clutter"
@@ -37,7 +36,7 @@ import Meta from "gi://Meta"
 import GLib from "gi://GLib"
 
 // Internal imports
-import { WorksetsInstance as Me } from "./extension.js";
+import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./uiUtils.js"
@@ -94,9 +93,9 @@ export class SessionManager {
         this.signals.add( Me.settings, "changed::isolate-workspaces", () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean( "isolate-workspaces" )
         } )
-        if ( Me.gExtensions.dash2panelSettings )
-            this.signals.add( Me.gExtensions.dash2panelSettings, "changed::isolate-workspaces", () => {
-                Me.settings.set_boolean( "isolate-workspaces", Me.gExtensions.dash2panelSettings.get_boolean( "isolate-workspaces" ) )
+        if ( Me.gExtensions.dash2panelSettings() )
+            this.signals.add( Me.gExtensions.dash2panelSettings(), "changed::isolate-workspaces", () => {
+                Me.settings.set_boolean( "isolate-workspaces", Me.gExtensions.dash2panelSettings().get_boolean( "isolate-workspaces" ) )
                 Me.session.saveSession()
             } )
 

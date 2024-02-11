@@ -216,11 +216,9 @@ export var WorksetsIndicator = GObject.registerClass( {
             // );
 
             // Orient menu
-            let reverseMenu
-            if ( Me.gExtensions.dash2panel )
-                reverseMenu = Me.gExtensions.dash2panel.state === extensionUtils.ExtensionState.ENABLED
-                                ? true : Me.session.activeSession.Options.ReverseMenu
-            else reverseMenu = Me.session.activeSession.Options.ReverseMenu
+            // TODO: Find where Extension.state has moved to
+            const reverseMenu = Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED
+                                    ? true : Me.session.activeSession.Options.ReverseMenu
             if ( reverseMenu ) {
                 this.menu.addMenuItem( this.viewSection )
                 this.menu.addMenuItem( this.optionsMenuItem )
@@ -633,7 +631,7 @@ menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
                     mode             : Clutter.AnimationMode.EASE_OUT_EXPO,
                 } )
             } else {
-                let angle = ( Me.gExtensions.dash2panelSettings && Me.gExtensions.dash2panel?.state === extensionUtils.ExtensionState.ENABLED )
+                let angle = ( Me.gExtensions.dash2panelSettings() && Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED )
                     ? -90 : 90
                 menuItem._triangle.ease( {
                     rotation_angle_z : angle,

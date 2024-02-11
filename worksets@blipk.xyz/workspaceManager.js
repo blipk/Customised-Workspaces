@@ -275,14 +275,15 @@ export class WorkspaceManager {
                 Me.session.activeSession.Options.IsolateWorkspaces = !Me.session.activeSession.Options.IsolateWorkspaces
 
             if ( Me.session.activeSession.Options.IsolateWorkspaces ) {
+                // Defer to isolaters in other extensions
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
-                if ( Me.gExtensions.dash2panelSettings ) {
+                if ( Me.gExtensions.dash2panelSettings() ) {
                     if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
-                    Me.gExtensions.dash2panelSettings.set_boolean( "isolate-workspaces", true )
-                } else if ( Me.gExtensions.dash2dockSettings ) {
+                    Me.gExtensions.dash2panelSettings().set_boolean( "isolate-workspaces", true )
+                } else if ( Me.gExtensions.dash2dockSettings() ) {
                     if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
-                    Me.gExtensions.dash2dockSettings.set_boolean( "isolate-workspaces", true )
+                    Me.gExtensions.dash2dockSettings().set_boolean( "isolate-workspaces", true )
                 } else {
                     Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator()
                     workspaceIsolater.WorkspaceIsolator.refresh()
@@ -290,10 +291,10 @@ export class WorkspaceManager {
             } else {
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
                 // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
-                if ( Me.gExtensions.dash2panelSettings )
-                    Me.gExtensions.dash2panelSettings.set_boolean( "isolate-workspaces", false )
-                if ( Me.gExtensions.dash2dockSettings )
-                    Me.gExtensions.dash2dockSettings.set_boolean( "isolate-workspaces", false )
+                if ( Me.gExtensions.dash2panelSettings() )
+                    Me.gExtensions.dash2panelSettings().set_boolean( "isolate-workspaces", false )
+                if ( Me.gExtensions.dash2dockSettings() )
+                    Me.gExtensions.dash2dockSettings().set_boolean( "isolate-workspaces", false )
                 if ( Me.workspaceIsolater ) {
                     Me.workspaceIsolater.destroy()
                     delete Me.workspaceIsolater
