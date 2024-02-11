@@ -1,8 +1,22 @@
 #!/usr/bin/env python
 """
-This file will update all imports to ESM on all js files in an extension directory,
+This file will update all imports to ESM on all js files in a gnome-shell extension directory,
 as well as wrap extension.js methods in a new class that extends Extension,
 and various other adjustments to help get extensions updated to gnome-shell 45.
+
+Other changes include:
+- All top level functions and let/const/var declerations will be exported
+- The instance of the main extension.js class will be exported `as Me` in files that require it
+- Update local imports to ESM
+- Remap misc imports to new directory structure
+- Remap extensionUtils usage to new Extension methods on Me
+- GI imports updated with any version if previously specified
+- Change `imports.byteArray.toString()` usage to `new TextDecoder().decode()`
+- Update `Main.extensionManager` usage to new `Extension` class
+
+Manual changes required:
+- Update prefs.js
+- Ensure metadata is correct, e.g. contains gettext-domain
 """
 import os
 import re
