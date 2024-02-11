@@ -284,12 +284,9 @@ export class SessionManager {
                     return true
                 }, this )
             }, this )
-
-            // Apply
             this.Worksets = filteredWorksets
-            this.activeSession.Worksets = this.Worksets
-            this.activeSession.workspaceMaps = this.workspaceMaps
-            this.activeSession.SessionName = this.SessionName
+
+
 
             // Clean workspace maps
             let worksetNames = []
@@ -297,10 +294,28 @@ export class SessionManager {
                 worksetNames.push( workset.WorksetName )
             }, this )
 
+            const mappedWorkspaces = []
             this.workspaceMaps.forEachEntry( ( workspaceMapKey, workspaceMapValues, i ) => {
+                // Remove non-existant worksets
                 if ( !worksetNames.includes( workspaceMapValues.currentWorkset ) )
                     this.workspaceMaps[workspaceMapKey].currentWorkset = ""
+
+                if ( !worksetNames.includes( workspaceMapValues.defaultWorkset ) )
+                    this.workspaceMaps[workspaceMapKey].defaultWorkset = ""
+
+                // Remove workset already mapped to a default workspace (allow only 1)
+                if ( mappedWorkspaces.includes( workspaceMapValues.defaultWorkset ) )
+                    this.workspaceMaps[workspaceMapKey].defaultWorkset = ""
+
+                // Keep track of names of worksets mapped to defaults
+                if ( workspaceMapValues.defaultWorkset )
+                    mappedWorkspaces.push( workspaceMapValues.defaultWorkset )
             }, this )
+
+            this.activeSession.Worksets = this.Worksets
+            this.activeSession.workspaceMaps = this.workspaceMaps
+            this.activeSession.workspaceMaps = this.workspaceMaps
+            this.activeSession.SessionName = this.SessionName
 
             if ( saveSession ) this.saveSession()
         } catch ( e ) { dev.log( e ) }
@@ -474,12 +489,19 @@ export class SessionManager {
 
         return isActive
     }
+
     displayWorkset( workset, loadInNewWorkspace = false, displayOnly = false ) {
         try {
             let activeIndex = this.getWorksetActiveIndex( workset )
+
+            // Don't do anything if the workset is a default here but already open elsewhere
+            if ( workset.WorksetName == this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].defaultWorkset
+                 && this.ActiveWorksets.includes( workset.WorksetName ) )
+                return
+
             if ( activeIndex > -1 && !displayOnly && !loadInNewWorkspace ) { // Switch to it if already active
-                if ( Me.workspaceManager.activeWorkspaceIndex != activeIndex ) Me.workspaceManager.switchToWorkspace( activeIndex )
-                if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
+                if ( Me.workspaceManager.activeWorkspaceIndex != activeIndex )
+                    Me.workspaceManager.switchToWorkspace( activeIndex )
                 if ( this.activeSession.Options.ShowNotifications )
                     uiUtils.showUserNotification( "Switched to active environment " + workset.WorksetName, false, 1 )
             } else if ( !displayOnly ) {
@@ -492,10 +514,12 @@ export class SessionManager {
                         Me.workspaceManager.switchToWorkspace( Me.workspaceManager.NumGlobalWorkspaces - 1 )
                 }
                 Me.workspaceManager.activeWorksetName = workset.WorksetName
-                if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
+
                 if ( this.activeSession.Options.ShowNotifications )
                     uiUtils.showUserNotification( "Loaded environment " + workset.WorksetName, false, 1.4 )
             }
+
+            if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
 
             this.setFavorites( workset.FavApps )
             this.setBackground(
@@ -511,6 +535,15 @@ export class SessionManager {
         if ( index === -1 )
             index = 0
         return this.Worksets[index]
+    }
+    get ActiveWorksets() {
+        // Returns names of all active worksets
+        let openedWorksets = []
+        this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+            openedWorksets.push( workspaceMapValues.currentWorkset )
+        }, this )
+
+        return openedWorksets
     }
     closeWorkset( workset ) {
         try {
@@ -687,7 +720,7 @@ export class SessionManager {
             let editables = [
                 { WorksetName: "Name" },
                 { BackgroundImage: " ", hidden: true },
-                { workSpaceOptionsLabel: "Opens on these workspaces automatically:", labelOnly: true },
+                { workSpaceOptionsLabel: "Opens on this workspaces automatically (select only one):", labelOnly: true },
                 { workSpaceOptions: " ", subObjectEditableProperties: workspaceOptionsEditables },
                 { workSpaceOptions2: " ", subObjectEditableProperties: workspaceOptionsEditables2 }
             ]

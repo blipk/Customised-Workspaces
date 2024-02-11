@@ -116,7 +116,7 @@ export class WorkspaceManager {
             //Loop through worksets and load the one which is set to current
             Me.session.Worksets.forEach( function ( workset, worksetIndex ) {
                 if ( Me.session.workspaceMaps["Workspace" + this.activeWorkspaceIndex].currentWorkset == workset.WorksetName ) {
-                    foundActive = true
+                    foundActive = workset.WorksetName
                     Me.session.displayWorkset( Me.session.Worksets[worksetIndex] )
                 }
             }, this )
@@ -307,12 +307,14 @@ export class WorkspaceManager {
 
     spawnOnSwitch( workset ) {
         const cmd = Me.session.activeSession.Options.CliSwitch.replaceAll( "$CWORKSPACE", workset.WorksetName )
-        const args = ["/usr/bin/env",
-"bash",
-"-c",
-cmd]
+        const args = [
+            "/usr/bin/env",
+            "bash",
+            "-c",
+            cmd
+        ]
         utils.spawnWithCallback(
- null, args, GLib.get_environ(), 0, null,
+            null, args, GLib.get_environ(), 0, null,
             ( stdout ) => {
                 try {
                     if ( !stdout ) return

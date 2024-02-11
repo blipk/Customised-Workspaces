@@ -49,10 +49,10 @@ export function log( ) {
                 return val
             }, 2 ) + "\n"
         } else if ( obj instanceof Error ) {
-            label = "\n!Error  |>\n"
+            label = "\n!ERROR  |>\n"
             output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
         } else {
-            label = "\n:Info   | "
+            label = "\n:INFO   | "
             output = obj && obj.toString ? obj.toString() : obj
             output += ""
         }
