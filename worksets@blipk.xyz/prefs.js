@@ -37,7 +37,8 @@ export default class MyExtensionPreferences extends ExtensionPreferences {
         this.settings.set_boolean( "show-panel-indicator", false )
         this.settings.set_boolean( "show-panel-indicator", true )
 
-        const page = new Adw.PreferencesPage( { title: `${this.metadata.name} Preferences` } )
+        window.title = `${this.metadata.name} Preferences`
+        const page = new Adw.PreferencesPage( )
 
         const group = new Adw.PreferencesGroup( {
             title: _( "Panel indicator menu has been enabled. \r\nPreferences, settings and options are accessible from there." ),

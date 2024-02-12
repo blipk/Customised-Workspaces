@@ -40,27 +40,27 @@ export function getDatadirFromErrorStack() {
 }
 
 window.worksets = {
-    extdatadir: GLib.build_filenamev( [
+    dir: GLib.build_filenamev( [
         getDatadirFromErrorStack(),
         "worksets@blipk.xyz"
     ] )
 }
-let worksets = window.worksets
-imports.searchPath.unshift( worksets.extdatadir )
+const worksets = window.worksets
+imports.searchPath.unshift( worksets.dir )
 
 worksets.metadata = ( () => {
-    let data = GLib.file_get_contents( worksets.extdatadir + "/metadata.json" )[1]
+    let data = GLib.file_get_contents( worksets.dir + "/metadata.json" )[1]
     return JSON.parse( new TextDecoder().decode( data ) )
 } )()
-worksets.app_id = worksets.metadata["application-id"]
-worksets.app_path = worksets.metadata["resource-path"]
-worksets.is_local = worksets.extdatadir.startsWith( GLib.get_user_data_dir() )
+worksets.resource_path = worksets.metadata["resource-path"]
+worksets.application_id = worksets.metadata["application-id"]
+worksets.is_local = worksets.dir.startsWith( GLib.get_user_data_dir() )
 window._ = imports.gettext.domain( worksets.metadata["gettext-domain"] ).gettext
 
 export class worksetsAppChooser {
     constructor( ARGV ) {
         this.application = new Gtk.Application( {
-            application_id : worksets.app_id,
+            application_id : worksets.application_id,
             flags          : Gio.ApplicationFlags.FLAGS_NONE
         } )
         //GLib.set_prgname('worksets');
@@ -70,8 +70,7 @@ export class worksetsAppChooser {
 
         // Extension
         const GioSSS = Gio.SettingsSchemaSource
-        let schemaDir = GLib.build_pathv( "/", [worksets.extdatadir,
-"schemas"] )
+        let schemaDir = GLib.build_pathv( "/", [worksets.dir, "schemas"] )
         let schemaSource = GioSSS.new_from_directory( schemaDir, GioSSS.get_default(), false )
         let schemaObj = schemaSource.lookup( worksets.metadata["settings-schema"], true )
         this.settings = new Gio.Settings( { settings_schema: schemaObj } )
@@ -100,7 +99,7 @@ export class worksetsAppChooser {
         //this.dialog.get_widget().show_other = true;
         this.dialog.get_widget().show_recommended = true
         this.dialog.get_widget().show_all = true
-        this.dialog.connect( "destroy", Gtk.main_quit )
+        this.dialog.connect( "destroy", () => Gtk.main_quit() )
     }
 
     vfunc_activate() {
