@@ -28,9 +28,10 @@
 import GLib from "gi://GLib"
 import Gio from "gi://Gio"
 
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
-import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as dev from "./dev.js"
 
 // Directory and file paths for resources
@@ -47,12 +48,9 @@ export var INSTALL_DIR = () => GLib.build_pathv(
         Me.uuid
     ]
 )
-export var RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(),
-"res"] )
-export var CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR,
-Me.uuid] )
-export var APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(),
-"appChooser.js"] )
+export var RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
+export var CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
+export var APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "appChooser.js"] )
 
 export function checkExists( path ) {
     let result = false
@@ -71,7 +69,7 @@ export function checkExists( path ) {
 // Disk I/O handlers
 export function enumarateDirectoryChildren(
     /*-1 searchLevel for infinite*/
-    directory = null, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1 
+    directory = null, returnFiles = true, returnDirectories = false, searchSubDirectories = false, searchLevel = 1
 ) {
     directory = directory || CONF_DIR()
     let childrenFileProperties = { parentDirectory: directory, fullname: null, name: null, extension: null, type: null }
@@ -111,7 +109,7 @@ export function enumarateDirectoryChildren(
 export function saveToFile( object, filename, directory = null, raw = false, append = false, async = false ) {
     directory = directory || CONF_DIR()
     let savePath = GLib.build_filenamev( [directory,
-filename] )
+        filename] )
     let outBuff
     if ( raw ) outBuff = object.toString()
     else outBuff = JSON.stringify( object, null, 1 )
@@ -175,7 +173,7 @@ export function loadJSObjectFromFile( filename = "session.json", directory = nul
             // const file_info = src.query_info_finish( res )
             file.load_contents_async( null, function ( obj, res ) {
                 let [
-                    success,contents
+                    success, contents
                 ] = obj.load_contents_finish( res )
                 if ( success ) {
                     jsobject = JSON.parse( new TextDecoder().decode( contents ) )

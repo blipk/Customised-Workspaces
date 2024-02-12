@@ -25,11 +25,12 @@
  */
 
 // External imports
-import GLib from "gi://GLib"
 import Gio from "gi://Gio"
+import GLib from "gi://GLib"
+
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 
 // Internal imports
-import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as dev from "./dev.js"
 
 export function textFormatter( text, options = {/*length: 50*/ } ) {
@@ -50,34 +51,38 @@ export function truncateString( instring, length = 50 ) {
     return shortened
 }
 
-const special = ["zeroth",
-"first",
-"second",
-"third",
-"fourth",
-"fifth",
-"sixth",
-"seventh",
-"eighth",
-"ninth",
-"tenth",
-"eleventh",
-"twelvth",
-"thirteenth",
-"fourteenth",
-"fifteenth",
-"sixteenth",
-"seventeenth",
-"eighteenth",
-"nineteenth"]
-const deca = ["twent",
-"thirt",
-"fourt",
-"fift",
-"sixt",
-"sevent",
-"eight",
-"ninet"]
+const special = [
+    "zeroth",
+    "first",
+    "second",
+    "third",
+    "fourth",
+    "fifth",
+    "sixth",
+    "seventh",
+    "eighth",
+    "ninth",
+    "tenth",
+    "eleventh",
+    "twelvth",
+    "thirteenth",
+    "fourteenth",
+    "fifteenth",
+    "sixteenth",
+    "seventeenth",
+    "eighteenth",
+    "nineteenth"
+]
+const deca = [
+    "twent",
+    "thirt",
+    "fourt",
+    "fift",
+    "sixt",
+    "sevent",
+    "eight",
+    "ninet"
+]
 export function stringifyNumber( n ) {
     n = parseInt( n )
     if ( n < 20 ) return special[n]

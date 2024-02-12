@@ -28,9 +28,9 @@
 "use strict"
 
 // External imports
+import Gio from "gi://Gio"
 import GLib from "gi://GLib"
 import Gtk from "gi://Gtk?version=3.0"
-import Gio from "gi://Gio"
 
 // Find the root datadir of the extension
 export function getDatadirFromErrorStack() {

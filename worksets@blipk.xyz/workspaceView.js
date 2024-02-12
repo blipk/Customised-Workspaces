@@ -25,22 +25,24 @@
  */
 
 // External imports
+import St from "gi://St"
+import Gio from "gi://Gio"
+import GLib from "gi://GLib"
+import Meta from "gi://Meta"
+import Clutter from "gi://Clutter"
+import GDesktopEnums from "gi://GDesktopEnums"
+
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
+import * as background from "resource:///org/gnome/shell/ui/background.js"
+import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
+import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
 // import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
 // import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
 // import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
 // import * as layout from "resource:///org/gnome/shell/ui/layout.js"
 // import * as overview from "resource:///org/gnome/shell/ui/overview.js"
-import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
-import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
-import * as background from "resource:///org/gnome/shell/ui/background.js"
-import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
-import GDesktopEnums from "gi://GDesktopEnums"
-import Meta from "gi://Meta"
-import GLib from "gi://GLib"
-import St from "gi://St"
-import Clutter from "gi://Clutter"
-import Gio from "gi://Gio"
+
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"

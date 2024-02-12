@@ -25,15 +25,17 @@
  */
 
 // External imports
+import Gio from "gi://Gio"
+import GLib from "gi://GLib"
+import Meta from "gi://Meta"
+import Shell from "gi://Shell"
+import Clutter from "gi://Clutter"
+import GDesktopEnums from "gi://GDesktopEnums"
+
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
-import GDesktopEnums from "gi://GDesktopEnums"
-import Gio from "gi://Gio"
-import Clutter from "gi://Clutter"
-import Shell from "gi://Shell"
-import Meta from "gi://Meta"
-import GLib from "gi://GLib"
+
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"

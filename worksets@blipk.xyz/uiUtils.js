@@ -25,23 +25,25 @@
  */
 
 // External imports
-import GObject from "gi://GObject"
 import St from "gi://St"
-import Clutter from "gi://Clutter"
 import Gio from "gi://Gio"
 import GLib from "gi://GLib"
-import GdkPixbuf from "gi://GdkPixbuf"
 import Cogl from "gi://Cogl"
+import GObject from "gi://GObject"
+import Clutter from "gi://Clutter"
+import GdkPixbuf from "gi://GdkPixbuf"
+
+import * as util from "resource:///org/gnome/shell/misc/util.js"
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as CheckBox from "resource:///org/gnome/shell/ui/checkBox.js"
 import * as modalDialog from "resource:///org/gnome/shell/ui/modalDialog.js"
 import * as shellEntry from "resource:///org/gnome/shell/ui/shellEntry.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
-import { WorksetsInstance as Me } from "./extension.js"; import * as util from "resource:///org/gnome/shell/misc/util.js"
 
 // Internal imports
-
-import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as fileUtils from "./fileUtils.js"

@@ -37,10 +37,11 @@
  */
 
 // External imports
+import Meta from "gi://Meta"
+
 import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as config from "resource:///org/gnome/shell/misc/config.js"
-import Meta from "gi://Meta"
 
 const [major] = config.PACKAGE_VERSION.split( "." )
 const shellVersion = Number.parseInt( major )

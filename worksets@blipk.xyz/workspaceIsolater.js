@@ -25,13 +25,15 @@
  */
 
 // External imports
-import * as AppDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
-const AppIcon = AppDisplay.AppIcon
-import * as Main from "resource:///org/gnome/shell/ui/main.js"
-import GObject from "gi://GObject"
 import Meta from "gi://Meta"
 import Shell from "gi://Shell"
+import GObject from "gi://GObject"
 const AppSystem = Shell.AppSystem.get_default()
+
+import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import * as AppDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
+const AppIcon = AppDisplay.AppIcon
+
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"

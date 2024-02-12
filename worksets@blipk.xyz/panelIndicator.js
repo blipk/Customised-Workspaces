@@ -25,20 +25,22 @@
  */
 
 //External imports
-import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import St from "gi://St"
+import GLib from "gi://GLib"
+import GObject from "gi://GObject"
+import Clutter from "gi://Clutter"
+
+import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
-import { WorksetsInstance as Me } from "./extension.js";import * as util from "resource:///org/gnome/shell/misc/util.js"
+
+import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 import * as panelMenu from "resource:///org/gnome/shell/ui/panelMenu.js"
 import * as boxpointer from "resource:///org/gnome/shell/ui/boxpointer.js"
-import GObject from "gi://GObject"
-import St from "gi://St"
-import Clutter from "gi://Clutter"
-import GLib from "gi://GLib"
 
 //Internal imports
-
-import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
+import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./uiUtils.js"
@@ -218,7 +220,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             // Orient menu
             // TODO: Find where Extension.state has moved to
             const reverseMenu = Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED
-                                    ? true : Me.session.activeSession.Options.ReverseMenu
+                ? true : Me.session.activeSession.Options.ReverseMenu
             if ( reverseMenu ) {
                 this.menu.addMenuItem( this.viewSection )
                 this.menu.addMenuItem( this.optionsMenuItem )
@@ -261,7 +263,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             // Create iconbuttons on MenuItem
             let activeIndex = Me.session.getWorksetActiveIndex( menuItem.workset )
             let icondefault_nameuri = ( Me.session.activeSession.Default == menuItem.workset.WorksetName ) ?
-                "starred-symbolic" : [ "non-starred-symbolic", "starred-symbolic" ]
+                "starred-symbolic" : ["non-starred-symbolic", "starred-symbolic"]
             let iconOpenNew_nameuri = ( activeIndex > -1 ) ? "window-close-symbolic" : "window-new-symbolic"
             let iconOpenHere_nameuri = ( activeIndex > -1 ) ? "view-reveal-symbolic" : "go-jump-symbolic"
             let openCloseCommand = ( activeIndex > -1 )
@@ -294,7 +296,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.favAppsMenuItems = []
 
             //if (activeIndex > -1) {
-            let ornamentIcon = new St.BoxLayout( { } )
+            let ornamentIcon = new St.BoxLayout( {} )
             menuItem.replace_child( menuItem._ornamentIcon, ornamentIcon )
             let icon = uiUtils.createIconButton(
                 ornamentIcon, iconOpenHere_nameuri,
@@ -368,7 +370,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                     if ( !pass ) Me.worksetsIndicator.signals.add(
                         GLib.timeout_add(
                             null, 100, function () {
-                            Me.worksetsIndicator.optionsMenuItem.show(); return false }
+                                Me.worksetsIndicator.optionsMenuItem.show(); return false
+                            }
                         )
                     )
 
@@ -407,8 +410,8 @@ export var WorksetsIndicator = GObject.registerClass( {
             // Background info
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem( { style_class: "bg-display" } )
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
-            const [ img,
-error ] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
+            const [img,
+                error] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
             if ( error && error.message.includes( "No such file or directory" ) ) {
                 Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
                 Me.session.applySession()
@@ -438,24 +441,24 @@ error ] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuI
 
             let btnDarkModeIconName = Me.session.isDarkMode ? "night-light-symbolic" : "weather-clear-symbolic"
             let btnDarkMode = uiUtils.createIconButton( backgroundOtherOptionsBox, btnDarkModeIconName, () => {
-                    try {
-                        btnDarkMode.viewingDarkMode = btnDarkMode.icon.icon_name === "night-light-symbolic" ? true : false
-                        btnDarkMode.viewingDarkMode = !btnDarkMode.viewingDarkMode
-                        btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? "night-light-symbolic" : "weather-clear-symbolic"
-                        const [ img, error ] = uiUtils.setImage(
-                            menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true
-                                ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage
-                        )
-                        if ( error && error.message.includes( "No such file or directory" ) ) {
-                            btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
-                            Me.session.applySession()
-                        }
-                        modeText = btnDarkMode.viewingDarkMode ? "Dark Mode" : "Light Mode"
-                        btnDarkMode.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
-                        //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
-                        updateIcons()
-                    } catch ( e ) { dev.log( e ) }
-                },
+                try {
+                    btnDarkMode.viewingDarkMode = btnDarkMode.icon.icon_name === "night-light-symbolic" ? true : false
+                    btnDarkMode.viewingDarkMode = !btnDarkMode.viewingDarkMode
+                    btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? "night-light-symbolic" : "weather-clear-symbolic"
+                    const [img, error] = uiUtils.setImage(
+                        menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true
+                        ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage
+                    )
+                    if ( error && error.message.includes( "No such file or directory" ) ) {
+                        btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
+                        Me.session.applySession()
+                    }
+                    modeText = btnDarkMode.viewingDarkMode ? "Dark Mode" : "Light Mode"
+                    btnDarkMode.tooltip.msg = "Currently Viewing " + modeText + " background - Click to view/change alternate mode"
+                    //menuItem.bgMenuButton.tooltip.msg = "Click to choose a new background image for " + menuItem.workset.WorksetName + " ("+modeText+")"
+                    updateIcons()
+                } catch ( e ) { dev.log( e ) }
+            },
                 { x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START },
                 { msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode" } )
             btnDarkMode.viewingDarkMode = Me.session.isDarkMode
@@ -546,9 +549,9 @@ error ] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuI
             let addApps = () => {
                 this.menu.toggle()
                 utils.spawnWithCallback(
- null, [fileUtils.APP_CHOOSER_EXEC(),
-"-w",
-menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
+                    null, [fileUtils.APP_CHOOSER_EXEC(),
+                    "-w",
+                    menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
                     ( resource ) => {
                         try {
                             if ( !resource ) return
@@ -560,7 +563,7 @@ menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
                             Me.session.setFavorites()
                         } catch ( e ) { dev.log( e ) }
                     }
-)
+                )
             }
             uiUtils.createIconButton(
                 menuItem.infoMenuButton,
@@ -669,7 +672,7 @@ menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
         let tmpWorkset = Me.session.Worksets.filter( item => item === menuItem.workset )[0]
         return tmpWorkset
     }
-    _worksetMenuItemsGetAll( ) {
+    _worksetMenuItemsGetAll() {
         return this.historySection._getMenuItems().concat( this.favoritesSection._getMenuItems() ).concat( this.defaultSection._getMenuItems() )
     }
     _worksetMenuItemsRemoveAll() {
