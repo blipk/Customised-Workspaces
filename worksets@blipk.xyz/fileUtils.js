@@ -35,11 +35,11 @@ import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 
 // Directory and file paths for resources
-export var USER_CONF_DIR = GLib.get_user_config_dir()
-export var USER_CACHE_DIR = GLib.get_user_cache_dir()
-export var USER_DATA_DIR = GLib.get_user_data_dir()
-export var SYS_DATA_DIRS = GLib.get_system_data_dirs()
-export var INSTALL_DIR = () => GLib.build_pathv(
+export const USER_CONF_DIR = GLib.get_user_config_dir()
+export const USER_CACHE_DIR = GLib.get_user_cache_dir()
+export const USER_DATA_DIR = GLib.get_user_data_dir()
+export const SYS_DATA_DIRS = GLib.get_system_data_dirs()
+export const INSTALL_DIR = () => GLib.build_pathv(
     "/",
     [
         USER_DATA_DIR,
@@ -48,9 +48,9 @@ export var INSTALL_DIR = () => GLib.build_pathv(
         Me.uuid
     ]
 )
-export var RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
-export var CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
-export var APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "appChooser.js"] )
+export const RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
+export const CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
+export const APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "appChooser.js"] )
 
 export function checkExists( path ) {
     let result = false

@@ -50,7 +50,7 @@ const shellVersion = Number.parseInt( major )
 import * as dev from "./dev.js"
 import * as sessionManager from "./sessionManager.js"
 
-export let WorksetsInstance = Extension.lookupByUUID( "worksets@blipk.xyz" )
+export let WorksetsInstance = null
 
 export default class Worksets extends Extension {
 
@@ -60,7 +60,6 @@ export default class Worksets extends Extension {
         try {
             dev.log( "@----------|" )
             if ( this.session ) return // Already initialized
-            global.shellVersion = shellVersion
 
             // Maintain compatibility with GNOME-Shell 3.30+ as well as previous versions.
             this.gScreen = global.screen || global.display
@@ -120,7 +119,7 @@ export default class Worksets extends Extension {
             delete this.workspaceViewManager
             if ( this.session ) this.session.destroy()
             delete this.session
-            if ( this.settings ) this.settings.run_dispose()
+
             delete this.settings
 
             dev.log( "!^^^^^^^^^^|\r\n" )

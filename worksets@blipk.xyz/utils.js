@@ -40,8 +40,8 @@ export function textFormatter( text, options = {/*length: 50*/ } ) {
     return text
 }
 
-export var textToKebabCase = str => str.replace( /[A-Z]/g, letter => `-${letter.toLowerCase()}` ).replace( /^[\-]+|[\-]+$/g, "" )
-export var textToPascalCase = str => str.split( "-" ).map( word => word.charAt( 0 ).toUpperCase() + word.slice( 1 ).toLowerCase() ).join( "" )
+export const textToKebabCase = str => str.replace( /[A-Z]/g, letter => `-${letter.toLowerCase()}` ).replace( /^[\-]+|[\-]+$/g, "" )
+export const textToPascalCase = str => str.split( "-" ).map( word => word.charAt( 0 ).toUpperCase() + word.slice( 1 ).toLowerCase() ).join( "" )
 
 //General
 export function truncateString( instring, length = 50 ) {
