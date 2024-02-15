@@ -37,6 +37,7 @@
  */
 
 // External imports
+import Gio from "gi://Gio"
 import Meta from "gi://Meta"
 
 import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
@@ -72,7 +73,7 @@ export default class Worksets extends Extension {
 
             this.gExtensions.dash2panelSettings = () => {
                 try {
-                    return this.getSettings( "org.gnome.shell.extensions.dash-to-panel" )
+                    return new Gio.Settings( {schema_id: "org.gnome.shell.extensions.dash-to-panel"} )
                 } catch ( e ) {
                     return null
                 }
@@ -81,7 +82,7 @@ export default class Worksets extends Extension {
             this.gExtensions.dash2dock = () => Extension.lookupByUUID( "dash-to-dock@micxgx.gmail.com" )
             this.gExtensions.dash2dockSettings = () => {
                 try {
-                    return this.getSettings( "org.gnome.shell.extensions.dash-to-dock" )
+                    return new Gio.Settings( {schema_id: "org.gnome.shell.extensions.dash-to-dock"} )
                 } catch ( e ) {
                     return null
                 }
@@ -101,9 +102,6 @@ export default class Worksets extends Extension {
     }
 
     disable() {
-        WorksetsInstance = this
-
-
         try {
             dev.log( "!~~~~~~~~~~|" )
 

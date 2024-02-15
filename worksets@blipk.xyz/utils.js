@@ -224,25 +224,36 @@ import * as background from "resource:///org/gnome/shell/ui/background.js"
 import * as layout from "resource:///org/gnome/shell/ui/layout.js"
 import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
+import { InjectionManager } from "resource:///org/gnome/shell/extensions/extension.js"
+
 
 
 export class InjectionHandler {
+
     constructor() {
-        this.injections = {}
+        this.injections = new Map()
+        this.manager = new InjectionManager()
     }
 
-    add( srcProto, dstFunc ) {
+    add( prototype, methodName, createOverrideFunc ) {
         try {
-            this.injections[srcProto] = eval( srcProto )
-            eval( srcProto + "= dstFunc" )
+            let savedProtoMethods = this.injections.get( prototype )
+            if ( !savedProtoMethods ) {
+                savedProtoMethods = new Map()
+                this.injections.set( prototype, savedProtoMethods )
+            }
+
+            savedProtoMethods.set( methodName, [createOverrideFunc, prototype[methodName].bind( {} )] )
+
+            this.manager.overrideMethod( prototype, methodName, createOverrideFunc )
         } catch ( e ) { dev.log( e ) }
     }
 
     removeAll() {
         try {
-            this.injections.forEachEntry( function ( srcProto, srcObject ) {
-                eval( srcProto + "= srcObject" )
-            }, this )
+            for ( let [prototype, savedProtoMethods] of this.injections.entries() )
+                for ( let methodName of savedProtoMethods.keys() )
+                    this.manager.restoreMethod( prototype, methodName )
         } catch ( e ) { dev.log( e ) }
     }
 

@@ -37,11 +37,11 @@ import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 import * as background from "resource:///org/gnome/shell/ui/background.js"
 import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
 import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
-// import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
-// import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
-// import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
-// import * as layout from "resource:///org/gnome/shell/ui/layout.js"
-// import * as overview from "resource:///org/gnome/shell/ui/overview.js"
+import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
+import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
+import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
+import * as layout from "resource:///org/gnome/shell/ui/layout.js"
+import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 
 
 // Internal imports
@@ -54,7 +54,7 @@ export class WorkspaceViewManager {
     constructor() {
         try {
             Me.workspaceViewManager = this
-            this.injections = new utils.InjectionHandler()
+            this.injectionHandler = new utils.InjectionHandler()
             this.signals = new utils.SignalHandler()
             this.menus = []
 
@@ -67,33 +67,33 @@ export class WorkspaceViewManager {
             this.overviewState = 0
 
             // Keep track of the new workspace views so their background can be changed in refreshOverview()
-            this.injections.add(
-                "workspace.Workspace.prototype._init",
+            this.injectionHandler.add(
+                workspace.Workspace.prototype, "_init",
+                ( originalMethod ) =>
                 function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
-                    Me.workspaceViewManager.injections.injections["workspace.Workspace.prototype._init"]
-                        .call( this, metaWorkspace, monitorIndex, overviewAdjustment )
+                    originalMethod.call( this, metaWorkspace, monitorIndex, overviewAdjustment )
                     Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this
                     this.connect( "destroy", () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace] )
                 }
             )
 
             // Extra reference to workspace views in overview
-            this.injections.add(
-                "workspacesView.WorkspacesView.prototype._init",
+            this.injectionHandler.add(
+                workspacesView.WorkspacesView.prototype, "_init",
+                ( originalMethod ) =>
                 function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
-                    Me.workspaceViewManager.injections.injections["workspacesView.WorkspacesView.prototype._init"]
-                        .call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
+                    originalMethod.call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
                     Me.workspaceViewManager.wsvWorkspaces = this._workspaces
                     this.connect( "destroy", () => delete Me.workspaceViewManager.wsvWorkspaces )
                 }
             )
 
             // For gestures from desktop
-            this.injections.add(
-                "workspaceAnimation.WorkspaceGroup.prototype._init",
+            this.injectionHandler.add(
+                workspaceAnimation.WorkspaceGroup.prototype, "_init",
+                ( originalMethod ) =>
                 function ( workspace, monitor, movingWindow ) {
-                    Me.workspaceViewManager.injections.injections["workspaceAnimation.WorkspaceGroup.prototype._init"]
-                        .call( this, workspace, monitor, movingWindow )
+                    originalMethod.call( this, workspace, monitor, movingWindow )
                     if ( !workspace )
                         return
                     Me.workspaceViewManager.wsGroups[workspace] = this
@@ -102,21 +102,21 @@ export class WorkspaceViewManager {
                 }
             )
 
-            this.injections.add(
-                "overviewControls.ControlsManager.prototype._init",
+            this.injectionHandler.add(
+                overviewControls.ControlsManager.prototype, "_init",
+                ( originalMethod ) =>
                 function () {
-                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype._init"]
-                        .call( this )
+                    originalMethod.call( this )
                     Me.workspaceViewManager.overviewControls = this
                     Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox
                 }
             )
 
-            this.injections.add(
-                "workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails",
+            this.injectionHandler.add(
+                workspaceThumbnail.ThumbnailsBox.prototype, "addThumbnails",
+                ( originalMethod ) =>
                 function ( start, count ) {
-                    Me.workspaceViewManager.injections.injections["workspaceThumbnail.ThumbnailsBox.prototype.addThumbnails"]
-                        .call( this, start, count )
+                    originalMethod.call( this, start, count )
                     this.connect( "destroy", () => {
                         if ( this._bgManager ) { this._bgManager.destroy(); this._bgManager = null }
                     } )
@@ -127,18 +127,23 @@ export class WorkspaceViewManager {
             )
 
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
-            this.injections.add(
-                "workspaceThumbnail.ThumbnailsBox.prototype._addWindowClone",
+            this.injectionHandler.add(
+                workspaceThumbnail.WorkspaceThumbnail.prototype, "_addWindowClone",
+                ( originalMethod ) =>
                 function ( win ) {
-                    let clone = new workspaceThumbnail.ThumbnailsBox.WindowClone( win )
+                    let clone = new workspaceThumbnail.WindowClone( win )
                     clone.connect( "selected", ( o, time ) => { this.activate( time ) } )
                     clone.connect( "drag-begin", () => { Main.overview.beginWindowDrag( clone.metaWindow ) } )
                     clone.connect( "drag-cancelled", () => { Main.overview.cancelledWindowDrag( clone.metaWindow ) } )
                     clone.connect( "drag-end", () => { Main.overview.endWindowDrag( clone.metaWindow ) } )
                     clone.connect( "destroy", () => { this._removeWindowClone( clone.metaWindow ) } )
-                    this._contents.add_actor( clone )
-                    if ( this._windows.length == 0 ) clone.setStackAbove( this._bgManager.backgroundActor )
-                    else clone.setStackAbove( this._windows[this._windows.length - 1] )
+                    this._contents.add_child( clone )
+                    // if ( this._windows.length == 0 ) clone.setStackAbove( this._bgManager.backgroundActor )
+                    // else clone.setStackAbove( this._windows[this._windows.length - 1] )
+
+                    if ( this._windows.length > 0 )
+                        clone.setStackAbove( this._windows[this._windows.length - 1] )
+
                     this._windows.push( clone )
                     return clone
                 }
@@ -182,11 +187,11 @@ export class WorkspaceViewManager {
                 Me.workspaceViewManager.refreshOverview( intValue )
             } )
             // This is needed in addition to above to ensure the correct starting overlay state with gestures
-            this.injections.add(
-                "overviewControls.ControlsManager.prototype.gestureBegin",
+            this.injectionHandler.add(
+                overviewControls.ControlsManager.prototype, "gestureBegin",
+                ( originalMethod ) =>
                 function ( tracker ) {
-                    Me.workspaceViewManager.injections.injections["overviewControls.ControlsManager.prototype.gestureBegin"]
-                        .call( this, tracker )
+                    originalMethod.call( this, tracker )
                     Me.workspaceViewManager.refreshOverview( 2 )
                 }
             )
@@ -196,10 +201,10 @@ export class WorkspaceViewManager {
 
     destroy() {
         try {
-            this.injections.removeAll()
+            this.injectionHandler.removeAll()
             this.signals.disconnectAll()
 
-            delete this.injections
+            delete this.injectionHandler
             delete this.signals
         } catch ( e ) { dev.log( e ) }
     }

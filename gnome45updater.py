@@ -101,19 +101,20 @@ def main(extension_directory: str, output_directory: str | None = None):
                 ]
 
                 new_class_contents += f"export let {extension_class_name}Instance = Extension.lookupByUUID('{metadata['uuid']}');\n\nexport default class {extension_class_name} extends Extension {{\n\n"
+
+                def joiner(em: re.Match):
+                    string = em.string[em.start() : em.end()]
+                    if "enable" in em.groupdict("fn_start"):
+                        string = string.replace(
+                            em.groupdict()["fn_start"],
+                            em.groupdict()["fn_start"]
+                            + f"\n    {extension_class_name}Instance = this;\n\n",
+                        )
+                    string = string.replace("function", "")
+                    return string
+
                 new_class_contents += (
-                    "\n\n".join(
-                        [
-                            em.string[em.start() : em.end()]
-                            .replace("function", "")
-                            .replace(
-                                em.groupdict()["fn_start"],
-                                em.groupdict()["fn_start"]
-                                + f"\n    {extension_class_name}Instance = this;\n\n",
-                            )
-                            for em in main_function_matches
-                        ]
-                    )
+                    "\n\n".join([joiner(em) for em in main_function_matches])
                     + "\n\n}\n"
                 )
 
