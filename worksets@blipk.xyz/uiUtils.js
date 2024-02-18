@@ -234,8 +234,7 @@ export function setImage( parent, imgFilePath = "" ) {
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file( imgFilePath )
             } catch ( e ) {
                 if ( e instanceof GLib.FileError && e.message.includes( "No such file or directory" ) )
-                    return [null,
-                        e]
+                    return [null, e]
                 else
                     throw e
             }
@@ -265,8 +264,7 @@ export function setImage( parent, imgFilePath = "" ) {
         parent.height = 150
 
         knownImages[imgFilePath] = image
-        return [image,
-            error]
+        return [image, error]
     } catch ( e ) { dev.log( e ) }
 }
 

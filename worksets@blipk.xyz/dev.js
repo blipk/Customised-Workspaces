@@ -38,7 +38,7 @@ export function log( ) {
 
     const printObj = ( obj ) => {
         let label, output
-        if ( obj instanceof Error ) {
+        if ( obj instanceof Error || obj.message ) {
             label = "\n!ERROR  |>\n"
             output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
         } else if ( typeof obj === "object" ) {
