@@ -38,7 +38,7 @@ export function log( ) {
 
     const printObj = ( obj ) => {
         let label, output
-        if ( obj instanceof Error || obj.message ) {
+        if ( obj instanceof Error || obj.stack ) {
             label = "\n!ERROR  |>\n"
             output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
         } else if ( typeof obj === "object" ) {
@@ -46,7 +46,7 @@ export function log( ) {
             let seen = []
             output = JSON.stringify( obj, function ( key, val ) {
                 if ( val != null && typeof val == "object" ) {
-                    if ( seen.indexOf( val ) >= 0 ) return
+                    if ( seen.indexOf( val ) > 0 ) return
                     seen.push( val )
                 }
                 return val
