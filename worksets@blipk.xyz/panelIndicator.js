@@ -411,7 +411,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.bgMenuButton = new popupMenu.PopupBaseMenuItem( { style_class: "bg-display" } )
             menuItem.bgMenuButton.content_gravity = Clutter.ContentGravity.RESIZE_ASPECT
             const [img, error] = uiUtils.setImage( menuItem.bgMenuButton, Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage )
-            if ( error && error.message.includes( "No such file or directory" ) ) {
+            if ( error ) {
                 Me.session.isDarkMode ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
                 Me.session.applySession()
             }
@@ -448,7 +448,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                         menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true
                         ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage
                     )
-                    if ( error && error.message.includes( "No such file or directory" ) ) {
+                    if ( error ) {
                         btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
                         Me.session.applySession()
                     }

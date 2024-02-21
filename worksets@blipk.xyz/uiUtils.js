@@ -233,10 +233,10 @@ export function setImage( parent, imgFilePath = "" ) {
             try {
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file( imgFilePath )
             } catch ( e ) {
-                if ( e instanceof GLib.FileError && e.message.includes( "No such file or directory" ) )
+                if ( e instanceof GLib.FileError )
                     return [null, e]
                 else
-                    throw e
+                    return [null, e]
             }
             if ( pixbuf === null ) // file doesnt exist
                 return [( imgFilePath = "" ),
