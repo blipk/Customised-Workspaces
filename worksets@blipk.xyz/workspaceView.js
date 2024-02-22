@@ -48,7 +48,7 @@ import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
-import * as uiUtils from "./uiUtils.js"
+import * as uiUtils from "./lib/ui/uiUtils.js"
 
 export class WorkspaceViewManager {
     constructor() {

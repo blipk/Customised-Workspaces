@@ -41,7 +41,8 @@ import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
 import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
-import * as uiUtils from "./uiUtils.js"
+import * as uiUtils from "./lib/ui/uiUtils.js"
+import * as dialogs from "./lib/ui/dialogs.js"
 import * as fileUtils from "./fileUtils.js"
 import * as panelIndicator from "./panelIndicator.js"
 import * as workspaceManager from "./workspaceManager.js"
@@ -71,9 +72,7 @@ export class SessionManager {
             this.signals.add( appFavorites.getAppFavorites(), "changed", () => { this._favoritesChanged() } )
 
             // Make sure our GTK App chooser is executable
-            util.spawn( ["chmod",
-                "+x",
-                fileUtils.APP_CHOOSER_EXEC()] )
+            util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
 
             // Create sesion or initialize from session file if it exists
             if ( fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" ) ) {
@@ -666,7 +665,7 @@ export class SessionManager {
                 // const timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
                 let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
                 { label: "Done", default: true }]
-                let getNewWorksetNameDialog = new uiUtils.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
+                let getNewWorksetNameDialog = new dialogs.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
                     if ( !returnText ) return
                     returnText = returnText.trim()
                     if ( returnText == "" ) return
@@ -729,7 +728,7 @@ export class SessionManager {
             let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.returnObject = false, this.close( true ) } },
             { label: "Done", default: true }]
 
-            let editObjectChooseDialog = new uiUtils.ObjectEditorDialog( "Editing: " + worksetIn.WorksetName, ( returnObject ) => {
+            let editObjectChooseDialog = new dialogs.ObjectEditorDialog( "Editing: " + worksetIn.WorksetName, ( returnObject ) => {
                 if ( !returnObject ) return
                 returnObject.WorksetName = returnObject.WorksetName.trim()
                 if ( returnObject.WorksetName == "" ) return

@@ -43,7 +43,8 @@ import * as boxpointer from "resource:///org/gnome/shell/ui/boxpointer.js"
 import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
-import * as uiUtils from "./uiUtils.js"
+import * as uiUtils from "./lib/ui/uiUtils.js"
+import * as dialogs from "./lib/ui/dialogs.js"
 import * as fileUtils from "./fileUtils.js"
 
 export var WorksetsIndicator = GObject.registerClass( {
@@ -134,7 +135,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                             { label: "Done", default: true }
                         ]
                         const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
-                        const getWorksetSwitchCLIArgs = new uiUtils.ObjectInterfaceDialog(
+                        const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
                             dialogMsg,
                             ( returnText ) => {
                                 if ( !returnText ) return
@@ -548,9 +549,11 @@ export var WorksetsIndicator = GObject.registerClass( {
             let addApps = () => {
                 this.menu.toggle()
                 utils.spawnWithCallback(
-                    null, [fileUtils.APP_CHOOSER_EXEC(),
-                    "-w",
-                    menuItem.workset.WorksetName], GLib.get_environ(), 0, null,
+                    null,
+                    [fileUtils.APP_CHOOSER_EXEC(), "-w", menuItem.workset.WorksetName],
+                    GLib.get_environ(),
+                    0,
+                    null,
                     ( resource ) => {
                         try {
                             if ( !resource ) return

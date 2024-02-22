@@ -93,7 +93,7 @@ export function stringifyNumber( n ) {
 export function isEmpty ( v ) {
     return typeof v === "undefined" ? true
         : v === null ? true
-            : v === [] ? true
+            : Array.isArray( v ) && v.length === 0 ? true
                 : typeof v === "object" ? ( Object.getOwnPropertyNames( v ).length > 0 ? false : true )
                     : typeof v === "string" ? ( v.length > 0 ? false : true )
                         : Boolean( v )
