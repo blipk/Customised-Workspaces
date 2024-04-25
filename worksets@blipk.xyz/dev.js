@@ -32,7 +32,12 @@ export function log( ) {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
     const args = [...arguments]
     const stack = ( new Error() ).stack.split( "\n" )
-    const context = stack[1]
+    const caller_stack = stack[2].toString().split( "/" )
+    const context_stack = stack[1].toString().split( "/" )
+    const caller = caller_stack[caller_stack.length - 1]
+    const context = context_stack[context_stack.length - 1]
+
+
 
     if ( !_debug_ ) return
 
@@ -61,7 +66,7 @@ export function log( ) {
     }
 
     const timestamp = new Date().toLocaleString()
-    const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${context.toString()}\n`
+    const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${caller} -> ${context}\n`
     let out = prefix
     let args_out = ""
     for ( const arg of args ) {

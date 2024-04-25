@@ -373,6 +373,12 @@ export class SessionManager {
             bgPath = this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].BackgroundImage
         bgPath = bgPath.replace( "file://", "" )
 
+        const currentBackground = darkMode ? this.getBackgroundDark() : this.getBackground()
+        const currentStyle = this.bSettings.get_string( "picture-options" )
+
+        if ( currentBackground == bgPath && currentStyle == style )
+            return
+
         this.bSettings = this.bSettings || new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
         if ( darkMode ) {
             this.bSettings.set_string( "picture-uri-dark", "file://" + bgPath )
@@ -494,10 +500,12 @@ export class SessionManager {
     displayWorkset( workset, loadInNewWorkspace = false, displayOnly = false ) {
         try {
             let activeIndex = this.getWorksetActiveIndex( workset )
+            // dev.log("display", [loadInNewWorkspace, displayOnly, activeIndex, workset.WorksetName])
 
             // Don't do anything if the workset is a default here but already open elsewhere
-            if ( workset.WorksetName == this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].defaultWorkset
-                 && this.ActiveWorksets.includes( workset.WorksetName ) )
+            if ( this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].defaultWorkset == workset.WorksetName
+                 && this.ActiveWorksets.includes( workset.WorksetName )
+                 && this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].currentWorkset != workset.WorksetName )
                 return
 
             if ( activeIndex > -1 && !displayOnly && !loadInNewWorkspace ) { // Switch to it if already active
@@ -519,7 +527,6 @@ export class SessionManager {
                 if ( this.activeSession.Options.ShowNotifications )
                     uiUtils.showUserNotification( "Loaded environment " + workset.WorksetName, false, 1.4 )
             }
-
             if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
 
             this.setFavorites( workset.FavApps )
