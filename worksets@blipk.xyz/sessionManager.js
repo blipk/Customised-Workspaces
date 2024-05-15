@@ -368,6 +368,9 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     setBackground( bgPath = "", style = "ZOOM", darkMode = false ) {
+        // dev.log("setBackground", [bgPath, style, darkMode], )
+        // const startTime = Math.floor(new Date().getTime() / 1000)
+
         if ( this.activeSession.Options.DisableWallpaperManagement ) return
         if ( !bgPath )
             bgPath = this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].BackgroundImage
@@ -402,6 +405,7 @@ export class SessionManager {
             }
         }, this )
 
+        // dev.log("setBackground END",  Math.floor(new Date().getTime() / 1000) - startTime)
         //*/
         /*
         Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
@@ -500,7 +504,7 @@ export class SessionManager {
     displayWorkset( workset, loadInNewWorkspace = false, displayOnly = false ) {
         try {
             let activeIndex = this.getWorksetActiveIndex( workset )
-            // dev.log("display", [loadInNewWorkspace, displayOnly, activeIndex, workset.WorksetName])
+            //dev.log("display", [loadInNewWorkspace, displayOnly, activeIndex, workset.WorksetName])
 
             // Don't do anything if the workset is a default here but already open elsewhere
             if ( this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].defaultWorkset == workset.WorksetName
@@ -532,7 +536,8 @@ export class SessionManager {
             this.setFavorites( workset.FavApps )
             this.setBackground(
                 this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
-                this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle, this.isDarkMode
+                this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle,
+                this.isDarkMode
             )
 
             this.saveSession()

@@ -417,7 +417,7 @@ export class WorkspaceViewManager {
                         btn.menu = new popupMenu.PopupMenu( btn, Clutter.ActorAlign.START, St.Side.TOP )
                         this.menus.push( btn.menu )
                         btn.menu.bye = function () {
-                            Main.uiGroup.remove_actor( btn.menu.actor )
+                            Main.uiGroup.remove_child( btn.menu.actor )
                             btn.menu.actor.hide()
                             btn.menu.destroy()
                             btn.menu = null
@@ -480,7 +480,7 @@ export class WorkspaceViewManager {
                             btn.menu.addMenuItem( menuItem, 0 )
                         }
 
-                        Main.uiGroup.add_actor( btn.menu.actor )
+                        Main.uiGroup.add_child( btn.menu.actor )
                         this.signals.add( GLib.timeout_add( null, 5000, () => { if ( !utils.isEmpty( btn.menu ) ) btn.menu.bye(); return false } ) )
                         btn.menu.open()
                     } catch ( e ) { dev.log( e ) }

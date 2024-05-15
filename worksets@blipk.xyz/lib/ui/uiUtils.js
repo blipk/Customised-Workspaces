@@ -110,7 +110,7 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
     const label = new St.Label( { style_class: "feedback-label", text: _( input ) } )
     messages.push( label )
     let lastItem = messages.length - 1
-    Main.uiGroup.add_actor( messages[lastItem] )
+    Main.uiGroup.add_child( messages[lastItem] )
     messages[lastItem].opacity = 255
     let monitor = Main.layoutManager.primaryMonitor
     messages[lastItem].set_position(
@@ -127,7 +127,7 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
 export function removeUserNotification( label, fadeTime ) {
     if ( !label ) return
     if ( !fadeTime ) {
-        Main.uiGroup.remove_actor( label )
+        Main.uiGroup.remove_child( label )
         messages = messages.filter( item => item != label )
         if ( label.attachedTo ) label.attachedTo.notificationLabel = null
         label = null
@@ -137,7 +137,7 @@ export function removeUserNotification( label, fadeTime ) {
             time       : fadeTime || 1.4,
             transition : "easeOutQuad",
             onComplete : () => {
-                Main.uiGroup.remove_actor( label )
+                Main.uiGroup.remove_child( label )
                 messages = messages.filter( item => item != label )
                 if ( label.attachedTo ) label.attachedTo.notificationLabel = null
                 label = null

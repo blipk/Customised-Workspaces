@@ -187,8 +187,8 @@ export var WorksetsIndicator = GObject.registerClass( {
             let favoritesScrollView = new St.ScrollView( {
                 style_class: "ci-history-menu-section", overlay_scrollbars: true
             } )
-            favoritesScrollView.add_actor( this.favoritesSection.actor )
-            this.scrollViewFavoritesMenuSection.actor.add_actor( favoritesScrollView )
+            favoritesScrollView.add_child( this.favoritesSection.actor )
+            this.scrollViewFavoritesMenuSection.actor.add_child( favoritesScrollView )
 
 
             // History
@@ -197,8 +197,8 @@ export var WorksetsIndicator = GObject.registerClass( {
             let historyScrollView = new St.ScrollView( {
                 style_class: "ci-history-menu-section", overlay_scrollbars: true
             } )
-            historyScrollView.add_actor( this.historySection.actor )
-            this.scrollViewHistoryMenuSection.actor.add_actor( historyScrollView )
+            historyScrollView.add_child( this.historySection.actor )
+            this.scrollViewHistoryMenuSection.actor.add_child( historyScrollView )
 
             // Management menu button menu
             let sessionMenuItem = new popupMenu.PopupImageMenuItem( "New Environment", "document-new-symbolic" )
@@ -352,7 +352,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.worksetPopupMenu.menu.bye = function ( pass = false ) {
                 try {
                     Me.worksetsIndicator.popUpMenus.forEach( wspopupMenu => {
-                        //Main.uiGroup.remove_actor(wspopupMenu.actor);
+                        //Main.uiGroup.remove_child(wspopupMenu.actor);
                         wspopupMenu.menuItem.isShowing = false
                         wspopupMenu.menuItem._triangle.ease( {
                             rotation_angle_z : 0,
@@ -625,7 +625,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                 uiUtils.createTooltip( menuItem.revealButton, { msg: "Reveal background and apps options for " + menuItem.workset.WorksetName } )
             }
 
-            //Main.uiGroup.add_actor(menuItem.worksetPopupMenu.actor);
+            //Main.uiGroup.add_child(menuItem.worksetPopupMenu.actor);
             this.viewSection.addMenuItem( menuItem.worksetPopupMenu )
             if ( isShowing ) {
                 menuItem.isShowing = false

@@ -48,7 +48,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
             //Label for our dialog/text field with text about the dialog or a prompt for user text input
             let stLabelUText = new St.Label( { style_class: "object-dialog-label", text: _( dialogText ) } )
             let headerLabelArea = new St.BoxLayout()
-            headerLabelArea.add( stLabelUText )
+            headerLabelArea.add_child( stLabelUText )
 
             //Text field for user input
             this.stEntryUText = new St.Entry( { style_class: "object-dialog-label", can_focus: true, text: defaultText } )
@@ -68,12 +68,12 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
 
             //Error box that will appear to prompt for user validation of input
             this._errorBox = new St.BoxLayout( { style_class: "object-dialog-error-box" } )
-            this.contentLayout.add( this._errorBox )
+            this.contentLayout.add_child( this._errorBox )
             let errorIcon = new St.Icon( { icon_name: "dialog-error-symbolic", icon_size: 24, style_class: "object-dialog-error-icon" } )
-            this._errorBox.add( errorIcon )
+            this._errorBox.add_child( errorIcon )
             this._errorMessage = new St.Label( { style_class: "object-dialog-error-label" } )
             this._errorMessage.clutter_text.line_wrap = true
-            this._errorBox.add( this._errorMessage )
+            this._errorBox.add_child( this._errorMessage )
             this._inputError = false
             this._errorBox.hide()
 
@@ -140,8 +140,8 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                 }
             }
 
-            this.contentLayout.add( headerLabelArea )
-            this.contentLayout.add( this.stEntryUText )
+            this.contentLayout.add_child( headerLabelArea )
+            this.contentLayout.add_child( this.stEntryUText )
 
             if ( jsobjectsSets ) {
                 //Build an area for each object set
@@ -152,8 +152,8 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                     this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon(
                         { icon_name: "insert-object-symbolic", icon_size: 18, style_class: "object-dialog-error-icon" }
                     )
-                    //this._objectsSetBoxes[i].add(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
-                    this.contentLayout.add( this._objectsSetBoxes[i] )
+                    //this._objectsSetBoxes[i].add_child(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
+                    this.contentLayout.add_child( this._objectsSetBoxes[i] )
 
                     this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label( { style_class: "object-dialog-backup-file-label" } )
                     this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true
@@ -171,20 +171,20 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                             this._objectsSetBoxes[i] = new St.BoxLayout(
                                 { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER }
                             )
-                            this.contentLayout.add( this._objectsSetBoxes[i] )
+                            this.contentLayout.add_child( this._objectsSetBoxes[i] )
                             this._objectsSetBoxes[i]._objectBoxes = []
                         }
                         count++
                         //Box base
                         this._objectsSetBoxes[i]._objectBoxes[ii] = new St.BoxLayout( { style_class: "object-dialog-item" } )
                         //this._objectsSetBoxes[i]._objectBoxes[ii].set_vertical(true);
-                        this._objectsSetBoxes[i].add( this._objectsSetBoxes[i]._objectBoxes[ii] )
+                        this._objectsSetBoxes[i].add_child( this._objectsSetBoxes[i]._objectBoxes[ii] )
 
                         //State/type icon
                         this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon(
                             { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-item-icon" }
                         )
-                        this._objectsSetBoxes[i]._objectBoxes[ii].add( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon )
+                        this._objectsSetBoxes[i]._objectBoxes[ii].add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon )
 
                         //Labelled button to select the object
                         this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button( {
@@ -197,7 +197,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                         this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.connect( "button-press-event", () => {
                             this.popModal(); this.close( object ); return object
                         } )
-                        this._objectsSetBoxes[i]._objectBoxes[ii].add( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton )
+                        this._objectsSetBoxes[i]._objectBoxes[ii].add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton )
 
                         let objectDisplayName = "Object " + ii
                         Object.keys( object ).forEach( function ( objectkey, objectkeyIndex ) {
@@ -212,7 +212,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                     }, this )
 
                     if ( this._objectsSetBoxes[i]._objectSetBoxMessage ) this._objectsSetBoxes[i]._objectSetBoxMessage.set_text( setDisplayName )
-                    if ( setDisplayName.trim() === "" ) this._objectsSetBoxes[i].remove_actor( this._objectsSetBoxes[i].objectSetBoxStIcon )
+                    if ( setDisplayName.trim() === "" ) this._objectsSetBoxes[i].remove_child( this._objectsSetBoxes[i].objectSetBoxStIcon )
                 }, this )
             }
 
@@ -310,18 +310,18 @@ export var ObjectEditorDialog = GObject.registerClass( {
             let stLabelUText = new St.Label( dialogInfoTextStyle )
 
             dialogInfoTextStyle.x_align = Clutter.ActorAlign.FILL
-            if ( dialogInfoTextStyle.text != "" ) this.contentLayout.add( stLabelUText )
+            if ( dialogInfoTextStyle.text != "" ) this.contentLayout.add_child( stLabelUText )
 
 
             //*Error box that will appear to prompt for user validation of input //TO DO
             this._errorBox = new St.BoxLayout()
-            this.contentLayout.add( this._errorBox )
+            this.contentLayout.add_child( this._errorBox )
             let errorIcon = new St.Icon( { icon_name: "dialog-error-symbolic", icon_size: 24, style_class: "object-dialog-error-icon" } )
-            this._errorBox.add( errorIcon )
+            this._errorBox.add_child( errorIcon )
             this._inputError = false
             this._errorMessage = new St.Label( { style_class: "object-dialog-error-label" } )
             this._errorMessage.clutter_text.line_wrap = true
-            this._errorBox.add( this._errorMessage )
+            this._errorBox.add_child( this._errorMessage )
             this._errorBox.hide()
 
             //Action buttons
@@ -400,7 +400,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     this._propertyBoxes[i] = new St.BoxLayout( this.propertyBoxStyle[i] )
                     if ( this.propertyIconStyle[i] != undefined && this.propertyIconStyle[i] != {} ) {
                         this._propertyBoxes[i].propertyBoxStNameIcon = new St.Icon( this.propertyIconStyle[i] )
-                        this._propertyBoxes[i].add( this._propertyBoxes[i].propertyBoxStNameIcon, this.propertyIconStyle[i] )
+                        this._propertyBoxes[i].add_child( this._propertyBoxes[i].propertyBoxStNameIcon, this.propertyIconStyle[i] )
                     }
                     // :hover event doesn't work on style_class elements for BoxLayout, this allows using :focus for hover events
                     this._propertyBoxes[i].connect( "enter-event", () => { this._propertyBoxes[i].grab_key_focus() } )
@@ -408,20 +408,20 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     this._propertyBoxes[i].connect( "button-press-event", () => {
                         this.propertyBoxClickCallbacks[i].call( this, i )
                     } )
-                    this.contentLayout.add( this._propertyBoxes[i], this.propertyBoxStyle[i] )
+                    this.contentLayout.add_child( this._propertyBoxes[i], this.propertyBoxStyle[i] )
 
                     // Left side labelled button
                     this._propertyBoxes[i]._propertyBoxMessageButton = new St.Button( this.propertyLabelStyle[i] )
                     this._propertyBoxes[i]._propertyBoxMessage = new St.Label( this.propertyLabelStyle[i] )
                     this._propertyBoxes[i]._propertyBoxMessage.set_text( this.propertyDisplayName[i] )
                     this._propertyBoxes[i]._propertyBoxMessage.clutter_text.line_wrap = false
-                    this._propertyBoxes[i]._propertyBoxMessageButton.add_actor( this._propertyBoxes[i]._propertyBoxMessage )
+                    this._propertyBoxes[i]._propertyBoxMessageButton.add_child( this._propertyBoxes[i]._propertyBoxMessage )
                     //this._propertyBoxes[i]._propertyBoxMessageButton.set_label(this.propertyDisplayName[i])
                     //this._propertyBoxes[i]._propertyBoxMessageButton.set_label_actor(this._propertyBoxes[i]._propertyBoxMessage.actor)
                     this._propertyBoxes[i]._propertyBoxMessageButton.connect( "button-press-event", () => {
                         this.propertyBoxClickCallbacks[i].call( this, i )
                     } )
-                    this._propertyBoxes[i].add( this._propertyBoxes[i]._propertyBoxMessageButton )
+                    this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxMessageButton )
 
                     //Property value editor element
                     if ( this.propertyLabelOnly[i] ) return
@@ -431,7 +431,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect(
                             "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked }
                         )
-                        this._propertyBoxes[i].add( this._propertyBoxes[i]._propertyBoxEditorElement.actor )
+                        this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement.actor )
                     } else if ( typeof value === "string" || typeof value === "number" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry(
                             { style_class: "object-dialog-label", can_focus: true, text: "", x_align: Clutter.ActorAlign.FILL, x_expand: true }
@@ -444,7 +444,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                             this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.set_max_length( value.length )
                         }
                         this._propertyBoxes[i]._propertyBoxEditorElement.set_text( value.toString() )
-                        this._propertyBoxes[i].add( this._propertyBoxes[i]._propertyBoxEditorElement )
+                        this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement )
 
                         this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.get_buffer().connect(
                             "inserted-text",
@@ -504,7 +504,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                 x_align     : Clutter.ActorAlign.FILL,
                                 y_align     : Clutter.ActorAlign.FILL
                             } )
-                            this._propertyBoxes[i].add( this._propertyBoxes[i]._boolBox[n] )
+                            this._propertyBoxes[i].add_child( this._propertyBoxes[i]._boolBox[n] )
                             //, { expand: true, reactive: true, track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL }
 
                             // Label
@@ -514,7 +514,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                             this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.add_style_class_name( "uri-element-label" )
                             //this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.clutter_text.set_line_wrap(false);
-                            this._propertyBoxes[i]._boolBox[n].add( this._propertyBoxes[i]._boolBox[n]._boolBoxMessage )
+                            this._propertyBoxes[i]._boolBox[n].add_child( this._propertyBoxes[i]._boolBox[n]._boolBoxMessage )
                             this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.set_text( subObjectPropertyDisplayName )
 
                             // Toggling Function
@@ -547,7 +547,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                 "clicked", () => { togglingFunction.call( this ) }
                             )
                             if ( !subObjectLabelOnly )
-                                this._propertyBoxes[i]._boolBox[n].add(
+                                this._propertyBoxes[i]._boolBox[n].add_child(
                                     this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor
                                 )
                             // Toggle when pressing anywhere in the label/checkbox parent BoxLayout
@@ -564,7 +564,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                             { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-error-icon" }
                         )
                         if ( this._propertyBoxes[i]._propertyBoxEditorElement.add ) {
-                            this._propertyBoxes[i]._propertyBoxEditorElement.add(
+                            this._propertyBoxes[i]._propertyBoxEditorElement.add_child(
                                 this._propertyBoxes[i].propertyBoxStElementIcon, { y_align: Clutter.ActorAlign.CENTER }
                             )
                         }

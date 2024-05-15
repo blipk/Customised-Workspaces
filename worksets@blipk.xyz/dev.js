@@ -29,6 +29,7 @@ import { WorksetsInstance as Me } from "./extension.js"
 import * as fileUtils from "./fileUtils.js"
 
 export function log( ) {
+    try {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
     const args = [...arguments]
     const stack = ( new Error() ).stack.split( "\n" )
@@ -41,9 +42,13 @@ export function log( ) {
 
     if ( !_debug_ ) return
 
-    const printObj = ( obj ) => {
+    const printObj = ( obj, i ) => {
         let label, output
-        if ( obj instanceof Error || obj.stack ) {
+        if ( typeof obj === "string" || obj instanceof String ) {
+            label = i == 0 ? "\n:INFO   | " : ", "
+            output = obj && obj.toString ? obj.toString() : obj
+            output += ""
+        } else if ( obj instanceof Error || obj.stack ) {
             label = "\n!ERROR  |>\n"
             output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
         } else if ( typeof obj === "object" ) {
@@ -69,8 +74,8 @@ export function log( ) {
     const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${caller} -> ${context}\n`
     let out = prefix
     let args_out = ""
-    for ( const arg of args ) {
-        const [label, output] = printObj( arg )
+    args.map( ( arg, i ) => {
+        const [label, output] = printObj( arg, i )
         const arg_out = `${label} ${output}`
         if ( arg instanceof Error ) {
             console.log( "Extension", "Worksets", arg_out )
@@ -79,10 +84,14 @@ export function log( ) {
             console.log( "Extension", "Worksets", arg_out )
         }
         args_out += arg_out
-    }
+    } )
     out += args_out.trimStart() + "\n"
 
     fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
+    } catch ( e ) {
+        console.error( e )
+        throw e
+    }
 }
 
 
