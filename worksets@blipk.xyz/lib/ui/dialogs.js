@@ -18,7 +18,7 @@ import * as fileUtils from "../../fileUtils.js"
 
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
-//Object Editor Dialog
+//Object Interfacer Dialog
 export var ObjectInterfaceDialog = GObject.registerClass( {
     GTypeName: "Worksets_ObjectInterfaceDialog"
 }, class ObjectInterfaceDialog extends modalDialog.ModalDialog {
@@ -149,20 +149,23 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                     this._objectsSetBoxes[i] = new St.BoxLayout(
                         { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER }
                     )
-                    this._objectsSetBoxes[i].objectSetBoxStIcon = new St.Icon(
-                        { icon_name: "insert-object-symbolic", icon_size: 18, style_class: "object-dialog-error-icon" }
-                    )
-                    //this._objectsSetBoxes[i].add_child(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
-                    this.contentLayout.add_child( this._objectsSetBoxes[i] )
 
-                    this._objectsSetBoxes[i]._objectSetBoxMessage = new St.Label( { style_class: "object-dialog-backup-file-label" } )
-                    this._objectsSetBoxes[i]._objectSetBoxMessage.clutter_text.line_wrap = true
+                    Array( this._objectsSetBoxes[i] ).map( b => {
+                        b.objectSetBoxStIcon = new St.Icon(
+                            { icon_name: "insert-object-symbolic", icon_size: 18, style_class: "object-dialog-error-icon" }
+                        )
+                        //b.add_child(this._objectsSetBoxes[i].objectSetBoxStIcon, { y_align: Clutter.ActorAlign.CENTER });
+                        this.contentLayout.add_child( b )
 
-                    let setDisplayName = "Object Set " + i
+                        b._objectSetBoxMessage = new St.Label( { style_class: "object-dialog-backup-file-label" } )
+                        b._objectSetBoxMessage.clutter_text.line_wrap = true
+                        return b
+                    } )
 
                     //Build area for each object
-                    this._objectsSetBoxes[i]._objectBoxes = []
                     let count = 0
+                    this._objectsSetBoxes[i]._objectBoxes = []
+                    let setDisplayName = "Object Set " + i
                     objectSet.forEach( function ( object, ii ) {
                         // Create a new line if there are too many objects
                         if ( count == 4 ) {
@@ -175,30 +178,34 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                             this._objectsSetBoxes[i]._objectBoxes = []
                         }
                         count++
+
                         //Box base
                         this._objectsSetBoxes[i]._objectBoxes[ii] = new St.BoxLayout( { style_class: "object-dialog-item" } )
                         //this._objectsSetBoxes[i]._objectBoxes[ii].set_vertical(true);
                         this._objectsSetBoxes[i].add_child( this._objectsSetBoxes[i]._objectBoxes[ii] )
+                        Array( this._objectsSetBoxes[i]._objectBoxes[ii] ).map( b => {
+                            //State/type icon
+                            b._objectBoxStIcon = new St.Icon(
+                                { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-item-icon" }
+                            )
+                            b.add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon )
+                            //Labelled button to select the object
+                            b._objectBoxStButton = new St.Button( {
+                                style_class : "ci-action-btn", x_align     : Clutter.ActorAlign.FILL, can_focus   : true,
+                                child       : this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon
+                            } )
 
-                        //State/type icon
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon = new St.Icon(
-                            { icon_name: "insert-object-symbolic", icon_size: 14, style_class: "object-dialog-item-icon" }
-                        )
-                        this._objectsSetBoxes[i]._objectBoxes[ii].add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon )
+                            b._objectBoxStButton.set_x_align( Clutter.ActorAlign.START )
+                            b._objectBoxStButton.set_x_expand( false )
+                            b._objectBoxStButton.set_y_expand( false )
+                            b.connect( "button-press-event", () => {
+                                this.popModal(); this.close( object ); return object
+                            } )
 
-                        //Labelled button to select the object
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton = new St.Button( {
-                            style_class : "ci-action-btn", x_align     : Clutter.ActorAlign.FILL, can_focus   : true,
-                            child       : this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStIcon
+                            b.add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton )
                         } )
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_align( Clutter.ActorAlign.START )
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_x_expand( false )
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.set_y_expand( false )
-                        this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton.connect( "button-press-event", () => {
-                            this.popModal(); this.close( object ); return object
-                        } )
-                        this._objectsSetBoxes[i]._objectBoxes[ii].add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton )
 
+                        // Object labels
                         let objectDisplayName = "Object " + ii
                         Object.keys( object ).forEach( function ( objectkey, objectkeyIndex ) {
                             objectSetMasks.forEach( function ( objectMask, objectMaskIndex ) {
@@ -402,66 +409,77 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         this._propertyBoxes[i].propertyBoxStNameIcon = new St.Icon( this.propertyIconStyle[i] )
                         this._propertyBoxes[i].add_child( this._propertyBoxes[i].propertyBoxStNameIcon, this.propertyIconStyle[i] )
                     }
-                    // :hover event doesn't work on style_class elements for BoxLayout, this allows using :focus for hover events
-                    this._propertyBoxes[i].connect( "enter-event", () => { this._propertyBoxes[i].grab_key_focus() } )
-                    this._propertyBoxes[i].connect( "leave-event", () => { global.stage.set_key_focus( this ) } )
-                    this._propertyBoxes[i].connect( "button-press-event", () => {
-                        this.propertyBoxClickCallbacks[i].call( this, i )
+
+                    Array( this._propertyBoxes[i] ).map( b => {
+                        // :hover event doesn't work on style_class elements for BoxLayout, this allows using :focus for hover events
+                        b.connect( "enter-event", () => { b.grab_key_focus() } )
+                        b.connect( "leave-event", () => { global.stage.set_key_focus( this ) } )
+                        b.connect( "button-press-event", () => {
+                            this.propertyBoxClickCallbacks[i].call( this, i )
+                        } )
+
+                        // Left side labelled button
+                        b._propertyBoxMessageButton = new St.Button( this.propertyLabelStyle[i] )
+                        b._propertyBoxMessage = new St.Label( this.propertyLabelStyle[i] )
+                        b._propertyBoxMessage.set_text( this.propertyDisplayName[i] )
+                        b._propertyBoxMessage.clutter_text.line_wrap = false
+                        b._propertyBoxMessageButton.add_child( b._propertyBoxMessage )
+                        //b._propertyBoxMessageButton.set_label(this.propertyDisplayName[i])
+                        //b._propertyBoxMessageButton.set_label_actor(b._propertyBoxMessage.actor)
+                        b._propertyBoxMessageButton.connect( "button-press-event", () => {
+                            this.propertyBoxClickCallbacks[i].call( this, i )
+                        } )
+                        b.add_child( b._propertyBoxMessageButton )
+                        return b
                     } )
                     this.contentLayout.add_child( this._propertyBoxes[i], this.propertyBoxStyle[i] )
 
-                    // Left side labelled button
-                    this._propertyBoxes[i]._propertyBoxMessageButton = new St.Button( this.propertyLabelStyle[i] )
-                    this._propertyBoxes[i]._propertyBoxMessage = new St.Label( this.propertyLabelStyle[i] )
-                    this._propertyBoxes[i]._propertyBoxMessage.set_text( this.propertyDisplayName[i] )
-                    this._propertyBoxes[i]._propertyBoxMessage.clutter_text.line_wrap = false
-                    this._propertyBoxes[i]._propertyBoxMessageButton.add_child( this._propertyBoxes[i]._propertyBoxMessage )
-                    //this._propertyBoxes[i]._propertyBoxMessageButton.set_label(this.propertyDisplayName[i])
-                    //this._propertyBoxes[i]._propertyBoxMessageButton.set_label_actor(this._propertyBoxes[i]._propertyBoxMessage.actor)
-                    this._propertyBoxes[i]._propertyBoxMessageButton.connect( "button-press-event", () => {
-                        this.propertyBoxClickCallbacks[i].call( this, i )
-                    } )
-                    this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxMessageButton )
 
                     //Property value editor element
                     if ( this.propertyLabelOnly[i] ) return
                     if ( typeof value === "boolean" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox.CheckBox( "" )
-                        this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked = editableObject[key]
-                        this._propertyBoxes[i]._propertyBoxEditorElement.actor.connect(
-                            "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked }
-                        )
+                        Array( this._propertyBoxes[i]._propertyBoxEditorElement ).map( b => {
+                            b.actor.checked = editableObject[key]
+                            b.actor.connect(
+                                "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked }
+                            )
+                        } )
                         this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement.actor )
                     } else if ( typeof value === "string" || typeof value === "number" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry(
                             { style_class: "object-dialog-label", can_focus: true, text: "", x_align: Clutter.ActorAlign.FILL, x_expand: true }
                         )
-                        this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.min_width = 200
-                        this._focusElement = this._propertyBoxes[i]._propertyBoxEditorElement // To set initial focus
-                        if ( this.propertyDisabled[i] === true ) {
-                            this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.set_editable( false )
-                            this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.set_selectable( false )
-                            this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.set_max_length( value.length )
-                        }
-                        this._propertyBoxes[i]._propertyBoxEditorElement.set_text( value.toString() )
+                        Array( this._propertyBoxes[i]._propertyBoxEditorElement ).map( b => {
+                            b.clutter_text.min_width = 200
+                            this._focusElement = b // To set initial focus
+                            if ( this.propertyDisabled[i] === true ) {
+                                b.clutter_text.set_editable( false )
+                                b.clutter_text.set_selectable( false )
+                                b.clutter_text.set_max_length( value.length )
+                            }
+                            b.set_text( value.toString() )
+
+                            b.clutter_text.get_buffer().connect(
+                                "inserted-text",
+                                ( o, position, new_text, new_text_length, e ) => {
+                                    if ( typeof value !== "number" ) return Clutter.EVENT_PROPAGATE
+                                    if ( new_text.search( /^[0-9]+$/i ) === -1 ) {
+                                        o.delete_text( position, new_text_length )
+                                        return Clutter.EVENT_STOP
+                                    }
+                                    return Clutter.EVENT_PROPAGATE
+                                }
+                            )
+                            b.clutter_text.connect( "text-changed", ( o, e ) => {
+                                if ( typeof value === "number" ) editableObject[key] = parseInt( o.get_text() )
+                                else editableObject[key] = o.get_text()
+                                return Clutter.EVENT_PROPAGATE
+                            } )
+                            return b
+                        } )
                         this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement )
 
-                        this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.get_buffer().connect(
-                            "inserted-text",
-                            ( o, position, new_text, new_text_length, e ) => {
-                                if ( typeof value !== "number" ) return Clutter.EVENT_PROPAGATE
-                                if ( new_text.search( /^[0-9]+$/i ) === -1 ) {
-                                    o.delete_text( position, new_text_length )
-                                    return Clutter.EVENT_STOP
-                                }
-                                return Clutter.EVENT_PROPAGATE
-                            }
-                        )
-                        this._propertyBoxes[i]._propertyBoxEditorElement.clutter_text.connect( "text-changed", ( o, e ) => {
-                            if ( typeof value === "number" ) editableObject[key] = parseInt( o.get_text() )
-                            else editableObject[key] = o.get_text()
-                            return Clutter.EVENT_PROPAGATE
-                        } )
                     } else if ( typeof value === "object" && !Array.isArray( value ) ) {
                         // Any grouped sub objects must all be boolean (or TO DO int types)
                         // They will be displaye horizontally with labels above them
@@ -504,20 +522,37 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                 x_align     : Clutter.ActorAlign.FILL,
                                 y_align     : Clutter.ActorAlign.FILL
                             } )
+                            Array( this._propertyBoxes[i]._boolBox[n] ).map( b => {
+                                // Label
+                                b._boolBoxMessage = new St.Label()
+                                value[subobjectKey] ? b._boolBoxMessage.set_style_class_name( "label-enabled" ) :
+                                    b._boolBoxMessage.add_style_class_name( "label-disabled" )
+
+                                b._boolBoxMessage.add_style_class_name( "uri-element-label" )
+                                //b._boolBoxMessage.clutter_text.set_line_wrap(false);
+                                b.add_child( b._boolBoxMessage )
+                                b._boolBoxMessage.set_text( subObjectPropertyDisplayName )
+
+                                // Check box
+                                b._boolBoxEditorElement = new CheckBox.CheckBox( "" )
+                                b._boolBoxEditorElement.set_x_align( Clutter.ActorAlign.CENTER )
+                                b._boolBoxEditorElement.actor.checked = value[subobjectKey]
+                                b._boolBoxEditorElement.actor.connect(
+                                    "clicked", () => { togglingFunction.call( this ) }
+                                )
+                                if ( !subObjectLabelOnly )
+                                    b.add_child(
+                                        b._boolBoxEditorElement.actor
+                                    )
+                                // Toggle when pressing anywhere in the label/checkbox parent BoxLayout
+                                b.connect( "button-press-event", () => { togglingFunction.call( this ) } )
+
+                                return b
+                            } )
                             this._propertyBoxes[i].add_child( this._propertyBoxes[i]._boolBox[n] )
                             //, { expand: true, reactive: true, track_hover: true, x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.FILL, y_align: Clutter.ActorAlign.FILL }
 
-                            // Label
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxMessage = new St.Label()
-                            value[subobjectKey] ? this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.set_style_class_name( "label-enabled" ) :
-                                this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.add_style_class_name( "label-disabled" )
-
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.add_style_class_name( "uri-element-label" )
-                            //this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.clutter_text.set_line_wrap(false);
-                            this._propertyBoxes[i]._boolBox[n].add_child( this._propertyBoxes[i]._boolBox[n]._boolBoxMessage )
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxMessage.set_text( subObjectPropertyDisplayName )
-
-                            // Toggling Function
+                            // Toggling Function used for boolean checkboxes
                             function togglingFunction() {
                                 // subObjectToggleValidationCallback will return values to set for any other bool in the subobject and whether to toggle the current one
                                 let [allowed,
@@ -539,20 +574,6 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                 }, this )
                             }
 
-                            // Check box
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement = new CheckBox.CheckBox( "" )
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.set_x_align( Clutter.ActorAlign.CENTER )
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.checked = value[subobjectKey]
-                            this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor.connect(
-                                "clicked", () => { togglingFunction.call( this ) }
-                            )
-                            if ( !subObjectLabelOnly )
-                                this._propertyBoxes[i]._boolBox[n].add_child(
-                                    this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.actor
-                                )
-                            // Toggle when pressing anywhere in the label/checkbox parent BoxLayout
-                            this._propertyBoxes[i]._boolBox[n].connect( "button-press-event", () => { togglingFunction.call( this ) } )
-
                         }, this )
                     } else if ( Array.isArray( value ) ) {
                         //TO DO Array editor
@@ -570,9 +591,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         }
                     }
                 }, this )
-
             }
-
             this.open() // Consider having this called from dialog instance origin to ease object reference workflow
         } catch ( e ) { dev.log( e ) }
     }
