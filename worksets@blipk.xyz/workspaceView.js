@@ -289,10 +289,23 @@ export class WorkspaceViewManager {
                 //&& Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
                 //continue;
 
-                // New background for thumbnail box
+                // New background and label for thumbnail box
                 if ( thumbnailBox._newbg )
                     delete thumbnailBox._newbg
                 thumbnailBox._newbg = this.makeWorksetBg( thumbnailBox._workset )
+
+                !Me.session.activeSession.Options.ShowOverlayThumbnailLabels && thumbnailBox.worksetLabel && thumbnailBox.remove_child( thumbnailBox.worksetLabel )
+
+                if ( thumbnailBox._workset && Me.session.activeSession.Options.ShowOverlayThumbnailLabels ) {
+                    thumbnailBox.worksetLabel ||= new St.Label( {
+                        style_class : "workspace-preview-label",
+                        x_align     : Clutter.ActorAlign.END, x_expand    : false,
+                        y_align     : Clutter.ActorAlign.END, y_expand    : false,
+                    } )
+                    thumbnailBox.worksetLabel.set_text( thumbnailBox._workset.WorksetName )
+
+                    thumbnailBox.add_child( thumbnailBox.worksetLabel )
+                }
 
                 // For larger workspace view and app grid workspace preview
                 if ( gsWorkspace )
@@ -363,10 +376,7 @@ export class WorkspaceViewManager {
                 x_align     : Clutter.ActorAlign.START, x_expand    : true,
                 y_align     : Clutter.ActorAlign.START, y_expand    : true,
             } )
-            let text = ""
-            if ( Me.session.workspaceMaps["Workspace" + i] != undefined )
-                text = Me.session.workspaceMaps["Workspace" + i].currentWorkset
-            worksetLabel.set_text( text )
+            worksetLabel.set_text( Me.session.workspaceMaps["Workspace" + i].currentWorkset || "" )
             this.wsvWorkspaces[i]._worksetOverlayBox.add_child( worksetLabel )
 
             if ( overviewState >= overviewControls.ControlsState.APP_GRID )

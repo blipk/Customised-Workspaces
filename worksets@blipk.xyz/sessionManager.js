@@ -103,6 +103,9 @@ export class SessionManager {
         this.signals.add( Me.settings, "changed::show-workspace-overlay", () => {
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } )
+        this.signals.add( Me.settings, "changed::show-overlay-thumbnail-labels", () => {
+            if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
+        } )
         this.signals.add( Me.settings, "changed::disable-wallpaper-management", () => {
             this.setBackground()
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()

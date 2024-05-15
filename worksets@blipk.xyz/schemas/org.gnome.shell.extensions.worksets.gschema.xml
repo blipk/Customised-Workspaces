@@ -10,6 +10,11 @@
       <summary>Show overview overlay</summary>
       <description>Show custom workspace details/actions in the overview</description>
     </key>
+    <key name="show-overlay-thumbnail-labels" type="b">
+      <default>true</default>
+      <summary>Show overlay thumbnail labels</summary>
+      <description>Show custom workspace labels on the thumbnails at the top of the overview</description>
+    </key>
     <key name="show-panel-indicator" type="b">
       <default>true</default>
       <summary>Show panel indicator</summary>

@@ -108,6 +108,19 @@ entry:indeterminate {
      */
 }
 
+.workspace-preview-label {
+    margin: 0px;
+    padding: 0px;
+    font: small-caps bold 4em/4em;
+    font-size: 1em;
+    font-weight: bold;
+    font-variant: unicase slashed-zero no-common-ligatures tabular-nums;
+    font-feature-settings: "c2sc", "smcp";
+    color: whitesmoke;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px hidden black;
+    border-radius: 5px;
+}
 
 
 .open-backups-icon {
