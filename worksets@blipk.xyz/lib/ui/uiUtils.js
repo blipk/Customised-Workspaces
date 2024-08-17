@@ -49,7 +49,7 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
         else iconNameURI = iconNames
         let defaults = {
             icon_name   : iconNameURI,
-            style_class : "icon-button",
+            style_class : "worksets-icon-button",
             x_expand    : false,
             x_align     : Clutter.ActorAlign.CENTER,
             y_expand    : true,
@@ -60,7 +60,7 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
 
         let icon = new St.Icon( options )
         let iconButton = new St.Button( {
-            child: icon, style_class: options.style_class || "icon-button", can_focus: true, x_expand: false, y_expand: false,
+            child: icon, style_class: options.style_class || "worksets-icon-button", can_focus: true, x_expand: false, y_expand: false,
         } )
         iconButton.icon = icon
         parentItem.add_child ? parentItem.add_child( iconButton ) : parentItem.actor.add_child( iconButton )

@@ -469,7 +469,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                     const backgroundStyleToCompare = btnDarkMode.viewingDarkMode ?
                         menuItem.workset.BackgroundStyleDark : menuItem.workset.BackgroundStyle
                     if ( iconButton.tooltip ) iconButton.style_class =
-                        ( iconButton.tooltip.msg.includes( backgroundStyleToCompare.toUpperCase() ) ) ? "active-icon" : "icon-button"
+                        ( iconButton.tooltip.msg.includes( backgroundStyleToCompare.toUpperCase() ) ) ? "active-icon" : "worksets-icon-button"
                 } )
             }
 
@@ -503,7 +503,7 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             let updateBackgroundStyle = ( style, menuItem ) => {
                 backgroundStyleOptionsBox.iconButtons.forEach( ( iconButton ) => {
-                    if ( iconButton.tooltip ) iconButton.style_class = ( iconButton.tooltip.msg.includes( style ) ) ? "active-icon" : "icon-button"
+                    if ( iconButton.tooltip ) iconButton.style_class = ( iconButton.tooltip.msg.includes( style ) ) ? "active-icon" : "worksets-icon-button"
                 } )
 
                 if ( btnDarkMode.viewingDarkMode ) {

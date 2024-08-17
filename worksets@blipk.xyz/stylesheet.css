@@ -133,11 +133,11 @@ entry:indeterminate {
 }
 
 
-.icon-button {
+.worksets-icon-button {
     padding: 0px;
     margin: 0px;
 }
-.icon-button StIcon {
+.worksets-icon-button StIcon {
     icon-size:16px;
 }
 
