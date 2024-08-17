@@ -31,16 +31,18 @@ import * as fileUtils from "./fileUtils.js"
 import GLib from "gi://GLib"
 
 
-
 const timers = {}
 export function timer( timerName ) {
+    const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
+    if ( !_debug_ ) return
+
     if ( !timers[timerName] ) {
         timers[timerName] = GLib.get_monotonic_time()
     } else {
         const currentTime = GLib.get_monotonic_time()
         const timerLengthMicroseconds = currentTime - timers[timerName]
         const timerLengthMilliseconds = timerLengthMicroseconds / 1000
-        // log( `Timer '${timerName}' took ${timerLengthMilliseconds}ms` )
+        log( `Timer '${timerName}' took ${timerLengthMilliseconds}ms` )
         delete timers[timerName]
     }
 }

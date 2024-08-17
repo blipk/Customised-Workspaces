@@ -35,7 +35,9 @@ import GDesktopEnums from "gi://GDesktopEnums"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
-import * as appMenu from "resource:///org/gnome/shell/ui/appMenu.js"
+// import * as appMenu from "resource:///org/gnome/shell/ui/appMenu.js"
+// import * as appDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
+// import * as dash from "resource:///org/gnome/shell/ui/dash.js"
 
 
 
@@ -87,6 +89,7 @@ export class SessionManager {
             }
 
 
+            // Profiling to figure out why this.setFavorites() is so slow...
             // const injectionHandler = new utils.InjectionHandler()
             // injectionHandler.add(
             //     appFavorites.getAppFavorites().__proto__ , "reload",
@@ -104,6 +107,29 @@ export class SessionManager {
             //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
             //         originalMethod.call( this )
             //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
+            //     }
+            // )
+
+            // This is the one taking the longest @ 30+ms,
+            // about half the time of this.displayWorkset()
+            // and 75% of this.setFavorites()
+            // injectionHandler.add(
+            //     appDisplay.AppDisplay.prototype, "_redisplay",
+            //     ( originalMethod ) =>
+            //     function ( ) {
+            //         dev.timer( "appDisplay.AppDisplay._redisplay" )
+            //         originalMethod.call( this )
+            //         dev.timer( "appDisplay.AppDisplay._redisplay" )
+            //     }
+            // )
+
+            // injectionHandler.add(
+            //     dash.Dash.prototype, "_queueRedisplay",
+            //     ( originalMethod ) =>
+            //     function ( ) {
+            //         dev.timer( "dash.Dash._queueRedisplay" )
+            //         originalMethod.call( this )
+            //         dev.timer( "dash.Dash._queueRedisplay" )
             //     }
             // )
         } catch ( e ) { dev.log( e ) }
@@ -149,6 +175,7 @@ export class SessionManager {
 
         this.bSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
         this.signals.add( this.bSettings, "changed::picture-uri", () => {
+            if ( this.backgroundSet ) return
             // Update active workset wallpaper info if changed elsewhere in gnome
             let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
             let bgPath = this.bSettings.get_string( "picture-uri" )
@@ -165,7 +192,9 @@ export class SessionManager {
             this.setBackground( bgPath, bgStyle, false )
         } )
         this.signals.add( this.bSettings, "changed::picture-uri-dark", () => {
+            if ( this.backgroundSet ) return
             // Update active workset wallpaper info if changed elsewhere in gnome
+
             let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
             let bgPath = this.bSettings.get_string( "picture-uri-dark" )
             let bgStyle
@@ -176,7 +205,6 @@ export class SessionManager {
                 bgStyle = this.Worksets[worksetIndex].BackgroundStyleDark
                 this.saveSession()
             }, this )
-
             if ( !isDarkMode ) return
             this.setBackground( bgPath, bgStyle, true )
         } )
@@ -382,23 +410,19 @@ export class SessionManager {
     }
     getBackground() {
         try {
-            this.bSettings = this.bSettings || new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
             let bgURI = this.bSettings.get_string( "picture-uri" )
             return bgURI.replace( "file://", "" )
         } catch ( e ) { dev.log( e ) }
     }
     getBackgroundDark() {
         try {
-            this.bSettings = this.bSettings || new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
             let bgURI = this.bSettings.get_string( "picture-uri-dark" )
             return bgURI.replace( "file://", "" )
         } catch ( e ) { dev.log( e ) }
     }
     setBackground( bgPath = "", style = "ZOOM", darkMode = false ) {
-        // dev.log("setBackground", [bgPath, style, darkMode], )
-        // const startTime = Math.floor(new Date().getTime() / 1000)
-
         if ( this.activeSession.Options.DisableWallpaperManagement ) return
+
         if ( !bgPath )
             bgPath = this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].BackgroundImage
         bgPath = bgPath.replace( "file://", "" )
@@ -406,15 +430,17 @@ export class SessionManager {
         const currentBackground = darkMode ? this.getBackgroundDark() : this.getBackground()
         const currentStyle = this.bSettings.get_string( "picture-options" )
 
-        if ( currentBackground == bgPath && currentStyle == style )
+        if ( currentBackground == bgPath && currentStyle == style ) {
             return
-
-        this.bSettings = this.bSettings || new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
-        if ( darkMode ) {
-            this.bSettings.set_string( "picture-uri-dark", "file://" + bgPath )
-        } else {
-            this.bSettings.set_string( "picture-uri", "file://" + bgPath )
         }
+
+        this.backgroundSet = true
+        darkMode
+            ? this.bSettings.set_string( "picture-uri-dark", "file://" + bgPath )
+            : this.bSettings.set_string( "picture-uri", "file://" + bgPath )
+        this.backgroundSet = false
+
+
         this.bSettings.set_string( "picture-options", style.toLowerCase() )
 
         if ( ( darkMode && !this.isDarkMode ) || ( !darkMode && this.isDarkMode ) ) return
@@ -431,9 +457,6 @@ export class SessionManager {
                     bgMan.backgroundActor.background = newbg
             }
         }, this )
-
-
-        // dev.log("setBackground END",  Math.floor(new Date().getTime() / 1000) - startTime)
         //*/
         /*
         Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
@@ -453,13 +476,13 @@ export class SessionManager {
         try {
             favArray = favArray || this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].FavApps
             if ( !favArray ) return
-            dev.timer( "setFavorites" )
+            // dev.timer( "setFavorites" )
 
             const outFavorites = favArray.map( fav => fav.name )
             global.settings.set_strv( "favorite-apps", outFavorites )
 
             this.favoritesSet = true
-            dev.timer( "setFavorites" )
+            // dev.timer( "setFavorites" )
         } catch ( e ) { dev.log( e ) }
     }
     getFavorites( appList ) {
@@ -479,7 +502,6 @@ export class SessionManager {
                     } )
                 }
             }, this )
-
             return newFavorites
         } catch ( e ) { dev.log( e ) }
     }
@@ -502,7 +524,7 @@ export class SessionManager {
             this.favoritesSet = false
             return
         }
-        dev.timer( "_favoritesChanged" )
+        // dev.timer( "_favoritesChanged" )
 
         try {
             this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
@@ -512,7 +534,7 @@ export class SessionManager {
             }, this )
             this.saveSession()
         } catch ( e ) { dev.log( e ) }
-        dev.timer( "_favoritesChanged" )
+        // dev.timer( "_favoritesChanged" )
     }
     scanInstalledApps() {
         // Shell.AppSystem includes flatpak and snap installed applications
@@ -543,7 +565,6 @@ export class SessionManager {
 
         try {
             let activeIndex = this.getWorksetActiveIndex( workset )
-            //dev.log("display", [loadInNewWorkspace, displayOnly, activeIndex, workset.WorksetName])
 
             // Don't do anything if the workset is a default here but already open elsewhere
             if ( this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].defaultWorkset == workset.WorksetName
@@ -551,7 +572,7 @@ export class SessionManager {
                  && this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].currentWorkset != workset.WorksetName )
                 return
 
-            dev.timer( "displayWorkset" )
+            // dev.timer( "displayWorkset" )
 
             if ( activeIndex > -1 && !displayOnly && !loadInNewWorkspace ) { // Switch to it if already active
                 if ( Me.workspaceManager.activeWorkspaceIndex != activeIndex )
@@ -574,19 +595,17 @@ export class SessionManager {
             }
             if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
 
+
             this.setFavorites( workset.FavApps )
 
-            dev.timer( "setBackground" )
             this.setBackground(
                 this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
                 this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle,
                 this.isDarkMode
             )
-            dev.timer( "setBackground" )
-
 
             this.saveSession()
-            dev.timer( "displayWorkset" )
+            // dev.timer( "displayWorkset" )
         } catch ( e ) { dev.log( e ) }
     }
     get DefaultWorkset() { // Returns the object from the WorksetName

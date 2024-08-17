@@ -90,15 +90,14 @@ export class WorkspaceManager {
 
             if ( min_workspaces < 2 ) min_workspaces = 2
 
-            const n_global_workspaces = Me.gWorkspaceManager.n_workspaces
 
             const currentWorkspaces = []
+            const n_global_workspaces = Me.gWorkspaceManager.n_workspaces
 
             // Make all workspaces non-persistent
             for ( let i = n_global_workspaces - 1; i >= 0; i-- ) {
                 currentWorkspaces[i] = Me.gWorkspaceManager.get_workspace_by_index( i )
                 currentWorkspaces[i]._keepAliveId = false
-
             }
 
 
@@ -110,7 +109,7 @@ export class WorkspaceManager {
                     }
                 }
 
-                // Make all workspaces persistent
+                // Make all workspaces persistent again
                 currentWorkspaces[i]._keepAliveId = true
             }
 
