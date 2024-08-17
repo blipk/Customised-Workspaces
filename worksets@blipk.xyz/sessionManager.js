@@ -35,6 +35,8 @@ import GDesktopEnums from "gi://GDesktopEnums"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
+import * as appMenu from "resource:///org/gnome/shell/ui/appMenu.js"
+
 
 
 // Internal imports
@@ -69,6 +71,7 @@ export class SessionManager {
             this.signals = new utils.SignalHandler()
 
             // Set up our bindings
+            this.favoritesSet = false
             this.signals.add( appFavorites.getAppFavorites(), "changed", () => { this._favoritesChanged() } )
 
             // Make sure our GTK App chooser is executable
@@ -82,6 +85,27 @@ export class SessionManager {
                 this.newSession( true )
                 this._setup( this.activeSession )
             }
+
+
+            // const injectionHandler = new utils.InjectionHandler()
+            // injectionHandler.add(
+            //     appFavorites.getAppFavorites().__proto__ , "reload",
+            //     ( originalMethod ) =>
+            //     function ( ) {
+            //         dev.timer( "appFavorites.AppFavorites.reload" )
+            //         originalMethod.call( this )
+            //         dev.timer( "appFavorites.AppFavorites.reload" )
+            //     }
+            // )
+            // injectionHandler.add(
+            //     appMenu.AppMenu.prototype, "_updateFavoriteItem",
+            //     ( originalMethod ) =>
+            //     function ( ) {
+            //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
+            //         originalMethod.call( this )
+            //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
+            //     }
+            // )
         } catch ( e ) { dev.log( e ) }
     }
     destroy() {
@@ -408,6 +432,7 @@ export class SessionManager {
             }
         }, this )
 
+
         // dev.log("setBackground END",  Math.floor(new Date().getTime() / 1000) - startTime)
         //*/
         /*
@@ -428,11 +453,13 @@ export class SessionManager {
         try {
             favArray = favArray || this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].FavApps
             if ( !favArray ) return
-            let outFavorites = []
-            favArray.forEach( function ( favorite, i ) {
-                outFavorites.push( favorite.name )
-            }, this )
+            dev.timer( "setFavorites" )
+
+            const outFavorites = favArray.map( fav => fav.name )
             global.settings.set_strv( "favorite-apps", outFavorites )
+
+            this.favoritesSet = true
+            dev.timer( "setFavorites" )
         } catch ( e ) { dev.log( e ) }
     }
     getFavorites( appList ) {
@@ -470,6 +497,13 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     _favoritesChanged() {
+        // Prevent this running when we're the one setting the favourites
+        if ( this.favoritesSet ) {
+            this.favoritesSet = false
+            return
+        }
+        dev.timer( "_favoritesChanged" )
+
         try {
             this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
                 if ( worksetBuffer.WorksetName == Me.workspaceManager.activeWorksetName ) {
@@ -478,6 +512,7 @@ export class SessionManager {
             }, this )
             this.saveSession()
         } catch ( e ) { dev.log( e ) }
+        dev.timer( "_favoritesChanged" )
     }
     scanInstalledApps() {
         // Shell.AppSystem includes flatpak and snap installed applications
@@ -505,6 +540,7 @@ export class SessionManager {
     }
 
     displayWorkset( workset, loadInNewWorkspace = false, displayOnly = false ) {
+
         try {
             let activeIndex = this.getWorksetActiveIndex( workset )
             //dev.log("display", [loadInNewWorkspace, displayOnly, activeIndex, workset.WorksetName])
@@ -514,6 +550,8 @@ export class SessionManager {
                  && this.ActiveWorksets.includes( workset.WorksetName )
                  && this.workspaceMaps["Workspace" + Me.workspaceManager.activeWorkspaceIndex].currentWorkset != workset.WorksetName )
                 return
+
+            dev.timer( "displayWorkset" )
 
             if ( activeIndex > -1 && !displayOnly && !loadInNewWorkspace ) { // Switch to it if already active
                 if ( Me.workspaceManager.activeWorkspaceIndex != activeIndex )
@@ -537,13 +575,18 @@ export class SessionManager {
             if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
 
             this.setFavorites( workset.FavApps )
+
+            dev.timer( "setBackground" )
             this.setBackground(
                 this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
                 this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle,
                 this.isDarkMode
             )
+            dev.timer( "setBackground" )
+
 
             this.saveSession()
+            dev.timer( "displayWorkset" )
         } catch ( e ) { dev.log( e ) }
     }
     get DefaultWorkset() { // Returns the object from the WorksetName

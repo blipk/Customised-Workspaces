@@ -50,7 +50,7 @@ export const INSTALL_DIR = () => GLib.build_pathv(
 )
 export const RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
 export const CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
-export const APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "ui", "appChooser.js"] )
+export const APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "lib", "ui", "appChooser.js"] )
 
 export function checkExists( path ) {
     let result = false

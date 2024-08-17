@@ -28,6 +28,23 @@
 import { WorksetsInstance as Me } from "./extension.js"
 import * as fileUtils from "./fileUtils.js"
 
+import GLib from "gi://GLib"
+
+
+
+const timers = {}
+export function timer( timerName ) {
+    if ( !timers[timerName] ) {
+        timers[timerName] = GLib.get_monotonic_time()
+    } else {
+        const currentTime = GLib.get_monotonic_time()
+        const timerLengthMicroseconds = currentTime - timers[timerName]
+        const timerLengthMilliseconds = timerLengthMicroseconds / 1000
+        log( `Timer '${timerName}' took ${timerLengthMilliseconds}ms` )
+        delete timers[timerName]
+    }
+}
+
 export function log( ) {
     try {
     const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
@@ -79,7 +96,7 @@ export function log( ) {
         const arg_out = `${label} ${output}`
         if ( arg instanceof Error ) {
             console.log( "Extension", "Worksets", arg_out )
-            console.error( arg )
+            // console.error( arg ) // This raises and won't log to the file
         } else {
             console.log( "Extension", "Worksets", arg_out )
         }

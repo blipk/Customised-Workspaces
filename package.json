@@ -1,5 +1,9 @@
 {
+	"scripts": {
+		"lintfix": "eslint . --fix"
+	},
 	"dependencies": {
 		"eslint": "^8.56.0"
 	}
+
 }

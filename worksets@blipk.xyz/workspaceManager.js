@@ -65,45 +65,55 @@ export class WorkspaceManager {
     _workspaceUpdate( destroyClean = false ) {
         if ( this.noUpdate ) return
         try {
-            // Remove any worksets that are set to current on more than one workspace
+            let min_workspaces = 1
+
             let currents = []
             Me.session.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues, i ) {
+                // Remove any worksets that are set to current on more than one workspace
                 if ( workspaceMapValues.currentWorkset != "" ) {
-                    if ( currents.indexOf( workspaceMapValues.currentWorkset ) > -1 )
+                    if ( currents.indexOf( workspaceMapValues.currentWorkset ) > -1 ) {
                         Me.session.workspaceMaps[workspaceMapKey].currentWorkset = ""
+                    }
+
                     currents.push( workspaceMapValues.currentWorkset )
+                }
+
+                // Minimum workspaces should be one more than the workspace index that the last active workset is on
+                if ( !destroyClean ) {
+                    let index = parseInt( workspaceMapKey.substr( -1, 1 ) )
+                    if ( workspaceMapValues.currentWorkset != "" && index > min_workspaces - 2 ) {
+                        min_workspaces = index + 2
+                    }
+
                 }
             }, this )
 
-            // Minimum workspaces should be one more than the workspace index that the last active workset is on
-            let min_workspaces = 1
-            if ( !destroyClean ) {
-                Me.session.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues, i ) {
-                    let index = parseInt( workspaceMapKey.substr( -1, 1 ) )
-                    if ( workspaceMapValues.currentWorkset != "" && index > min_workspaces - 2 )
-                        min_workspaces = index + 2
-                }, this )
-            }
             if ( min_workspaces < 2 ) min_workspaces = 2
 
+            const n_global_workspaces = Me.gWorkspaceManager.n_workspaces
+
+            const currentWorkspaces = []
+
             // Make all workspaces non-persistent
-            for ( let i = Me.gWorkspaceManager.n_workspaces - 1; i >= 0; i-- ) {
-                Me.gWorkspaceManager.get_workspace_by_index( i )._keepAliveId = false
+            for ( let i = n_global_workspaces - 1; i >= 0; i-- ) {
+                currentWorkspaces[i] = Me.gWorkspaceManager.get_workspace_by_index( i )
+                currentWorkspaces[i]._keepAliveId = false
+
             }
 
-            // If we have less than the minimum workspaces create new ones and make them persistent
-            if ( Me.gWorkspaceManager.n_workspaces < min_workspaces - 1 ) {
-                for ( let i = 0; i < min_workspaces - 1; i++ ) {
-                    if ( i >= Me.gWorkspaceManager.n_workspaces ) {
+
+            for ( let i = 0; i < min_workspaces - 1; i++ ) {
+                // If we have less than the minimum workspaces create new ones
+                if ( n_global_workspaces < min_workspaces - 1 ) {
+                    if ( i >= n_global_workspaces ) {
                         Me.gWorkspaceManager.append_new_workspace( false, global.get_current_time() )
                     }
-                    Me.gWorkspaceManager.get_workspace_by_index( i )._keepAliveId = true
                 }
-            } else { // If we already have enough workspaces make the first ones persistent
-                for ( let i = 0; i < min_workspaces - 1; i++ ) {
-                    Me.gWorkspaceManager.get_workspace_by_index( i )._keepAliveId = true
-                }
+
+                // Make all workspaces persistent
+                currentWorkspaces[i]._keepAliveId = true
             }
+
 
             // Update the workspace view
             Main.wm._workspaceTracker._checkWorkspaces()
@@ -265,6 +275,7 @@ export class WorkspaceManager {
             Me.gWorkspaceManager.get_workspace_by_index( index ).activate( 0 )
             this._workspaceUpdate()
         } catch ( e ) { dev.log( e ) }
+
     }
     _moveWindowsToWorkspace() {
         //TO DO
