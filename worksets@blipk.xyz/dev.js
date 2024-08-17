@@ -40,7 +40,7 @@ export function timer( timerName ) {
         const currentTime = GLib.get_monotonic_time()
         const timerLengthMicroseconds = currentTime - timers[timerName]
         const timerLengthMilliseconds = timerLengthMicroseconds / 1000
-        log( `Timer '${timerName}' took ${timerLengthMilliseconds}ms` )
+        // log( `Timer '${timerName}' took ${timerLengthMilliseconds}ms` )
         delete timers[timerName]
     }
 }
@@ -65,7 +65,7 @@ export function log( ) {
             label = i == 0 ? "\n:INFO   | " : ", "
             output = obj && obj.toString ? obj.toString() : obj
             output += ""
-        } else if ( obj instanceof Error || obj.stack ) {
+        } else if ( obj instanceof Error || obj?.stack ) {
             label = "\n!ERROR  |>\n"
             output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
         } else if ( typeof obj === "object" ) {

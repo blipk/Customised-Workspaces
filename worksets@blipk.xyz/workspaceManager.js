@@ -287,12 +287,10 @@ export class WorkspaceManager {
 
             if ( Me.session.activeSession.Options.IsolateWorkspaces ) {
                 // Defer to isolaters in other extensions
-                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'true']);
-                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'true']);
-                if ( Me.gExtensions.dash2panelSettings() ) {
+                if ( Me.gExtensions.dash2panel() && Me.gExtensions.dash2panelSettings() ) {
                     if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
                     Me.gExtensions.dash2panelSettings().set_boolean( "isolate-workspaces", true )
-                } else if ( Me.gExtensions.dash2dockSettings() ) {
+                } else if ( Me.gExtensions.dash2dock() && Me.gExtensions.dash2dockSettings() ) {
                     if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
                     Me.gExtensions.dash2dockSettings().set_boolean( "isolate-workspaces", true )
                 } else {
