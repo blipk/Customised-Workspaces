@@ -70,83 +70,83 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspace.Workspace.prototype, "_init",
                 ( originalMethod ) =>
-                function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
-                    originalMethod.call( this, metaWorkspace, monitorIndex, overviewAdjustment )
-                    Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this
-                    this.connect( "destroy", () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace] )
-                }
+                    function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
+                        originalMethod.call( this, metaWorkspace, monitorIndex, overviewAdjustment )
+                        Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this
+                        this.connect( "destroy", () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace] )
+                    }
             )
 
             // Extra reference to workspace views in overview
             this.injectionHandler.add(
                 workspacesView.WorkspacesView.prototype, "_init",
                 ( originalMethod ) =>
-                function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
-                    originalMethod.call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
-                    Me.workspaceViewManager.wsvWorkspaces = this._workspaces
-                    this.connect( "destroy", () => delete Me.workspaceViewManager.wsvWorkspaces )
-                }
+                    function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
+                        originalMethod.call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
+                        Me.workspaceViewManager.wsvWorkspaces = this._workspaces
+                        this.connect( "destroy", () => delete Me.workspaceViewManager.wsvWorkspaces )
+                    }
             )
 
             // For gestures from desktop
             this.injectionHandler.add(
                 workspaceAnimation.WorkspaceGroup.prototype, "_init",
                 ( originalMethod ) =>
-                function ( workspace, monitor, movingWindow ) {
-                    originalMethod.call( this, workspace, monitor, movingWindow )
-                    if ( !workspace )
-                        return
-                    Me.workspaceViewManager.wsGroups[workspace] = this
-                    Me.workspaceViewManager.refreshDesktop()
-                    this.connect( "destroy", () => delete Me.workspaceViewManager.wsGroups[workspace] )
-                }
+                    function ( workspace, monitor, movingWindow ) {
+                        originalMethod.call( this, workspace, monitor, movingWindow )
+                        if ( !workspace )
+                            return
+                        Me.workspaceViewManager.wsGroups[workspace] = this
+                        Me.workspaceViewManager.refreshDesktop()
+                        this.connect( "destroy", () => delete Me.workspaceViewManager.wsGroups[workspace] )
+                    }
             )
 
             this.injectionHandler.add(
                 overviewControls.ControlsManager.prototype, "_init",
                 ( originalMethod ) =>
-                function () {
-                    originalMethod.call( this )
-                    Me.workspaceViewManager.overviewControls = this
-                    Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox
-                }
+                    function () {
+                        originalMethod.call( this )
+                        Me.workspaceViewManager.overviewControls = this
+                        Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox
+                    }
             )
 
             this.injectionHandler.add(
                 workspaceThumbnail.ThumbnailsBox.prototype, "addThumbnails",
                 ( originalMethod ) =>
-                function ( start, count ) {
-                    originalMethod.call( this, start, count )
-                    this.connect( "destroy", () => {
-                        if ( this._bgManager ) { this._bgManager.destroy(); this._bgManager = null }
-                    } )
-                    Me.workspaceViewManager.thumbnailsBox = this
-                    Me.workspaceViewManager.thumbnailBoxes = this._thumbnails
-                    Me.workspaceViewManager.refreshOverview()
-                }
+                    function ( start, count ) {
+                        originalMethod.call( this, start, count )
+                        this.connect( "destroy", () => {
+                            if ( this._bgManager ) { this._bgManager.destroy(); this._bgManager = null }
+                        } )
+                        Me.workspaceViewManager.thumbnailsBox = this
+                        Me.workspaceViewManager.thumbnailBoxes = this._thumbnails
+                        Me.workspaceViewManager.refreshOverview()
+                    }
             )
 
             // Re-implementation from earlier shell versions to show the desktop background in the workspace thumbnail
             this.injectionHandler.add(
                 workspaceThumbnail.WorkspaceThumbnail.prototype, "_addWindowClone",
                 ( originalMethod ) =>
-                function ( win ) {
-                    let clone = new workspaceThumbnail.WindowClone( win )
-                    clone.connect( "selected", ( o, time ) => { this.activate( time ) } )
-                    clone.connect( "drag-begin", () => { Main.overview.beginWindowDrag( clone.metaWindow ) } )
-                    clone.connect( "drag-cancelled", () => { Main.overview.cancelledWindowDrag( clone.metaWindow ) } )
-                    clone.connect( "drag-end", () => { Main.overview.endWindowDrag( clone.metaWindow ) } )
-                    clone.connect( "destroy", () => { this._removeWindowClone( clone.metaWindow ) } )
-                    this._contents.add_child( clone )
-                    // if ( this._windows.length == 0 ) clone.setStackAbove( this._bgManager.backgroundActor )
-                    // else clone.setStackAbove( this._windows[this._windows.length - 1] )
+                    function ( win ) {
+                        let clone = new workspaceThumbnail.WindowClone( win )
+                        clone.connect( "selected", ( o, time ) => { this.activate( time ) } )
+                        clone.connect( "drag-begin", () => { Main.overview.beginWindowDrag( clone.metaWindow ) } )
+                        clone.connect( "drag-cancelled", () => { Main.overview.cancelledWindowDrag( clone.metaWindow ) } )
+                        clone.connect( "drag-end", () => { Main.overview.endWindowDrag( clone.metaWindow ) } )
+                        clone.connect( "destroy", () => { this._removeWindowClone( clone.metaWindow ) } )
+                        this._contents.add_child( clone )
+                        // if ( this._windows.length == 0 ) clone.setStackAbove( this._bgManager.backgroundActor )
+                        // else clone.setStackAbove( this._windows[this._windows.length - 1] )
 
-                    if ( this._windows.length > 0 )
-                        clone.setStackAbove( this._windows[this._windows.length - 1] )
+                        if ( this._windows.length > 0 )
+                            clone.setStackAbove( this._windows[this._windows.length - 1] )
 
-                    this._windows.push( clone )
-                    return clone
-                }
+                        this._windows.push( clone )
+                        return clone
+                    }
             )
 
             // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
@@ -190,10 +190,10 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 overviewControls.ControlsManager.prototype, "gestureBegin",
                 ( originalMethod ) =>
-                function ( tracker ) {
-                    originalMethod.call( this, tracker )
-                    Me.workspaceViewManager.refreshOverview( 2 )
-                }
+                    function ( tracker ) {
+                        originalMethod.call( this, tracker )
+                        Me.workspaceViewManager.refreshOverview( 2 )
+                    }
             )
 
         } catch ( e ) { dev.log( e ) }

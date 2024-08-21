@@ -115,41 +115,41 @@ export var WorksetsIndicator = GObject.registerClass( {
             }
             let apply
             switch ( optionName ) {
-                case "IsolateWorkspaces":
-                    apply = () => { Me.workspaceManager.activateIsolater() }
-                    break
-                case "ReverseMenu":
-                    apply = () => { toggleOpt(); Me.session.resetIndicator() }
-                    break
-                case "ShowWorkspaceOverly":
-                    apply = () => { toggleOpt(); Me.workspaceViewManager.refreshOverview() }
-                    break
-                case "CliSwitch":
-                    apply = () => {
-                        const buttonStyles = [
-                            {
-                                label  : "Cancel",
-                                key    : Clutter.KEY_Escape,
-                                action : function () { this.close( " " ) }
-                            },
-                            { label: "Done", default: true }
-                        ]
-                        const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
-                        const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
-                            dialogMsg,
-                            ( returnText ) => {
-                                if ( !returnText ) return
-                                returnText = returnText.trim()
-                                if ( returnText === "" ) return
-                                Me.session.activeSession.Options["CliSwitch"] = returnText
-                                Me.session.applySession()
-                                uiUtils.showUserNotification( "CLI command saved." )
-                            },
-                            true, false, [], [], buttonStyles, Me.session.activeSession.Options["CliSwitch"]
-                        )
-                    }
-                    break
-                default: apply = toggleOpt
+            case "IsolateWorkspaces":
+                apply = () => { Me.workspaceManager.activateIsolater() }
+                break
+            case "ReverseMenu":
+                apply = () => { toggleOpt(); Me.session.resetIndicator() }
+                break
+            case "ShowWorkspaceOverly":
+                apply = () => { toggleOpt(); Me.workspaceViewManager.refreshOverview() }
+                break
+            case "CliSwitch":
+                apply = () => {
+                    const buttonStyles = [
+                        {
+                            label  : "Cancel",
+                            key    : Clutter.KEY_Escape,
+                            action : function () { this.close( " " ) }
+                        },
+                        { label: "Done", default: true }
+                    ]
+                    const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
+                    const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
+                        dialogMsg,
+                        ( returnText ) => {
+                            if ( !returnText ) return
+                            returnText = returnText.trim()
+                            if ( returnText === "" ) return
+                            Me.session.activeSession.Options["CliSwitch"] = returnText
+                            Me.session.applySession()
+                            uiUtils.showUserNotification( "CLI command saved." )
+                        },
+                        true, false, [], [], buttonStyles, Me.session.activeSession.Options["CliSwitch"]
+                    )
+                }
+                break
+            default: apply = toggleOpt
             }
             const eventName = isBoolOption ? "toggled" : "button_release_event"
             optionMenuItem.pressHandler = optionMenuItem.connect( eventName, () => { apply() } )
@@ -447,7 +447,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                     btnDarkMode.icon.icon_name = btnDarkMode.viewingDarkMode === true ? "night-light-symbolic" : "weather-clear-symbolic"
                     const [img, error] = uiUtils.setImage(
                         menuItem.bgMenuButton, btnDarkMode.viewingDarkMode === true
-                        ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage
+                            ? menuItem.workset.BackgroundImageDark : menuItem.workset.BackgroundImage
                     )
                     if ( error ) {
                         btnDarkMode.viewingDarkMode === true ? menuItem.workset.BackgroundImageDark = "" : menuItem.workset.BackgroundImage = ""
@@ -459,8 +459,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                     updateIcons()
                 } catch ( e ) { dev.log( e ) }
             },
-                { x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START },
-                { msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode" } )
+            { x_expand: true, y_expand: true, x_align: Clutter.ActorAlign.START, y_align: Clutter.ActorAlign.START },
+            { msg: "Currently Viewing " + modeText + " background - Click to view/change alternate mode" } )
             btnDarkMode.viewingDarkMode = Me.session.isDarkMode
             btnDarkMode.disconnect( btnDarkMode.leaveEvent )
 

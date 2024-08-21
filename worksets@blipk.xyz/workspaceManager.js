@@ -329,6 +329,6 @@ export class WorkspaceManager {
                     dev.log( "Workspace switched command output:", stdout )
                 } catch ( e ) { dev.log( e ) }
             }
-)
+        )
     }
 }

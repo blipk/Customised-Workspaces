@@ -72,10 +72,6 @@ export class SessionManager {
 
             this.signals = new utils.SignalHandler()
 
-            // Set up our bindings
-            this.favoritesSet = false
-            this.signals.add( appFavorites.getAppFavorites(), "changed", () => { this._favoritesChanged() } )
-
             // Make sure our GTK App chooser is executable
             util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
 
@@ -94,20 +90,20 @@ export class SessionManager {
             // injectionHandler.add(
             //     appFavorites.getAppFavorites().__proto__ , "reload",
             //     ( originalMethod ) =>
-            //     function ( ) {
-            //         dev.timer( "appFavorites.AppFavorites.reload" )
-            //         originalMethod.call( this )
-            //         dev.timer( "appFavorites.AppFavorites.reload" )
-            //     }
+            //         function ( ) {
+            //             dev.timer( "appFavorites.AppFavorites.reload" )
+            //             originalMethod.call( this )
+            //             dev.timer( "appFavorites.AppFavorites.reload" )
+            //         }
             // )
             // injectionHandler.add(
             //     appMenu.AppMenu.prototype, "_updateFavoriteItem",
             //     ( originalMethod ) =>
-            //     function ( ) {
-            //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
-            //         originalMethod.call( this )
-            //         dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
-            //     }
+            //         function ( ) {
+            //             dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
+            //             originalMethod.call( this )
+            //             dev.timer( "appMenu.AppMenu._updateFavoriteItem" )
+            //         }
             // )
 
             // This is the one taking the longest @ 30+ms,
@@ -116,21 +112,21 @@ export class SessionManager {
             // injectionHandler.add(
             //     appDisplay.AppDisplay.prototype, "_redisplay",
             //     ( originalMethod ) =>
-            //     function ( ) {
-            //         dev.timer( "appDisplay.AppDisplay._redisplay" )
-            //         originalMethod.call( this )
-            //         dev.timer( "appDisplay.AppDisplay._redisplay" )
-            //     }
+            //         function ( ) {
+            //             dev.timer( "appDisplay.AppDisplay._redisplay" )
+            //             originalMethod.call( this )
+            //             dev.timer( "appDisplay.AppDisplay._redisplay" )
+            //         }
             // )
 
             // injectionHandler.add(
             //     dash.Dash.prototype, "_queueRedisplay",
             //     ( originalMethod ) =>
-            //     function ( ) {
-            //         dev.timer( "dash.Dash._queueRedisplay" )
-            //         originalMethod.call( this )
-            //         dev.timer( "dash.Dash._queueRedisplay" )
-            //     }
+            //         function ( ) {
+            //             dev.timer( "dash.Dash._queueRedisplay" )
+            //             originalMethod.call( this )
+            //             dev.timer( "dash.Dash._queueRedisplay" )
+            //         }
             // )
         } catch ( e ) { dev.log( e ) }
     }
@@ -141,6 +137,21 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     _watchOptions() {
+        // Set up our bindings
+        this.favoritesSet = false
+        this.signals.add( appFavorites.getAppFavorites(), "changed", () => {
+            if ( this.favoritesSet ) return
+
+            try {
+                this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
+                    if ( worksetBuffer.WorksetName == Me.workspaceManager.activeWorksetName ) {
+                        this.Worksets[worksetIndex].FavApps = this.getFavorites()
+                    }
+                }, this )
+                this.saveSession()
+            } catch ( e ) { dev.log( e ) }
+        } )
+
         this.signals.add( Me.settings, "changed::isolate-workspaces", () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean( "isolate-workspaces" )
         } )
@@ -209,6 +220,8 @@ export class SessionManager {
             this.setBackground( bgPath, bgStyle, true )
         } )
         this.signals.add( this.bSettings, "changed::picture-options", () => {
+            if ( this.backgroundSet ) return
+
             let bgStyle = this.bSettings.get_string( "picture-options" )
             let bgPath = ""
 
@@ -387,6 +400,8 @@ export class SessionManager {
     }
     saveSession( backup = false ) {
         try {
+            // dev.timer( "saveSession" )
+
             if ( utils.isEmpty( this.activeSession ) ) return
             this._saveOptions()
             this._validateSession( false )
@@ -397,6 +412,8 @@ export class SessionManager {
             fileUtils.saveToFile( sessionCopy, filename, fileUtils.CONF_DIR() )
 
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
+
+            // dev.timer( "saveSession" )
         } catch ( e ) { dev.log( e ) }
     }
     applySession( callback ) {
@@ -430,18 +447,17 @@ export class SessionManager {
         const currentBackground = darkMode ? this.getBackgroundDark() : this.getBackground()
         const currentStyle = this.bSettings.get_string( "picture-options" )
 
-        if ( currentBackground == bgPath && currentStyle == style ) {
+        if ( currentBackground == bgPath && currentStyle == style )
             return
-        }
 
         this.backgroundSet = true
         darkMode
             ? this.bSettings.set_string( "picture-uri-dark", "file://" + bgPath )
             : this.bSettings.set_string( "picture-uri", "file://" + bgPath )
-        this.backgroundSet = false
-
 
         this.bSettings.set_string( "picture-options", style.toLowerCase() )
+
+        this.backgroundSet = false
 
         if ( ( darkMode && !this.isDarkMode ) || ( !darkMode && this.isDarkMode ) ) return
 
@@ -479,9 +495,11 @@ export class SessionManager {
             // dev.timer( "setFavorites" )
 
             const outFavorites = favArray.map( fav => fav.name )
-            global.settings.set_strv( "favorite-apps", outFavorites )
-
             this.favoritesSet = true
+            global.settings.set_strv( "favorite-apps", outFavorites )
+            this.favoritesSet = false
+
+
             // dev.timer( "setFavorites" )
         } catch ( e ) { dev.log( e ) }
     }
@@ -517,24 +535,6 @@ export class SessionManager {
             }, this )
             this.saveSession()
         } catch ( e ) { dev.log( e ) }
-    }
-    _favoritesChanged() {
-        // Prevent this running when we're the one setting the favourites
-        if ( this.favoritesSet ) {
-            this.favoritesSet = false
-            return
-        }
-        // dev.timer( "_favoritesChanged" )
-
-        try {
-            this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
-                if ( worksetBuffer.WorksetName == Me.workspaceManager.activeWorksetName ) {
-                    this.Worksets[worksetIndex].FavApps = this.getFavorites()
-                }
-            }, this )
-            this.saveSession()
-        } catch ( e ) { dev.log( e ) }
-        // dev.timer( "_favoritesChanged" )
     }
     scanInstalledApps() {
         // Shell.AppSystem includes flatpak and snap installed applications
@@ -595,14 +595,21 @@ export class SessionManager {
             }
             if ( this.activeSession.Options.CliSwitch ) Me.workspaceManager.spawnOnSwitch( workset )
 
+            // dev.timer( "setFavorites" )
 
             this.setFavorites( workset.FavApps )
+
+            // dev.timer( "setFavorites" )
+
+            // dev.timer( "setBackground" )
 
             this.setBackground(
                 this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
                 this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle,
                 this.isDarkMode
             )
+            // dev.timer( "setBackground" )
+
 
             this.saveSession()
             // dev.timer( "displayWorkset" )
@@ -647,8 +654,8 @@ export class SessionManager {
             let msg = darkMode ? "Dark Mode" : "Light Mode"
             utils.spawnWithCallback(
                 null, ["/usr/bin/zenity",
-                "--file-selection",
-                "--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
+                    "--file-selection",
+                    "--title=Choose Background for " + workset.WorksetName + " (" + msg + ")"], GLib.get_environ(), 0, null,
                 ( resource ) => {
                     try {
                         if ( !resource ) return
@@ -741,7 +748,7 @@ export class SessionManager {
             if ( !name ) {
                 // const timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
                 let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
-                { label: "Done", default: true }]
+                    { label: "Done", default: true }]
                 let getNewWorksetNameDialog = new dialogs.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
                     if ( !returnText ) return
                     returnText = returnText.trim()
@@ -803,7 +810,7 @@ export class SessionManager {
                 { workSpaceOptions2: " ", subObjectEditableProperties: workspaceOptionsEditables2 }
             ]
             let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.returnObject = false, this.close( true ) } },
-            { label: "Done", default: true }]
+                { label: "Done", default: true }]
 
             let editObjectChooseDialog = new dialogs.ObjectEditorDialog( "Editing: " + worksetIn.WorksetName, ( returnObject ) => {
                 if ( !returnObject ) return

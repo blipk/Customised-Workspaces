@@ -49,64 +49,64 @@ export function timer( timerName ) {
 
 export function log( ) {
     try {
-    const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-    const args = [...arguments]
-    const stack = ( new Error() ).stack.split( "\n" )
-    const caller_stack = stack[2].toString().split( "/" )
-    const context_stack = stack[1].toString().split( "/" )
-    const caller = caller_stack[caller_stack.length - 1]
-    const context = context_stack[context_stack.length - 1]
+        const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
+        const args = [...arguments]
+        const stack = ( new Error() ).stack.split( "\n" )
+        const caller_stack = stack[2].toString().split( "/" )
+        const context_stack = stack[1].toString().split( "/" )
+        const caller = caller_stack[caller_stack.length - 1]
+        const context = context_stack[context_stack.length - 1]
 
 
 
-    if ( !_debug_ ) return
+        if ( !_debug_ ) return
 
-    const printObj = ( obj, i ) => {
-        let label, output
-        if ( typeof obj === "string" || obj instanceof String ) {
-            label = i == 0 ? "\n:INFO   | " : ", "
-            output = obj && obj.toString ? obj.toString() : obj
-            output += ""
-        } else if ( obj instanceof Error || obj?.stack ) {
-            label = "\n!ERROR  |>\n"
-            output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
-        } else if ( typeof obj === "object" ) {
-            label = "\n@Object |>\n"
-            let seen = []
-            output = JSON.stringify( obj, function ( key, val ) {
-                if ( val != null && typeof val == "object" ) {
-                    if ( seen.indexOf( val ) > 0 ) return
-                    seen.push( val )
-                }
-                return val
-            }, 2 ) + "\n"
-        } else {
-            label = "\n:INFO   | "
-            output = obj && obj.toString ? obj.toString() : obj
-            output += ""
+        const printObj = ( obj, i ) => {
+            let label, output
+            if ( typeof obj === "string" || obj instanceof String ) {
+                label = i == 0 ? "\n:INFO   | " : ", "
+                output = obj && obj.toString ? obj.toString() : obj
+                output += ""
+            } else if ( obj instanceof Error || obj?.stack ) {
+                label = "\n!ERROR  |>\n"
+                output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
+            } else if ( typeof obj === "object" ) {
+                label = "\n@Object |>\n"
+                let seen = []
+                output = JSON.stringify( obj, function ( key, val ) {
+                    if ( val != null && typeof val == "object" ) {
+                        if ( seen.indexOf( val ) > 0 ) return
+                        seen.push( val )
+                    }
+                    return val
+                }, 2 ) + "\n"
+            } else {
+                label = "\n:INFO   | "
+                output = obj && obj.toString ? obj.toString() : obj
+                output += ""
+            }
+
+            return [label, output]
         }
 
-        return [label, output]
-    }
-
-    const timestamp = new Date().toLocaleString()
-    const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${caller} -> ${context}\n`
-    let out = prefix
-    let args_out = ""
-    args.map( ( arg, i ) => {
-        const [label, output] = printObj( arg, i )
-        const arg_out = `${label} ${output}`
-        if ( arg instanceof Error ) {
-            console.log( "Extension", "Worksets", arg_out )
+        const timestamp = new Date().toLocaleString()
+        const prefix = `(${Me.uuid.toString()}) [${timestamp}]:-> ${caller} -> ${context}\n`
+        let out = prefix
+        let args_out = ""
+        args.map( ( arg, i ) => {
+            const [label, output] = printObj( arg, i )
+            const arg_out = `${label} ${output}`
+            if ( arg instanceof Error ) {
+                console.log( "Extension", "Worksets", arg_out )
             // console.error( arg ) // This raises and won't log to the file
-        } else {
-            console.log( "Extension", "Worksets", arg_out )
-        }
-        args_out += arg_out
-    } )
-    out += args_out.trimStart() + "\n"
+            } else {
+                console.log( "Extension", "Worksets", arg_out )
+            }
+            args_out += arg_out
+        } )
+        out += args_out.trimStart() + "\n"
 
-    fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
+        fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
     } catch ( e ) {
         console.error( e )
         throw e

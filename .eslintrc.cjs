@@ -40,6 +40,8 @@ module.exports = {
         "ngettext" : false
     },
     rules: {
+        indent: ["error", 4],
+
         "array-element-newline"  : ["error", "consistent"],
         "function-paren-newline" : ["error", "consistent"],
         "space-in-parens"        : ["error", "always"],

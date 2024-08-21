@@ -84,8 +84,8 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
             if ( iconButton.focus == true ) callback(); return Clutter.EVENT_STOP
         } )
         parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent,
-        iconButton.releaseEvent,
-        iconButton.leaveEvent] )
+            iconButton.releaseEvent,
+            iconButton.leaveEvent] )
         parentItem.destroyIconButtons = function () {
             parentItem.iconButtons.forEach( function ( iconButton ) {
                 //iconButton.destroy();
@@ -118,7 +118,7 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
             Math.floor( monitor.width / 2 - messages[lastItem].width / 2 ),
         monitor.y +
             Math.floor( monitor.height / 2 - messages[lastItem].height / 2 )
-        )
+    )
     if ( fadeTime > 0 ) removeUserNotification( label, fadeTime )
 
     return label
