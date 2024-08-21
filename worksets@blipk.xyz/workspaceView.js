@@ -162,7 +162,7 @@ export class WorkspaceViewManager {
             } )
 
             // Run the correct overlay update when the state adjustment hits values in overviewControls.ControlsState
-            Main.overview._overview._controls._stateAdjustment.connect( "notify::value", ( adjustment ) => {
+            this.signals.add( Main.overview._overview._controls._stateAdjustment, "notify::value", ( adjustment ) => {
                 const value = adjustment.value
                 const valueDecimal = parseFloat( "0." + ( value + "" ).split( "." )[1], 10 )
                 const intValue = parseInt( adjustment.value, 10 )
