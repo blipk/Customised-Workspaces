@@ -31,7 +31,7 @@ import { ExtensionPreferences, gettext as _ } from "resource:///org/gnome/Shell/
 
 
 export default class MyExtensionPreferences extends ExtensionPreferences {
-    fillPreferencesWindow( window ) {
+    async fillPreferencesWindow( window ) {
         const settings = this.getSettings( "org.gnome.shell.extensions.worksets" )
         window._settings = settings
         settings.set_boolean( "show-panel-indicator", false )
