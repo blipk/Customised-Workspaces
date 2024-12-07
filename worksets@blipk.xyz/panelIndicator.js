@@ -690,5 +690,6 @@ export var WorksetsIndicator = GObject.registerClass( {
     }
     toggleMenu() {
         this.menu.toggle()
+        // this._refreshMenu()
     }
 } )
