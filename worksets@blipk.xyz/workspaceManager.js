@@ -102,6 +102,11 @@ export class WorkspaceManager {
 
 
             for ( let i = 0; i < min_workspaces - 1; i++ ) {
+                if ( !currentWorkspaces[i] ) {
+                    dev.log( `Could not find expected workspace at index ${i}` )
+                    return
+                }
+
                 // If we have less than the minimum workspaces create new ones
                 if ( n_global_workspaces < min_workspaces - 1 ) {
                     if ( i >= n_global_workspaces ) {
