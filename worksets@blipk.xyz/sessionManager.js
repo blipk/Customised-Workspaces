@@ -241,12 +241,16 @@ export class SessionManager {
         } )
 
         this.signals.add( Me.settings, "changed::show-panel-indicator", () => {
+
+            dev.log( `1 ${this.activeSession.Options.ShowPanelIndicator}` )
             this._loadOptions()
+            dev.log( `2 ${this.activeSession.Options.ShowPanelIndicator}` )
+
             if ( !Me.worksetsIndicator ) return
             if ( this.activeSession.Options.ShowPanelIndicator ) {
                 Me.worksetsIndicator.show()
                 this.saveSession()
-                Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu()
+                //Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu()
             }
         } )
     }
@@ -279,9 +283,11 @@ export class SessionManager {
             }
         }, this )
         // This has to be last or the signal callback will change the other options
+        dev.log( `0 ${this.activeSession.Options.ShowPanelIndicator}` )
         Me.settings.set_boolean( "show-panel-indicator", this.activeSession.Options.ShowPanelIndicator )
     }
     _loadOptions() {
+        dev.log( "_loadOptions" )
         this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
             const k = Me.settings.settings_schema.get_key( utils.textToKebabCase( optionName ) )
             const defaultValue = k.get_default_value()

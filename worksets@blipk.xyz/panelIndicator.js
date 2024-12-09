@@ -652,7 +652,7 @@ export var WorksetsIndicator = GObject.registerClass( {
     }
     _refreshMenu() {
         try {
-            Me.session.loadSession()
+            //Me.session.loadSession()
 
             // Ensure option switches match settings
             this.optionsMenuItems.forEach( function ( menuItem, i ) {
