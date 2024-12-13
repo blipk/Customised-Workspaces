@@ -303,7 +303,7 @@ export class SessionManager {
         this.activeFunctions["_saveOptions"] = false
     }
     _loadOptions() {
-        dev.log( "_loadOptions" )
+        // dev.log( "_loadOptions" )
         this.activeFunctions["_loadOptions"] = true
 
         this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
@@ -430,7 +430,7 @@ export class SessionManager {
     }
     saveSession( backup = false ) {
         try {
-            dev.log( "saveSession" )
+            // dev.log( "saveSession" )
 
             if ( utils.isEmpty( this.activeSession ) ) return
             this._saveOptions()
@@ -447,7 +447,7 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     applySession( callback ) {
-        dev.log( "applySession" )
+        // dev.log( "applySession" )
         this.saveSession()
         if ( callback ) callback()
         this.loadSession()
