@@ -71,19 +71,21 @@ export class SessionManager {
             this.allApps = {}
 
             this.signals = new utils.SignalHandler()
+            this.activeFunctions = {}
 
             // Make sure our GTK App chooser is executable
             util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
 
             // Create sesion or initialize from session file if it exists
+            let targetSession
             if ( fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" ) ) {
-                let obj = fileUtils.loadJSObjectFromFile( "session.json", fileUtils.CONF_DIR() )
-                this._setup( obj )
+                targetSession = fileUtils.loadJSObjectFromFile( "session.json", fileUtils.CONF_DIR() )
             } else {
                 this.newSession( true )
-                this._setup( this.activeSession )
+                targetSession = this.activeSession
             }
 
+            this._setup( targetSession )
 
             // Profiling to figure out why this.setFavorites() is so slow...
             // const injectionHandler = new utils.InjectionHandler()
@@ -137,6 +139,9 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     _watchOptions() {
+        if ( this.optionsWatched )
+            return
+
         // Set up our bindings
         this.favoritesSet = false
         this.signals.add( appFavorites.getAppFavorites(), "changed", () => {
@@ -242,17 +247,24 @@ export class SessionManager {
 
         this.signals.add( Me.settings, "changed::show-panel-indicator", () => {
 
-            dev.log( `1 ${this.activeSession.Options.ShowPanelIndicator}` )
+            if ( this.activeFunctions["_loadOptions"] ) {
+                // dev.log( "ABORT SIGNAL" )
+                return
+            }
+
+            // dev.log( `1 ${this.activeSession.Options.ShowPanelIndicator}` )
             this._loadOptions()
-            dev.log( `2 ${this.activeSession.Options.ShowPanelIndicator}` )
+            // dev.log( `2 ${this.activeSession.Options.ShowPanelIndicator}` )
 
             if ( !Me.worksetsIndicator ) return
             if ( this.activeSession.Options.ShowPanelIndicator ) {
                 Me.worksetsIndicator.show()
-                this.saveSession()
-                //Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu()
+                // this.saveSession()
+                Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu()
             }
         } )
+
+        this.optionsWatched = true
     }
     _initOptions() {
         const keys = Me.settings.list_keys()
@@ -272,6 +284,8 @@ export class SessionManager {
         this._saveOptions()
     }
     _saveOptions() {
+        this.activeFunctions["_saveOptions"] = true
+
         this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
             const k = Me.settings.settings_schema.get_key( utils.textToKebabCase( optionName ) )
             const defaultValue = k.get_default_value()
@@ -283,11 +297,15 @@ export class SessionManager {
             }
         }, this )
         // This has to be last or the signal callback will change the other options
-        dev.log( `0 ${this.activeSession.Options.ShowPanelIndicator}` )
+        // dev.log( `0 ${this.activeSession.Options.ShowPanelIndicator}` )
         Me.settings.set_boolean( "show-panel-indicator", this.activeSession.Options.ShowPanelIndicator )
+
+        this.activeFunctions["_saveOptions"] = false
     }
     _loadOptions() {
         dev.log( "_loadOptions" )
+        this.activeFunctions["_loadOptions"] = true
+
         this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
             const k = Me.settings.settings_schema.get_key( utils.textToKebabCase( optionName ) )
             const defaultValue = k.get_default_value()
@@ -297,8 +315,10 @@ export class SessionManager {
                 this.activeSession.Options[optionName] = Me.settings.get_string( utils.textToKebabCase( optionName ) )
             }
         }, this )
+
+        this.activeFunctions["_loadOptions"] = false
     }
-    _setup( sessionObject ) {
+    _setup( sessionObject, fromLoad = false ) {
         try {
             if ( !utils.isEmpty( sessionObject ) ) {
                 this.activeSession = sessionObject
@@ -306,11 +326,15 @@ export class SessionManager {
                 this.workspaceMaps = this.activeSession.workspaceMaps
                 this.SessionName = this.activeSession.SessionName
 
-                this._initOptions()
+                if ( !fromLoad ) this._initOptions()
                 this._validateSession()
                 this._loadOptions()
-                this._watchOptions()
-                this.saveSession()
+
+                if ( !fromLoad ) {
+                    this._watchOptions()
+                    this.saveSession()
+                }
+
 
                 if ( !Me.workspaceManager ) Me.workspaceManager = new workspaceManager.WorkspaceManager()
                 if ( !Me.workspaceViewManager ) Me.workspaceViewManager = new workspaceView.WorkspaceViewManager()
@@ -399,14 +423,14 @@ export class SessionManager {
         try {
             if ( utils.isEmpty( sessionsObject ) )
                 sessionsObject = fileUtils.loadJSObjectFromFile( "session.json", fileUtils.CONF_DIR() )
-            this._setup( sessionsObject )
+            this._setup( sessionsObject, true )
 
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } catch ( e ) { dev.log( e ) }
     }
     saveSession( backup = false ) {
         try {
-            // dev.timer( "saveSession" )
+            dev.log( "saveSession" )
 
             if ( utils.isEmpty( this.activeSession ) ) return
             this._saveOptions()
@@ -423,6 +447,7 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     applySession( callback ) {
+        dev.log( "applySession" )
         this.saveSession()
         if ( callback ) callback()
         this.loadSession()

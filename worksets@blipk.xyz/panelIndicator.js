@@ -110,6 +110,8 @@ export var WorksetsIndicator = GObject.registerClass( {
                 : new popupMenu.PopupSubMenuMenuItem( _( summary ), false )
             optionMenuItem.optionName = optionName
             const toggleOpt = () => {
+                // dev.log( `toggle ${optionName} ${this.reopeningMenu}` )
+                if ( this.reopeningMenu ) return
                 Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]
                 Me.session.applySession()
             }
@@ -159,6 +161,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             this.optionsMenuItems.push( optionMenuItem )
             this.optionsMenuItem.menu.addMenuItem( optionMenuItem )
         }, this )
+
     }
     _buildMenu() {
         try {
@@ -652,7 +655,7 @@ export var WorksetsIndicator = GObject.registerClass( {
     }
     _refreshMenu() {
         try {
-            //Me.session.loadSession()
+            // Me.session.loadSession()
 
             // Ensure option switches match settings
             this.optionsMenuItems.forEach( function ( menuItem, i ) {
@@ -666,6 +669,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                 Me.session.Worksets.forEach( ( workset, index ) => {
                     this._addWorksetMenuItemEntry( workset, index )
                 }, this )
+
                 Me.session.saveSession()
             }
         } catch ( e ) { dev.log( e ) }
@@ -689,6 +693,8 @@ export var WorksetsIndicator = GObject.registerClass( {
         } catch ( e ) { dev.log( e ) }
     }
     toggleMenu() {
+        this.reopeningMenu = true
         this.menu.toggle()
+        this.reopeningMenu = false
     }
 } )
