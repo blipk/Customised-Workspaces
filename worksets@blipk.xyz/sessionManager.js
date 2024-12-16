@@ -77,13 +77,10 @@ export class SessionManager {
             util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
 
             // Create sesion or initialize from session file if it exists
-            let targetSession
-            if ( fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" ) ) {
-                targetSession = fileUtils.loadJSObjectFromFile( "session.json", fileUtils.CONF_DIR() )
-            } else {
-                this.newSession( true )
-                targetSession = this.activeSession
-            }
+            const targetSession = fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" )
+                ? fileUtils.loadJSObjectFromFile( "session.json", fileUtils.CONF_DIR() )
+                : this.newSession( true )
+
 
             this._setup( targetSession )
 
@@ -344,12 +341,14 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     resetIndicator() {
-        Me.worksetsIndicator.destroy()
-        delete Me.worksetsIndicator
-        delete Main.panel.statusArea["WorksetsIndicator"]
+        try {
+            Me.worksetsIndicator.destroy()
+            delete Me.worksetsIndicator
+            delete Main.panel.statusArea["WorksetsIndicator"]
 
-        Me.worksetsIndicator = new panelIndicator.WorksetsIndicator()
-        Me.worksetsIndicator.show()
+            Me.worksetsIndicator = new panelIndicator.WorksetsIndicator()
+            Me.worksetsIndicator.show()
+        } catch ( e ) { dev.log( e ) }
     }
     _validateSession( saveSession = true ) {
         try {
@@ -752,6 +751,7 @@ export class SessionManager {
             }
             //Load the session
             this.loadSession( sessionObject )
+            return this.activeSession
         } catch ( e ) { dev.log( e ) }
     }
     newWorkset( name, fromEnvironment = true, activate = false ) {
