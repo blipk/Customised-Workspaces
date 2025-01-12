@@ -914,7 +914,7 @@ export class SessionManager {
     loadObject() {
         try {
             let worksetsDirectory = fileUtils.CONF_DIR() + "/envbackups"
-            let loadObjectDialog = new uiUtils.ObjectInterfaceDialog( "Select a backup to load in to the session", ( returnObject ) => {
+            let loadObjectDialog = new dialogs.ObjectInterfaceDialog( "Select a backup to load in to the session", ( returnObject ) => {
                 if ( returnObject.WorksetName ) {
                     let exists = false
                     this.Worksets.forEach( function ( worksetBuffer ) {

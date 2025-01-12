@@ -15,6 +15,7 @@ import * as shellEntry from "resource:///org/gnome/shell/ui/shellEntry.js"
 import * as dev from "../../dev.js"
 import * as utils from "../../utils.js"
 import * as fileUtils from "../../fileUtils.js"
+import * as uiUtils from "./uiUtils.js"
 
 
 //Modal dialog popup based off runDialog that can display a message and/or get user input from a text box or from sets of JSObjects
@@ -119,7 +120,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                         jsobjectsSets.push( tmpObjectsSet )
                     }
 
-                    let btn = createIconButton(
+                    let btn = uiUtils.createIconButton(
                         headerLabelArea, "document-open-symbolic",
                         () => {
                             this.close()
@@ -198,7 +199,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                             b._objectBoxStButton.set_x_align( Clutter.ActorAlign.START )
                             b._objectBoxStButton.set_x_expand( false )
                             b._objectBoxStButton.set_y_expand( false )
-                            b.connect( "button-press-event", () => {
+                            b._objectBoxStButton.connect( "button-press-event", () => {
                                 this.popModal(); this.close( object ); return object
                             } )
 
@@ -245,8 +246,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
     }
     close( returnObject ) {
         try {
-            if ( !returnObject ) returnObject = this.stEntryUText.clutter_text.get_text()
-            this._callback( returnObject )
+            this._callback( returnObject || this.stEntryUText.clutter_text.get_text() )
             super.close()
         } catch ( e ) { dev.log( e ) }
     }
