@@ -232,8 +232,10 @@ export function setImage( parent, imgFilePath = "" ) {
             const { width, height } = pixbuf
             if ( height == 0 ) return
 
-            image = new Clutter.Image()
+            const coglContext = global.stage.context.get_backend().get_cogl_context()
+            image = new St.ImageContent()
             let success = image.set_data(
+                coglContext,
                 pixbuf.get_pixels(),
                 pixbuf.get_has_alpha()
                     ? Cogl.PixelFormat.RGBA_8888
@@ -244,7 +246,7 @@ export function setImage( parent, imgFilePath = "" ) {
             )
             if ( !success ) throw Error( "error creating Clutter.Image()" )
         } else { // empty image if no file path
-            image = new Clutter.Image()
+            image = new St.ImageContent()
         }
         parent.imgSrc = imgFilePath
         parent.content = image

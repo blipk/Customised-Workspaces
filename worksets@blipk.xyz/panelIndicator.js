@@ -422,7 +422,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             viewArea.addMenuItem( menuItem.bgMenuButton )
 
             let backgroundStyleOptionsBox = new St.BoxLayout( {
-                vertical    : true,
+                orientation : Clutter.Orientation.VERTICAL,
                 reactive    : true,
                 track_hover : true,
                 x_expand    : true,
@@ -438,8 +438,13 @@ export var WorksetsIndicator = GObject.registerClass( {
             // );
 
             let backgroundOtherOptionsBox = new St.BoxLayout( {
-                vertical    : true, reactive    : true, track_hover : true,
-                x_expand    : true, y_expand    : true, x_align     : Clutter.ActorAlign.START, y_align     : Clutter.ActorAlign.CENTER
+                orientation : Clutter.Orientation.VERTICAL,
+                reactive    : true,
+                track_hover : true,
+                x_expand    : true,
+                y_expand    : true,
+                x_align     : Clutter.ActorAlign.START,
+                y_align     : Clutter.ActorAlign.CENTER
             } )
 
             let btnDarkModeIconName = Me.session.isDarkMode ? "night-light-symbolic" : "weather-clear-symbolic"

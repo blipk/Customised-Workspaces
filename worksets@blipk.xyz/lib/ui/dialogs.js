@@ -514,7 +514,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                             //Vertical box area for each subobject property
                             this._propertyBoxes[i]._boolBox[n] = new St.BoxLayout( {
-                                vertical    : true,
+                                orientation : Clutter.Orientation.VERTICAL,
                                 reactive    : true,
                                 track_hover : true,
                                 x_expand    : true,
