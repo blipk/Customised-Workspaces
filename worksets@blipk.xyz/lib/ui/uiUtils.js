@@ -34,6 +34,7 @@ import GdkPixbuf from "gi://GdkPixbuf"
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
+import * as MessageTray from "resource:///org/gnome/shell/ui/messageTray.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 
 // Internal imports
@@ -104,7 +105,7 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
     removeAllUserNotifications()
 
     if ( overviewMessage ) {
-        Main.overview.setMessage( _( input ), { forFeedback: true } )
+        Main.notify( "Customised Workspaces", _( input ) )
         return null
     }
     const label = new St.Label( { style_class: "feedback-label", text: _( input ) } )
@@ -234,6 +235,7 @@ export function setImage( parent, imgFilePath = "" ) {
 
             const coglContext = global.stage.context.get_backend().get_cogl_context()
             image = new St.ImageContent()
+
             let success = image.set_data(
                 coglContext,
                 pixbuf.get_pixels(),
@@ -244,16 +246,21 @@ export function setImage( parent, imgFilePath = "" ) {
                 height,
                 pixbuf.get_rowstride()
             )
+
             if ( !success ) throw Error( "error creating Clutter.Image()" )
         } else { // empty image if no file path
             image = new St.ImageContent()
         }
         parent.imgSrc = imgFilePath
-        parent.content = image
+        dev.log( "X1", image )
+        parent.actor.content = image
+        dev.log( "X2" )
         parent.height = 150
+        dev.log( "X3" )
 
-        knownImages[imgFilePath] = image
-        return [image, error]
+        // knownImages[imgFilePath] = image
+        // dev.log( "X4" )
+        // return [image, error]
     } catch ( e ) { dev.log( e ) }
 }
 
