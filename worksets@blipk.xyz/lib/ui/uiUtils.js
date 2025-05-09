@@ -253,14 +253,12 @@ export function setImage( parent, imgFilePath = "" ) {
         }
         parent.imgSrc = imgFilePath
         dev.log( "X1", image )
-        parent.actor.content = image
+        // parent.content = image // CRASHING HERE
         dev.log( "X2" )
         parent.height = 150
-        dev.log( "X3" )
 
-        // knownImages[imgFilePath] = image
-        // dev.log( "X4" )
-        // return [image, error]
+        knownImages[imgFilePath] = image
+        return [image, error]
     } catch ( e ) { dev.log( e ) }
 }
 
