@@ -1,5 +1,10 @@
 #!/bin/bash
+
 ./install.sh
-env GNOME_SHELL_SLOWDOWN_FACTOR=2 \ # slow animations for debugging
-MUTTER_DEBUG_DUMMY_MODE_SPECS=1800x1000 \
-dbus-run-session -- gnome-shell --nested --wayland
+
+export G_MESSAGES_DEBUG=all
+export SHELL_DEBUG=all
+export GNOME_SHELL_SLOWDOWN_FACTOR=2 # slow animations for debugging
+export MUTTER_DEBUG_DUMMY_MODE_SPECS=1920x1080
+
+dbus-run-session -- gnome-shell --devkit --wayland

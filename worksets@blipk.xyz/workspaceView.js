@@ -241,9 +241,10 @@ export class WorkspaceViewManager {
 
             for ( const i in this.wsGroups ) {
                 const wsGroup = this.wsGroups[i]
-                const metaWorkspace = wsGroup.workspace
+                const metaWorkspace = wsGroup._workspace
                 wsGroup._workset = Me.session.Worksets
-                    .find( ( wset ) => wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
+                    .find( ( wset ) =>
+                        wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
 
                 if ( wsGroup._newbg )
                     delete wsGroup._newbg
@@ -293,8 +294,10 @@ export class WorkspaceViewManager {
                 if ( thumbnailBox._newbg )
                     delete thumbnailBox._newbg
                 thumbnailBox._newbg = this.makeWorksetBg( thumbnailBox._workset )
+                // dev.log( "bb", typeof thumbnailBox._newbg, thumbnailBox._newbg )
 
-                !Me.session.activeSession.Options.ShowOverlayThumbnailLabels && thumbnailBox.worksetLabel && thumbnailBox.remove_child( thumbnailBox.worksetLabel )
+                if ( !Me.session.activeSession.Options.ShowOverlayThumbnailLabels && thumbnailBox.worksetLabel )
+                    thumbnailBox.remove_child( thumbnailBox.worksetLabel )
 
                 if ( thumbnailBox._workset && Me.session.activeSession.Options.ShowOverlayThumbnailLabels ) {
                     thumbnailBox.worksetLabel ||= new St.Label( {
@@ -308,7 +311,7 @@ export class WorkspaceViewManager {
                 }
 
                 // For larger workspace view and app grid workspace preview
-                if ( gsWorkspace )
+                if ( gsWorkspace && thumbnailBox._newbg )
                     gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg
 
                 if ( Me.session.activeSession.Options.DisableWallpaperManagement ) {
@@ -330,12 +333,13 @@ export class WorkspaceViewManager {
                     controlPosition : false,
                     vignette        : false,
                 } )
-                thumbnailBox._bgManager.backgroundActor.content.set( {
-                    background         : thumbnailBox._newbg,
-                    vignette           : false,
-                    vignette_sharpness : 0.5,
-                    brightness         : 0.5,
-                } )
+                if ( thumbnailBox._bgManager.backgroundActor.content )
+                    thumbnailBox._bgManager.backgroundActor.content.set( {
+                        background         : thumbnailBox._newbg,
+                        vignette           : false,
+                        vignette_sharpness : 0.5,
+                        brightness         : 0.5,
+                    } )
 
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false
@@ -447,7 +451,7 @@ export class WorkspaceViewManager {
                             menuItem._workset = workset
                             menuItem.label.set_text( menuItem._workset.WorksetName )
 
-                            menuItem.buttonPressId = menuItem.connect( "button_release_event", () => {
+                            menuItem.buttonPressId = menuItem.connect( "button-press-event", () => {
                                 Me.workspaceManager.loadDefaults = false
                                 Me.workspaceManager.noUpdate = true
                                 Me.workspaceManager.switchToWorkspace( i )

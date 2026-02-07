@@ -73,6 +73,13 @@ export class SessionManager {
             this.signals = new utils.SignalHandler()
             this.activeFunctions = {}
 
+            // Change tracking for session saves
+            this._sessionHash = null
+
+            // Initialize settings early (needed by newSession if no session.json exists)
+            this.iSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.interface"} )
+            this.bSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
+
             // Make sure our GTK App chooser is executable
             util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
 
@@ -174,7 +181,7 @@ export class SessionManager {
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } )
 
-        this.iSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.interface"} )
+        // iSettings and bSettings are now initialized in constructor
         this.signals.add( this.iSettings, "changed::color-scheme", () => {
             // switched theme mode
             let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
@@ -186,7 +193,6 @@ export class SessionManager {
             }, this )
         } )
 
-        this.bSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
         this.signals.add( this.bSettings, "changed::picture-uri", () => {
             if ( this.backgroundSet ) return
             // Update active workset wallpaper info if changed elsewhere in gnome
@@ -337,6 +343,11 @@ export class SessionManager {
                 if ( !Me.workspaceViewManager ) Me.workspaceViewManager = new workspaceView.WorkspaceViewManager()
                 if ( !Me.worksetsIndicator ) Me.worksetsIndicator = new panelIndicator.WorksetsIndicator()
                 this.activeSession.Options.ShowPanelIndicator ? Me.worksetsIndicator.show() : Me.worksetsIndicator.hide()
+
+                // Initialize hash after setup
+                if ( !fromLoad ) {
+                    this._sessionHash = this._computeSessionHash()
+                }
             }
         } catch ( e ) { dev.log( e ) }
     }
@@ -425,13 +436,26 @@ export class SessionManager {
             this._setup( sessionsObject, true )
 
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
+
+            // Initialize hash after loading session
+            this._sessionHash = this._computeSessionHash()
         } catch ( e ) { dev.log( e ) }
     }
     saveSession( backup = false ) {
         try {
             // dev.log( "saveSession" )
 
-            if ( utils.isEmpty( this.activeSession ) ) return
+            if ( utils.isEmpty( this.activeSession ) ) return false
+
+            // Compute hash of current in-memory state
+            const newHash = this._computeSessionHash()
+
+            // Only save if session actually changed (or if creating backup)
+            if ( !backup && newHash === this._sessionHash ) {
+                // dev.log( "saveSession: No changes detected, skipping save" )
+                return false // No save occurred
+            }
+
             this._saveOptions()
             this._validateSession( false )
 
@@ -442,14 +466,59 @@ export class SessionManager {
 
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
 
+            // Update hash after successful save (only for non-backup saves)
+            if ( !backup ) {
+                this._sessionHash = newHash
+            }
+
             // dev.timer( "saveSession" )
-        } catch ( e ) { dev.log( e ) }
+            return true // Save occurred
+        } catch ( e ) {
+            dev.log( e )
+            return false
+        }
     }
     applySession( callback ) {
         // dev.log( "applySession" )
-        this.saveSession()
+
+        // saveSession now checks for changes and returns whether save occurred
+        const didSave = this.saveSession()
+
+        // Execute callback if provided
         if ( callback ) callback()
-        this.loadSession()
+
+        // Only reload if we actually saved (to refresh from disk)
+        if ( didSave ) {
+            this.loadSession()
+        } else {
+            // No save occurred, just refresh UI without disk I/O
+            if ( Me.workspaceViewManager ) {
+                Me.workspaceViewManager.refreshOverview()
+            }
+        }
+    }
+    _computeSessionHash() {
+        // Hash critical session fields to detect changes
+        // Using JSON stringify for simplicity - only includes data that affects persistence
+        try {
+            const criticalData = {
+                worksets       : this.activeSession.Worksets,
+                workspaceMaps  : this.activeSession.workspaceMaps,
+                options        : this.activeSession.Options,
+                defaultWorkset : this.activeSession.Default,
+                sessionName    : this.activeSession.SessionName
+            }
+
+            const jsonString = JSON.stringify( criticalData )
+            return GLib.compute_checksum_for_string(
+                GLib.ChecksumType.MD5,
+                jsonString,
+                -1
+            )
+        } catch ( e ) {
+            dev.log( "Error computing session hash:", e )
+            return null
+        }
     }
     get isDarkMode() {
         // no-preference, prefer-dark, prefer-light
@@ -689,7 +758,8 @@ export class SessionManager {
                 ( resource ) => {
                     try {
                         if ( !resource ) return
-                        resource = resource.trim()
+
+                        resource = resource.trim().split( "\n" )[0]
                         let filePath = GLib.path_get_dirname( resource )
                         let fileName = GLib.path_get_basename( resource )
 

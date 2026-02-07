@@ -432,7 +432,8 @@ export var ObjectEditorDialog = GObject.registerClass( {
                         b.add_child( b._propertyBoxMessageButton )
                         return b
                     } )
-                    this.contentLayout.add_child( this._propertyBoxes[i], this.propertyBoxStyle[i] )
+                    // this.contentLayout.add_child( this._propertyBoxes[i], this.propertyBoxStyle[i] )
+                    this.contentLayout.add_child( this._propertyBoxes[i] )
 
 
                     //Property value editor element
@@ -440,12 +441,14 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     if ( typeof value === "boolean" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new CheckBox.CheckBox( "" )
                         Array( this._propertyBoxes[i]._propertyBoxEditorElement ).map( b => {
-                            b.actor.checked = editableObject[key]
-                            b.actor.connect(
-                                "clicked", () => { editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.actor.checked }
+                            b.set_checked( editableObject[key] )
+                            b.connect(
+                                "clicked", () => {
+                                    editableObject[key] = this._propertyBoxes[i]._propertyBoxEditorElement.get_checked()
+                                }
                             )
                         } )
-                        this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement.actor )
+                        this._propertyBoxes[i].add_child( this._propertyBoxes[i]._propertyBoxEditorElement )
                     } else if ( typeof value === "string" || typeof value === "number" ) {
                         this._propertyBoxes[i]._propertyBoxEditorElement = new St.Entry(
                             { style_class: "object-dialog-label", can_focus: true, text: "", x_align: Clutter.ActorAlign.FILL, x_expand: true }
@@ -536,16 +539,21 @@ export var ObjectEditorDialog = GObject.registerClass( {
                                 // Check box
                                 b._boolBoxEditorElement = new CheckBox.CheckBox( "" )
                                 b._boolBoxEditorElement.set_x_align( Clutter.ActorAlign.CENTER )
-                                b._boolBoxEditorElement.actor.checked = value[subobjectKey]
-                                b._boolBoxEditorElement.actor.connect(
+                                b._boolBoxEditorElement.set_checked( value[subobjectKey] )
+                                b._boolBoxEditorElement.connect(
                                     "clicked", () => { togglingFunction.call( this ) }
                                 )
                                 if ( !subObjectLabelOnly )
                                     b.add_child(
-                                        b._boolBoxEditorElement.actor
+                                        b._boolBoxEditorElement
                                     )
-                                // Toggle when pressing anywhere in the label/checkbox parent BoxLayout
-                                b.connect( "button-press-event", () => { togglingFunction.call( this ) } )
+                                // Make label clickable to toggle the checkbox
+                                b._boolBoxMessage.reactive = true
+                                b._boolBoxMessage.connect( "button-press-event", () => {
+                                    // Programmatically click the checkbox to trigger its toggle
+                                    b._boolBoxEditorElement.emit( "clicked" )
+                                    return Clutter.EVENT_STOP
+                                } )
 
                                 return b
                             } )
@@ -554,24 +562,38 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                             // Toggling Function used for boolean checkboxes
                             function togglingFunction() {
-                                // subObjectToggleValidationCallback will return values to set for any other bool in the subobject and whether to toggle the current one
-                                let [allowed,
-                                    boolValues] = subObjectToggleValidationCallback.call( this, value, n )
-                                if ( !boolValues ) boolValues = Object.values( value )
-                                if ( allowed ) boolValues[n] = value[subobjectKey] = value[subobjectKey] ? false : true
-                                this._propertyBoxes[i]._boolBox.forEach( function ( box, x ) {
-                                    if ( boolValues[x] ) {
-                                        value[Object.keys( value )[x]] = boolValues[x]
+                                // Get the checkbox's current state (after auto-toggle)
+                                const newCheckedState = this._propertyBoxes[i]._boolBox[n]._boolBoxEditorElement.get_checked()
+
+                                // Create proposed state array with the new value
+                                let proposedBoolValues = Object.values( value )
+                                proposedBoolValues[n] = newCheckedState
+
+                                // Run validation callback
+                                let [allowed, validatedBoolValues] = subObjectToggleValidationCallback.call( this, value, n )
+
+                                // Determine final values: use validated values if provided, otherwise use proposed values
+                                let finalBoolValues = validatedBoolValues || proposedBoolValues
+
+                                // If not allowed, revert to original state
+                                if ( !allowed ) {
+                                    finalBoolValues[n] = value[subobjectKey]
+                                }
+
+                                // Update all checkboxes and data model to match final state
+                                this._propertyBoxes[i]._boolBox.forEach( ( _box, x ) => {
+                                    const key = Object.keys( value )[x]
+                                    value[key] = finalBoolValues[x]
+
+                                    if ( finalBoolValues[x] ) {
                                         this._propertyBoxes[i]._boolBox[x]._boolBoxMessage.remove_style_class_name( "label-disabled" )
                                         this._propertyBoxes[i]._boolBox[x]._boolBoxMessage.add_style_class_name( "label-enabled" )
-                                        this._propertyBoxes[i]._boolBox[x]._boolBoxEditorElement.actor.set_checked( boolValues[x] )
                                     } else {
-                                        value[Object.keys( value )[x]] = boolValues[x]
                                         this._propertyBoxes[i]._boolBox[x]._boolBoxMessage.remove_style_class_name( "label-enabled" )
                                         this._propertyBoxes[i]._boolBox[x]._boolBoxMessage.add_style_class_name( "label-disabled" )
-                                        this._propertyBoxes[i]._boolBox[x]._boolBoxEditorElement.actor.set_checked( boolValues[x] )
                                     }
-                                }, this )
+                                    this._propertyBoxes[i]._boolBox[x]._boolBoxEditorElement.set_checked( finalBoolValues[x] )
+                                } )
                             }
 
                         }, this )

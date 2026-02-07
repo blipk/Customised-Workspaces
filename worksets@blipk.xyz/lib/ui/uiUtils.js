@@ -234,7 +234,10 @@ export function setImage( parent, imgFilePath = "" ) {
             if ( height == 0 ) return
 
             const coglContext = global.stage.context.get_backend().get_cogl_context()
-            image = new St.ImageContent()
+            image = new St.ImageContent( {
+                preferred_width  : width,
+                preferred_height : height
+            } )
 
             let success = image.set_data(
                 coglContext,
@@ -248,16 +251,22 @@ export function setImage( parent, imgFilePath = "" ) {
             )
 
             if ( !success ) throw Error( "error creating Clutter.Image()" )
-        } else { // empty image if no file path
-            image = new St.ImageContent()
-        }
-        parent.imgSrc = imgFilePath
-        dev.log( "X1", image )
-        // parent.content = image // CRASHING HERE
-        dev.log( "X2" )
-        parent.height = 150
 
-        knownImages[imgFilePath] = image
+            knownImages[imgFilePath] = image
+        }
+
+        // Set the image content on parent (for both cached and newly loaded images)
+        if ( image ) {
+            parent.imgSrc = imgFilePath
+            parent.content = image
+            parent.height = 150
+        } else {
+            // No image file path - clear the content instead of setting empty image
+            parent.imgSrc = ""
+            parent.content = null
+            parent.height = 150
+        }
+
         return [image, error]
     } catch ( e ) { dev.log( e ) }
 }

@@ -1,0 +1,14 @@
+This project is a Gnome Shell extension.
+
+You can find the gnome shell extension guide here: https://gjs.guide/extensions/
+
+You can find the gnome-shell source code here if you need to analyze it: https://gitlab.gnome.org/GNOME/gnome-shell/-/tree/main/js
+
+
+
+
+The session saving function `applySession` is being called too eagerly in many places,
+this causes performance issues when saving the session.
+I need you to analyse the usage of this function and how it can be improved,
+possibly using a proxy object and/or a check if the session has actually changed before saving,
+but preferably by using the session saving only when required.

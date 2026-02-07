@@ -153,7 +153,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                 break
             default: apply = toggleOpt
             }
-            const eventName = isBoolOption ? "toggled" : "button_release_event"
+            const eventName = isBoolOption ? "toggled" : "button-press-event"
             optionMenuItem.pressHandler = optionMenuItem.connect( eventName, () => { apply() } )
             if ( isBoolOption )
                 optionMenuItem.activate = () => { if ( optionMenuItem._switch.mapped ) optionMenuItem.toggle() }
@@ -169,7 +169,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             this.optionsMenuItem.icon.icon_name = "org.gnome.tweaks"
             this.optionsMenuItems = []
             this._buildOptionsMenuItems()
-            this.optionsMenuItem.connect( "button_release_event", () => {
+            this.optionsMenuItem.connect( "button-press-event", () => {
                 this.optionsMenuItems.forEach( m => m.destroy() )
                 this.optionsMenuItems = []
                 this._buildOptionsMenuItems()
@@ -222,7 +222,6 @@ export var WorksetsIndicator = GObject.registerClass( {
             // );
 
             // Orient menu
-            // TODO: Find where Extension.state has moved to
             const reverseMenu = Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED
                 ? true : Me.session.activeSession.Options.ReverseMenu
             if ( reverseMenu ) {
@@ -257,7 +256,10 @@ export var WorksetsIndicator = GObject.registerClass( {
     _addWorksetMenuItemEntry( workSetsArrayBuffer, worksetIndex ) {
         try {
             let menuItem = new popupMenu.PopupSubMenuMenuItem( "", true )
-            menuItem.buttonPressId = menuItem.connect( "button_release_event", () => { this._worksetSubMenuRefresh( menuItem ) } )
+            menuItem.buttonPressId = menuItem.connect( "button-press-event", () => {
+                this._worksetSubMenuRefresh( menuItem )
+                return Clutter.EVENT_STOP
+            } )
 
             // Connect menu items to worksets array
             menuItem.workset = workSetsArrayBuffer
@@ -321,8 +323,13 @@ export var WorksetsIndicator = GObject.registerClass( {
                 activeMenuItem = menuItem
                 this.defaultSection.addMenuItem( menuItem, 0 )
                 this.defaultSection.moveMenuItem( activeMenuItem, 1 )
-            } else ( activeIndex > -1 )
-                ? this.favoritesSection.addMenuItem( menuItem, 0 ) : this.historySection.addMenuItem( menuItem, 0 )
+            } else {
+                if ( activeIndex > -1 ) {
+                    this.favoritesSection.addMenuItem( menuItem, 0 )
+                } else {
+                    this.historySection.addMenuItem( menuItem, 0 )
+                }
+            }
 
             if ( activeMenuItem )
                 this.defaultSection.moveMenuItem( activeMenuItem, 1 )
@@ -381,7 +388,7 @@ export var WorksetsIndicator = GObject.registerClass( {
 
                 } catch ( e ) { dev.log( e ) }
             }
-            menuItem.worksetPopupMenu.connect( "button_release_event", () => {
+            menuItem.worksetPopupMenu.connect( "button-press-event", () => {
                 menuItem.worksetPopupMenu.menu.bye()
                 return Clutter.SOURCE_REMOVE
                 //return Clutter.EVENT_STOP;
@@ -583,7 +590,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                 "list-add-symbolic", addApps,
                 {}, { msg: "Add an application to '" + menuItem.workset.WorksetName + "' favourites" }
             )
-            menuItem.infoMenuButton.connect( "button_release_event", addApps )
+            menuItem.infoMenuButton.connect( "button-press-event", addApps )
             uiUtils.createTooltip(
                 menuItem.infoMenuButton,
                 { msg: "Click to select an application to add to '" + menuItem.workset.WorksetName + "' favourites" }
@@ -620,7 +627,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             // -- Enable all switch if nothing to show here
             if ( Me.session.activeSession.Options.HideAppList && Me.session.activeSession.Options.DisableWallpaperManagement ) {
                 menuItem.revealButton = new popupMenu.PopupSwitchMenuItem( _( "Show Details" ), false, { reactive: true } )
-                menuItem.revealButton.connect( "button_release_event", () => {
+                menuItem.revealButton.connect( "button-press-event", () => {
                     Me.session.activeSession.Options.HideAppList = false
                     Me.session.activeSession.Options.DisableWallpaperManagement = false
                     Me.session.applySession()
