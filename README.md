@@ -1,3 +1,13 @@
+> **Maintenance Mode Notice**
+>
+> This extension is in **maintenance mode**. Future updates and bugfixes are not guaranteed.
+>
+> Contributions are welcome! You can submit PRs that address issues identified in the [AUDIT_REPORT.md](AUDIT_REPORT.md).
+>
+> For GNOME Shell version compatibility PRs, the changes **must be verified by at least 1 other user** in the PR comments before merging.
+
+---
+
 ## Customised Workspaces - Gnome Shell Extension
 
 <p align="left">
