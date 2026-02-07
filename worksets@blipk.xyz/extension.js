@@ -1,7 +1,7 @@
 /*
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
- * Copyright (C) 2023 A.D. http://github.com/blipk
+ * Copyright (C) http://github.com/blipk
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -42,10 +42,10 @@ import Meta from "gi://Meta"
 
 import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
-import * as config from "resource:///org/gnome/shell/misc/config.js"
+// import * as config from "resource:///org/gnome/shell/misc/config.js"
 
-const [major] = config.PACKAGE_VERSION.split( "." )
-const shellVersion = Number.parseInt( major )
+// const [major] = config.PACKAGE_VERSION.split( "." )
+// const shellVersion = Number.parseInt( major )
 
 // Internal imports
 import * as dev from "./dev.js"

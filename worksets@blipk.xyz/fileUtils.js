@@ -1,7 +1,7 @@
 /*
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
- * Copyright (C) 2023 A.D. http://github.com/blipk
+ * Copyright (C) http://github.com/blipk
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@ import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.j
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
-import * as dev from "./dev.js"
+// import * as dev from "./dev.js"
 
 // Directory and file paths for resources
 export const USER_CONF_DIR = GLib.get_user_config_dir()

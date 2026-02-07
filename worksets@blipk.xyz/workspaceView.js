@@ -1,7 +1,7 @@
 /*
  * Customised Workspaces extension for Gnome 3
  * This file is part of the Customised Workspaces Gnome Extension for Gnome 3
- * Copyright (C) 2023 A.D. http://github.com/blipk
+ * Copyright (C) http://github.com/blipk
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,8 +40,8 @@ import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThu
 import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
 import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
 import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
-import * as layout from "resource:///org/gnome/shell/ui/layout.js"
-import * as overview from "resource:///org/gnome/shell/ui/overview.js"
+// import * as layout from "resource:///org/gnome/shell/ui/layout.js"
+// import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 
 
 // Internal imports
@@ -344,7 +344,8 @@ export class WorkspaceViewManager {
                 // Prevent excessive recursion but enforce background updates during various events
                 thumbnailBox._updated = false
                 thumbnailBox._bgManager.connect( "changed", () => {
-                    if ( !thumbnailBox._updated ) Me.workspaceViewManager.refreshOverview(); thumbnailBox._updated = true
+                    if ( !thumbnailBox._updated ) Me.workspaceViewManager.refreshOverview()
+                    thumbnailBox._updated = true
                 } )
 
                 this.updateOverlay( overviewState, thumbnailBox._workset, i )
