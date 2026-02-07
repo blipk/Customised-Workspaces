@@ -34,7 +34,6 @@ import GdkPixbuf from "gi://GdkPixbuf"
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
-import * as MessageTray from "resource:///org/gnome/shell/ui/messageTray.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 
 // Internal imports
