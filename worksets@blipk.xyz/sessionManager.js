@@ -146,7 +146,6 @@ export class SessionManager {
         if ( this.optionsWatched )
             return
 
-        // Set up our bindings
         this.favoritesSet = false
         this.signals.add( appFavorites.getAppFavorites(), "changed", () => {
             if ( this.favoritesSet ) return
@@ -265,6 +264,14 @@ export class SessionManager {
                 // this.saveSession()
                 Me.worksetsIndicator.menu.isOpen ? null : Me.worksetsIndicator.toggleMenu()
             }
+        } )
+
+        this.signals.add( Me.settings, "changed::grayscale-icon", () => {
+            if ( !Me.worksetsIndicator ) return
+            if ( Me.settings.get_boolean( "grayscale-icon" ) )
+                Me.worksetsIndicator.icon.add_effect_with_name( "grayscale", new Clutter.DesaturateEffect( { factor: 1.0 } ) )
+            else
+                Me.worksetsIndicator.icon.remove_effect_by_name( "grayscale" )
         } )
 
         this.optionsWatched = true
