@@ -77,7 +77,7 @@ export function enumarateDirectoryChildren(
 
     let directoryFile = Gio.file_new_for_path( directory )
     if ( !directoryFile.query_exists( null ) ) throw Error( directory + " not found" )
-    let children = directoryFile.enumerate_children( "standard::name,standard::type", Gio.FileQueryInfoFlags.NONE, null )
+    let children = directoryFile.enumerate_children( "standard::name,standard::type", Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null )
 
     let fileIterator
     while ( ( fileIterator = children.next_file( null ) ) != null ) {
@@ -106,8 +106,11 @@ export function enumarateDirectoryChildren(
     return childrenFilePropertiesArray
 }
 
-export function saveToFile( object, filename, directory = null, raw = false, append = false, async = false ) {
+export function saveToFile( object, filename, directory = null, raw = false, append = false, async = true ) {
     directory = directory || CONF_DIR()
+    // S5: Validate filename does not contain path separators
+    if ( filename.includes( "/" ) || filename.includes( "\\" ) )
+        throw Error( "Invalid filename: must not contain path separators" )
     let savePath = GLib.build_filenamev( [directory,
         filename] )
     let outBuff
@@ -117,14 +120,14 @@ export function saveToFile( object, filename, directory = null, raw = false, app
     let contents = new GLib.Bytes( outBuff )
 
     // Make sure dir exists
-    GLib.mkdir_with_parents( directory, parseInt( "0775", 8 ) )
+    GLib.mkdir_with_parents( directory, parseInt( "0700", 8 ) )
     let file = Gio.file_new_for_path( savePath )
     if ( async ) {
         if ( append ) {
             file.append_to_async(
                 Gio.FileCreateFlags.NONE,
                 GLib.PRIORITY_DEFAULT, null,
-                function ( obj, res ) { aSyncSaveCallback( obj, res, contents ) }
+                function ( obj, res ) { aSyncSaveCallback( obj, res, contents, true ) }
             )
         } else {
             file.replace_async(
@@ -149,8 +152,8 @@ export function saveToFile( object, filename, directory = null, raw = false, app
     }
 }
 
-export function aSyncSaveCallback( obj, res, contents ) {
-    let stream = obj.replace_finish( res )
+export function aSyncSaveCallback( obj, res, contents, isAppend = false ) {
+    let stream = isAppend ? obj.append_to_finish( res ) : obj.replace_finish( res )
     stream.write_bytes_async( contents, GLib.PRIORITY_DEFAULT, null, function ( w_obj, w_res ) {
         w_obj.write_bytes_finish( w_res ); stream.close( null )
     } )
@@ -165,7 +168,7 @@ export function loadJSObjectFromFile( filename = "session.json", directory = nul
 
     let file = Gio.file_new_for_path( loadPath )
 
-    if ( !GLib.file_test( loadPath, GLib.FileTest.EXISTS ) ) { throw Error( "File does not exist: " + loadPath ) }
+    if ( !file.query_exists( null ) ) { throw Error( "File does not exist: " + loadPath ) }
     if ( async === true ) {
         if ( typeof callback !== "function" ) { throw TypeError( "loadJSObjectFromFile callback must be a function" ) }
 

@@ -65,7 +65,7 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
         iconButton.icon = icon
         parentItem.add_child ? parentItem.add_child( iconButton ) : parentItem.actor.add_child( iconButton )
         parentItem.iconButtons = parentItem.iconButtons || new Array()
-        parentItem.iconsButtonsPressIds = parentItem.iconButtons || new Array()
+        parentItem.iconsButtonsPressIds = parentItem.iconsButtonsPressIds || new Array()
         if ( tooltip ) {
             iconButton.tooltip = tooltip
             createTooltip( iconButton, tooltip )
@@ -167,9 +167,12 @@ export function createTooltip( widget, tooltip ) {
 
         widget.tooltipEnterEvent = widget.connect( "enter_event", () => {
             widget.hovering = true
-            Me.session.signals.add( GLib.timeout_add( null, widget.tooltip.delay || 700, () => {
+            // Cancel any pending tooltip timer from a previous enter
+            if ( widget._tooltipTimerId ) { GLib.Source.remove( widget._tooltipTimerId ); widget._tooltipTimerId = 0 }
+            widget._tooltipTimerId = GLib.timeout_add( null, widget.tooltip.delay || 700, () => {
+                widget._tooltipTimerId = 0
                 // Ensure there is only one notification per widget
-                if ( widget.notificationLabel ) return
+                if ( widget.notificationLabel ) return false
                 // Create message
                 if ( widget.hovering && !widget.notificationLabel && ( Me.session.activeSession.Options.ShowHelpers || widget.tooltip.force ) ) {
                     widget.notificationLabel = showUserNotification(
@@ -178,18 +181,22 @@ export function createTooltip( widget, tooltip ) {
                     widget.notificationLabel.attachedTo = widget
                 }
                 // Make sure they're eventually removed for any missed cases
-                Me.session.signals.add( GLib.timeout_add( null, widget.tooltip.disappearTime || 4000, () => {
+                widget._tooltipDisappearId = GLib.timeout_add( null, widget.tooltip.disappearTime || 4000, () => {
+                    widget._tooltipDisappearId = 0
                     if ( widget.notificationLabel )
                         removeUserNotification( widget.notificationLabel, 1 )
                     return false
-                } ) )
+                } )
+                Me.session.signals.add( widget._tooltipDisappearId )
                 return false
-            } ) )
+            } )
+            Me.session.signals.add( widget._tooltipTimerId )
 
             //return Clutter.EVENT_STOP;
         } )
         widget.tooltipLeaveEvent = widget.connect( "leave_event", () => {
             widget.hovering = false
+            if ( widget._tooltipTimerId ) { GLib.Source.remove( widget._tooltipTimerId ); widget._tooltipTimerId = 0 }
             if ( widget.notificationLabel )
                 removeUserNotification( widget.notificationLabel, widget.tooltip.leaveFadeTime || 1.4 )
             //return Clutter.EVENT_STOP;

@@ -50,16 +50,14 @@ export function timer( timerName ) {
 export function log( ) {
     try {
         const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
+        if ( !_debug_ ) return
+
         const args = [...arguments]
         const stack = ( new Error() ).stack.split( "\n" )
         const caller_stack = stack[2].toString().split( "/" )
         const context_stack = stack[1].toString().split( "/" )
         const caller = caller_stack[caller_stack.length - 1]
         const context = context_stack[context_stack.length - 1]
-
-
-
-        if ( !_debug_ ) return
 
         const printObj = ( obj, i ) => {
             let label, output
@@ -72,11 +70,11 @@ export function log( ) {
                 output += `|- ${obj.name} ${obj.message}\n|- Stack Trace:\n ${obj.stack}\n`
             } else if ( typeof obj === "object" ) {
                 label = "\n@Object |>\n"
-                let seen = []
+                let seen = new Set()
                 output = JSON.stringify( obj, function ( key, val ) {
                     if ( val != null && typeof val == "object" ) {
-                        if ( seen.indexOf( val ) > 0 ) return
-                        seen.push( val )
+                        if ( seen.has( val ) ) return
+                        seen.add( val )
                     }
                     return val
                 }, 2 ) + "\n"
@@ -106,7 +104,7 @@ export function log( ) {
         } )
         out += args_out.trimStart() + "\n"
 
-        fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true )
+        fileUtils.saveToFile( out, "debug.log", fileUtils.CONF_DIR(), true, true, true )
     } catch ( e ) {
         console.error( e )
         throw e
@@ -123,14 +121,14 @@ export function dump( object, objectName ) {
     //if (typeof object !== 'object') return;
 
     let out = ""
-    let seen = []
+    let seen = new Set()
     out += JSON.stringify( object, function ( key, val ) {
         if ( val != null && typeof val == "object" ) {
-            if ( seen.indexOf( val ) >= 0 ) return
-            seen.push( val )
+            if ( seen.has( val ) ) return
+            seen.add( val )
         }
         return val
     }, 2 ) + "\n\n"
 
-    fileUtils.saveToFile( out, objectName + "-" + timestamp + ".json", fileUtils.CONF_DIR(), true, false )
+    fileUtils.saveToFile( out, GLib.path_get_basename( objectName ) + "-" + timestamp + ".json", fileUtils.CONF_DIR(), true, false )
 }

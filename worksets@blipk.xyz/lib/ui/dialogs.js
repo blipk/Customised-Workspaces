@@ -40,6 +40,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
         this._objectsSetBoxes = []
         this.DIALOG_GROW_TIME = 0.1
         this._callback = null
+        this._confirmed = false
 
         if ( typeof callback !== "function" ) throw TypeError( "ObjectInterfaceDialog._init error: callback must be a function" )
         this._callback = callback
@@ -85,6 +86,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
             buttons = ( typeof buttons == "string" ) ? defaults : buttons
             buttons.forEach( function ( button, i ) {
                 if ( button.action ) button.action = button.action.bind( this )
+                else if ( button.default ) button.action = () => { this._confirmed = true; this.close() }
                 else button.action = () => { this.close() }
 
                 this.buttons[i] = this.addButton( button )
@@ -200,7 +202,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                             b._objectBoxStButton.set_x_expand( false )
                             b._objectBoxStButton.set_y_expand( false )
                             b._objectBoxStButton.connect( "button-press-event", () => {
-                                this.popModal(); this.close( object ); return object
+                                this.popModal(); this._confirmed = true; this.close( object ); return object
                             } )
 
                             b.add_child( this._objectsSetBoxes[i]._objectBoxes[ii]._objectBoxStButton )
@@ -230,6 +232,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                 this._checkInput( o.get_text() )
                 if ( !this._inputError || !this.pushModal() ) {
                     this.popModal()
+                    this._confirmed = true
                     this.close( o.get_text() )
                     return o.get_text()
                 }
@@ -246,7 +249,9 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
     }
     close( returnObject ) {
         try {
-            this._callback( returnObject || this.stEntryUText.clutter_text.get_text() )
+            if ( this._confirmed )
+                this._callback( returnObject || this.stEntryUText.clutter_text.get_text() )
+            this._confirmed = false
             super.close()
         } catch ( e ) { dev.log( e ) }
     }
@@ -360,7 +365,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
             this.subObjectMasks = Array()
             this.propertyBoxClickCallbacks = Array()
             if ( editableObject ) {
-                editableObject.forEachEntry( function ( key, value, i ) {
+                utils.forEachEntry( editableObject, function ( key, value, i ) {
                     // Options for how to display each property section
                     this.propertyKeys[i] = key
                     this.propertyValues[i] = value
@@ -489,14 +494,14 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                         // Check for valid types in the sub object
                         let containsBooleans = true
-                        value.forEachEntry( function ( subobjectKey, subobjectValue, i ) {
+                        utils.forEachEntry( value, function ( subobjectKey, subobjectValue, i ) {
                             if ( typeof subobjectValue != "boolean" ) containsBooleans = false
                         }, this )
                         if ( !containsBooleans ) return
 
                         // Build UI
                         this._propertyBoxes[i]._boolBox = Array()
-                        value.forEachEntry( function ( subobjectKey, subobjectValue, n ) {
+                        utils.forEachEntry( value, function ( subobjectKey, subobjectValue, n ) {
                             // Set up display masks for the subobject properties
                             let subObjectPropertyDisplayName = key
                             let subObjectPropertyDisabled = false // TODO

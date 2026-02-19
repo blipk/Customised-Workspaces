@@ -37,7 +37,7 @@
  */
 
 // External imports
-import Gio from "gi://Gio"
+// import Gio from "gi://Gio"
 import Meta from "gi://Meta"
 
 import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
@@ -71,18 +71,33 @@ export default class Worksets extends Extension {
             this.gExtensions = new Object()
             this.gExtensions.dash2panel = () => Extension.lookupByUUID( "dash-to-panel@jderose9.github.com" )
 
-            this.gExtensions.dash2panelSettings = () => {
+            this.gExtensions._dash2panelSettingsCache = null
+            this.gExtensions.dash2panelSettings = ( useCache = true ) => {
+                if ( useCache && this.gExtensions._dash2panelSettingsCache )
+                    return this.gExtensions._dash2panelSettingsCache
+
                 try {
-                    return new Gio.Settings( {schema_id: "org.gnome.shell.extensions.dash-to-panel"} )
+                    let ext = this.gExtensions.dash2panel()
+                    if ( !ext ) return null
+                    this.gExtensions._dash2panelSettingsCache = ext.getSettings( "org.gnome.shell.extensions.dash-to-panel" )
+                    return this.gExtensions._dash2panelSettingsCache
                 } catch ( e ) {
+                    dev.log( e )
                     return null
                 }
             }
 
             this.gExtensions.dash2dock = () => Extension.lookupByUUID( "dash-to-dock@micxgx.gmail.com" )
-            this.gExtensions.dash2dockSettings = () => {
+            this.gExtensions._dash2dockSettingsCache = null
+            this.gExtensions.dash2dockSettings = ( useCache = true ) => {
+                if ( useCache && this.gExtensions._dash2dockSettingsCache )
+                    return this.gExtensions._dash2dockSettingsCache
+
                 try {
-                    return new Gio.Settings( {schema_id: "org.gnome.shell.extensions.dash-to-dock"} )
+                    let ext = this.gExtensions.dash2dock()
+                    if ( !ext ) return null
+                    this.gExtensions._dash2dockSettingsCache = ext.getSettings( "org.gnome.shell.extensions.dash-to-dock" )
+                    return this.gExtensions._dash2dockSettingsCache
                 } catch ( e ) {
                     return null
                 }

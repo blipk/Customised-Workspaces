@@ -72,6 +72,8 @@ export class SessionManager {
 
             this.signals = new utils.SignalHandler()
             this.activeFunctions = {}
+            this._allAppsScanned = false
+            this.signals.add( Shell.AppSystem.get_default(), "installed-changed", () => { this._allAppsScanned = false } )
 
             // Change tracking for session saves
             this._sessionHash = null
@@ -162,12 +164,20 @@ export class SessionManager {
 
         this.signals.add( Me.settings, "changed::isolate-workspaces", () => {
             Me.session.activeSession.Options.IsolateWorkspaces = Me.settings.get_boolean( "isolate-workspaces" )
+            Me.session.applySession()
         } )
-        if ( Me.gExtensions.dash2panelSettings() )
+        if ( Me.gExtensions.dash2panelSettings() ) {
             this.signals.add( Me.gExtensions.dash2panelSettings(), "changed::isolate-workspaces", () => {
-                Me.settings.set_boolean( "isolate-workspaces", Me.gExtensions.dash2panelSettings().get_boolean( "isolate-workspaces" ) )
-                Me.session.saveSession()
+
+                const updatedValue = Me.gExtensions.dash2panelSettings().get_boolean( "isolate-workspaces" )
+
+                // This will call the signal above and save the session
+                Me.settings.set_boolean(
+                    "isolate-workspaces",
+                    updatedValue
+                )
             } )
+        }
 
         this.signals.add( Me.settings, "changed::show-workspace-overlay", () => {
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
@@ -287,7 +297,7 @@ export class SessionManager {
                 this.activeSession.Options[utils.textToPascalCase( key )] = Me.settings.get_string( key )
             }
         }, this )
-        this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
+        utils.forEachEntry( this.activeSession.Options, function ( optionName, optionValue ) {
             if ( keys.includes( utils.textToKebabCase( optionName ) ) ) return
             delete this.activeSession.Options[optionName]
         }, this )
@@ -296,7 +306,7 @@ export class SessionManager {
     _saveOptions() {
         this.activeFunctions["_saveOptions"] = true
 
-        this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
+        utils.forEachEntry( this.activeSession.Options, function ( optionName, optionValue ) {
             const k = Me.settings.settings_schema.get_key( utils.textToKebabCase( optionName ) )
             const defaultValue = k.get_default_value()
             if ( defaultValue.toString().includes( "\"b\"" ) ) { // GLib Variant Boolean
@@ -316,7 +326,7 @@ export class SessionManager {
         // dev.log( "_loadOptions" )
         this.activeFunctions["_loadOptions"] = true
 
-        this.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
+        utils.forEachEntry( this.activeSession.Options, function ( optionName, optionValue ) {
             const k = Me.settings.settings_schema.get_key( utils.textToKebabCase( optionName ) )
             const defaultValue = k.get_default_value()
             if ( defaultValue.toString().includes( "\"b\"" ) ) { // GLib Variant Boolean
@@ -377,7 +387,6 @@ export class SessionManager {
 
             // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
             //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
-            let filteredWorksets
             this.Worksets.forEach( function ( worksetBuffer, ii ) {
                 //Fix entries
                 if ( !Array.isArray( worksetBuffer.FavApps ) ) worksetBuffer.FavApps = []
@@ -393,14 +402,15 @@ export class SessionManager {
                 if ( typeof worksetBuffer.BackgroundStyleDark !== "string" || !worksetBuffer.BackgroundStyleDark )
                     worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
 
-                // Remove duplicate entries
-                filteredWorksets = this.Worksets.filter( function ( item ) {
-                    if ( item !== worksetBuffer &&
-                        ( JSON.stringify( item ) === JSON.stringify( worksetBuffer ) ) ) { return false }
-                    return true
-                }, this )
             }, this )
-            this.Worksets = filteredWorksets
+            // Remove duplicate entries using Set-based dedup
+            let seenHashes = new Set()
+            this.Worksets = this.Worksets.filter( function ( workset ) {
+                let hash = JSON.stringify( workset )
+                if ( seenHashes.has( hash ) ) return false
+                seenHashes.add( hash )
+                return true
+            } )
 
 
 
@@ -411,7 +421,7 @@ export class SessionManager {
             }, this )
 
             const mappedWorkspaces = []
-            this.workspaceMaps.forEachEntry( ( workspaceMapKey, workspaceMapValues, i ) => {
+            utils.forEachEntry( this.workspaceMaps, ( workspaceMapKey, workspaceMapValues, i ) => {
                 // Remove non-existant worksets
                 if ( !worksetNames.includes( workspaceMapValues.currentWorkset ) )
                     this.workspaceMaps[workspaceMapKey].currentWorkset = ""
@@ -466,12 +476,10 @@ export class SessionManager {
             this._saveOptions()
             this._validateSession( false )
 
-            let sessionCopy = JSON.parse( JSON.stringify( this.activeSession ) )
             let timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "" )
             let filename = ( backup ? "session-backup-" + timestamp + ".json" : "session.json" )
-            fileUtils.saveToFile( sessionCopy, filename, fileUtils.CONF_DIR() )
-
-            if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
+            let sessionJSON = JSON.stringify( this.activeSession, null, 1 )
+            fileUtils.saveToFile( sessionJSON, filename, fileUtils.CONF_DIR(), true, false, false )
 
             // Update hash after successful save (only for non-backup saves)
             if ( !backup ) {
@@ -643,6 +651,7 @@ export class SessionManager {
         } catch ( e ) { dev.log( e ) }
     }
     scanInstalledApps() {
+        if ( this._allAppsScanned ) return
         // Shell.AppSystem includes flatpak and snap installed applications
         let installedApps = Shell.AppSystem.get_default().get_installed()
         installedApps.forEach( function ( app ) {
@@ -653,13 +662,14 @@ export class SessionManager {
             if ( app.get_icon() ) icon = app.get_icon().to_string()
             this.allApps[id] = { "displayName": name, "icon": icon, "exec": exec }
         }, this )
+        this._allAppsScanned = true
     }
     getWorksetActiveIndex( workset ) {
         let name = workset.WorksetName || workset
         let isActive = -1
-        this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+        utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues ) {
             if ( workspaceMapValues.currentWorkset == name ) {
-                isActive = parseInt( workspaceMapKey.substr( -1, 1 ) )
+                isActive = parseInt( workspaceMapKey.replace( "Workspace", "" ) )
                 return
             }
         }, this )
@@ -730,7 +740,7 @@ export class SessionManager {
     get ActiveWorksets() {
         // Returns names of all active worksets
         let openedWorksets = []
-        this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+        utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues ) {
             openedWorksets.push( workspaceMapValues.currentWorkset )
         }, this )
 
@@ -739,13 +749,13 @@ export class SessionManager {
     closeWorkset( workset ) {
         try {
             let closing
-            this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+            utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues ) {
                 if ( workspaceMapValues.currentWorkset == workset.WorksetName ) closing = workspaceMapKey
             }, this )
             this.workspaceMaps[closing].currentWorkset = ""
 
             // Show the default
-            if ( parseInt( closing.substr( -1, 1 ) ) == Me.workspaceManager.activeWorkspaceIndex )
+            if ( parseInt( closing.replace( "Workspace", "" ) ) == Me.workspaceManager.activeWorkspaceIndex )
                 this.displayWorkset( this.DefaultWorkset, false, true )
 
             if ( this.activeSession.Options.ShowNotifications )
@@ -895,7 +905,7 @@ export class SessionManager {
             Object.assign( editable, worksetIn )
             let workSpaceOptions = { Workspace0: false, Workspace1: false, Workspace2: false, Workspace3: false, Workspace4: false }
             let workSpaceOptions2 = { Workspace5: false, Workspace6: false, Workspace7: false, Workspace8: false, Workspace9: false }
-            this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues, i ) {
+            utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues, i ) {
                 try {
                     if ( workspaceMapValues.defaultWorkset == worksetIn.WorksetName ) {
                         if ( workSpaceOptions[workspaceMapKey] != undefined ) workSpaceOptions[workspaceMapKey] = true
@@ -927,7 +937,7 @@ export class SessionManager {
 
                 // Update workspace maps - this currently overrides any previous worksets assigned to the workspace
                 Object.assign( returnObject.workSpaceOptions, returnObject.workSpaceOptions2 )
-                returnObject.workSpaceOptions.forEachEntry( function ( workSpaceOptionsKey, workSpaceOptionsValue, i ) {
+                utils.forEachEntry( returnObject.workSpaceOptions, function ( workSpaceOptionsKey, workSpaceOptionsValue, i ) {
                     if ( this.workspaceMaps[workSpaceOptionsKey] == undefined )
                         Object.assign( this.workspaceMaps, { [workSpaceOptionsKey]: { "defaultWorkset": "", "currentWorkset": "" } } )
 
@@ -938,7 +948,7 @@ export class SessionManager {
                 }, this )
 
                 // Update the name on the maps if it has changed
-                this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+                utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues ) {
                     if ( workspaceMapValues.defaultWorkset == worksetIn.WorksetName )
                         this.workspaceMaps[workspaceMapKey].defaultWorkset = returnObject.WorksetName
                     if ( workspaceMapValues.currentWorkset == worksetIn.WorksetName )
@@ -965,7 +975,7 @@ export class SessionManager {
         try {
             let backupFilename = this.saveWorkset( workset, true )
             // Remove it as the default on any workspace
-            this.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues ) {
+            utils.forEachEntry( this.workspaceMaps, function ( workspaceMapKey, workspaceMapValues ) {
                 if ( workspaceMapValues.defaultWorkset == workset.WorksetName )
                     this.workspaceMaps[workspaceMapKey].defaultWorkset = ""
                 if ( workspaceMapValues.currentWorkset == workset.WorksetName )

@@ -201,6 +201,9 @@ export class WorkspaceViewManager {
 
     destroy() {
         try {
+            this.menus.forEach( menu => { try { menu.destroy() } catch ( e ) { /* already destroyed */ } } )
+            this.menus = []
+
             this.injectionHandler.removeAll()
             this.signals.disconnectAll()
 
@@ -241,10 +244,15 @@ export class WorkspaceViewManager {
 
             for ( const i in this.wsGroups ) {
                 const wsGroup = this.wsGroups[i]
-                const metaWorkspace = wsGroup._workspace
-                wsGroup._workset = Me.session.Worksets
-                    .find( ( wset ) =>
-                        wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
+                const metaWorkspace = wsGroup._workspace || wsGroup.workspace()
+
+                if ( metaWorkspace )
+                    wsGroup._workset = Me.session.Worksets
+                        .find( ( wset ) =>
+                            wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
+
+                if ( !wsGroup._workset )
+                    return
 
                 if ( wsGroup._newbg )
                     delete wsGroup._newbg

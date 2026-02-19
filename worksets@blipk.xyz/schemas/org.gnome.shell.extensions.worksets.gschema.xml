@@ -46,7 +46,7 @@
       <description>Reverse the menu order if you have your panel on the lower edge</description>
     </key>
     <key name="debug-mode" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Enable logging</summary>
       <description>Toggles writing log file to ~/.config/worksets@blipk.xyz/debug.log</description>
     </key>

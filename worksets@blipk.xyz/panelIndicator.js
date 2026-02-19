@@ -105,67 +105,82 @@ export var WorksetsIndicator = GObject.registerClass( {
     //main UI builder
     _buildOptionsMenuItems() {
         // Sub menu for option switches
-        Me.session.activeSession.Options.forEachEntry( function ( optionName, optionValue ) {
-            const settingsKeyName = utils.textToKebabCase( optionName )
-            const summary = Me.settings.settings_schema.get_key( settingsKeyName ).get_summary()
-            const description = Me.settings.settings_schema.get_key( settingsKeyName ).get_description()
-            const isBoolOption = typeof Me.session.activeSession.Options[optionName] === "boolean"
-            const optionMenuItem = isBoolOption
-                ? new popupMenu.PopupSwitchMenuItem( _( summary ), Me.session.activeSession.Options[optionName], { reactive: true } )
-                : new popupMenu.PopupSubMenuMenuItem( _( summary ), false )
-            optionMenuItem.optionName = optionName
-            const toggleOpt = () => {
+        utils.forEachEntry(
+            Me.session.activeSession.Options,
+            function ( optionName, optionValue ) {
+                const settingsKeyName = utils.textToKebabCase( optionName )
+                const summary = Me.settings.settings_schema.get_key( settingsKeyName ).get_summary()
+                const description = Me.settings.settings_schema.get_key( settingsKeyName ).get_description()
+                const isBoolOption = typeof Me.session.activeSession.Options[optionName] === "boolean"
+                const optionMenuItem = isBoolOption
+                    ? new popupMenu.PopupSwitchMenuItem( _( summary ), Me.session.activeSession.Options[optionName], { reactive: true } )
+                    : new popupMenu.PopupSubMenuMenuItem( _( summary ), false )
+                optionMenuItem.optionName = optionName
+                const toggleOpt = ( apply = true ) => {
                 // dev.log( `toggle ${optionName} ${this.reopeningMenu}` )
-                if ( this.reopeningMenu ) return
-                Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]
-                Me.session.applySession()
-            }
-            let apply
-            switch ( optionName ) {
-            case "IsolateWorkspaces":
-                apply = () => { Me.workspaceManager.activateIsolater() }
-                break
-            case "ReverseMenu":
-                apply = () => { toggleOpt(); Me.session.resetIndicator() }
-                break
-            case "ShowWorkspaceOverly":
-                apply = () => { toggleOpt(); Me.workspaceViewManager.refreshOverview() }
-                break
-            case "CliSwitch":
-                apply = () => {
-                    const buttonStyles = [
-                        {
-                            label  : "Cancel",
-                            key    : Clutter.KEY_Escape,
-                            action : function () { this.close( " " ) }
-                        },
-                        { label: "Done", default: true }
-                    ]
-                    const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
-                    const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
-                        dialogMsg,
-                        ( returnText ) => {
-                            if ( !returnText ) return
-                            returnText = returnText.trim()
-                            if ( returnText === "" ) return
-                            Me.session.activeSession.Options["CliSwitch"] = returnText
-                            Me.session.applySession()
-                            uiUtils.showUserNotification( "CLI command saved." )
-                        },
-                        true, false, [], [], buttonStyles, Me.session.activeSession.Options["CliSwitch"]
-                    )
+                    if ( this.reopeningMenu ) return
+                    Me.session.activeSession.Options[optionName] = !Me.session.activeSession.Options[optionName]
+                    if ( !apply ) return
+                    Me.session.applySession()
                 }
-                break
-            default: apply = toggleOpt
-            }
-            const eventName = isBoolOption ? "toggled" : "button-press-event"
-            optionMenuItem.pressHandler = optionMenuItem.connect( eventName, () => { apply() } )
-            if ( isBoolOption )
-                optionMenuItem.activate = () => { if ( optionMenuItem._switch.mapped ) optionMenuItem.toggle() }
-            uiUtils.createTooltip( optionMenuItem, { msg: description, delay: 1400 } )
-            this.optionsMenuItems.push( optionMenuItem )
-            this.optionsMenuItem.menu.addMenuItem( optionMenuItem )
-        }, this )
+                let apply
+                switch ( optionName ) {
+                case "IsolateWorkspaces":
+                    apply = () => {
+                        Me.workspaceManager.activateIsolater()
+                    }
+                    break
+                case "ReverseMenu":
+                    apply = () => { toggleOpt(); Me.session.resetIndicator() }
+                    break
+                case "ShowWorkspaceOverly":
+                    apply = () => { toggleOpt(); Me.workspaceViewManager.refreshOverview() }
+                    break
+                case "CliSwitch":
+                    apply = () => {
+                        const buttonStyles = [
+                            {
+                                label  : "Cancel",
+                                key    : Clutter.KEY_Escape,
+                                action : function () { this.close( " " ) }
+                            },
+                            { label: "Done", default: true }
+                        ]
+                        const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
+                        const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
+                            dialogMsg,
+                            ( returnText ) => {
+                                if ( !returnText ) return
+                                returnText = returnText.trim()
+                                if ( returnText === "" ) return
+                                Me.session.activeSession.Options["CliSwitch"] = returnText
+                                Me.session.applySession()
+                                uiUtils.showUserNotification( "CLI command saved." )
+                            },
+                            true, false, [], [], buttonStyles, Me.session.activeSession.Options["CliSwitch"]
+                        )
+                    }
+                    break
+                default: apply = toggleOpt
+                }
+                const eventName = isBoolOption ? "toggled" : "button-press-event"
+                optionMenuItem.pressHandler = optionMenuItem.connect(
+                    eventName,
+                    () => {
+                        if ( this._syncingOptions ) return
+                        apply()
+                    }
+                )
+                if ( isBoolOption )
+                    optionMenuItem.activate = () => {
+                        if ( optionMenuItem._switch.mapped ) optionMenuItem.toggle()
+                    }
+
+                uiUtils.createTooltip( optionMenuItem, { msg: description, delay: 1400 } )
+                this.optionsMenuItems.push( optionMenuItem )
+                this.optionsMenuItem.menu.addMenuItem( optionMenuItem )
+            }, this
+        )
 
     }
     _buildMenu() {
@@ -323,11 +338,9 @@ export var WorksetsIndicator = GObject.registerClass( {
             if ( Me.session.activeSession.Default == menuItem.workset.WorksetName ) {
                 defaultMenuItem = menuItem
                 this.defaultSection.addMenuItem( menuItem, 0 )
-                this.defaultSection.moveMenuItem( defaultMenuItem, 0 )
             } else if ( Me.workspaceManager.activeWorksetName == menuItem.workset.WorksetName ) {
                 activeMenuItem = menuItem
                 this.defaultSection.addMenuItem( menuItem, 0 )
-                this.defaultSection.moveMenuItem( activeMenuItem, 1 )
             } else {
                 if ( activeIndex > -1 ) {
                     this.favoritesSection.addMenuItem( menuItem, 0 )
@@ -562,9 +575,9 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             // -- Workset info
             let infoText = "Has these favourites"
-            Me.session.workspaceMaps.forEachEntry( ( workspaceMapKey, workspaceMapValues, i ) => {
+            utils.forEachEntry( Me.session.workspaceMaps, ( workspaceMapKey, workspaceMapValues, i ) => {
                 if ( workspaceMapValues.defaultWorkset == menuItem.workset.WorksetName )
-                    infoText += " on the " + utils.stringifyNumber( parseInt( workspaceMapKey.substr( -1, 1 ) ) + 1 ) + " workspace"
+                    infoText += " on the " + utils.stringifyNumber( parseInt( workspaceMapKey.replace( "Workspace", "" ) ) + 1 ) + " workspace"
             }, this )
             menuItem.infoMenuButton = new popupMenu.PopupImageMenuItem( _( infoText ), "" )
             menuItem.infoMenuButton.label.set_x_expand( true )
@@ -678,10 +691,12 @@ export var WorksetsIndicator = GObject.registerClass( {
             // Me.session.loadSession()
 
             // Ensure option switches match settings
+            this._syncingOptions = true
             this.optionsMenuItems.forEach( function ( menuItem, i ) {
                 if ( typeof this.optionsMenuItems[i]._switch !== "undefined" )
                     this.optionsMenuItems[i]._switch.state = Me.session.activeSession.Options[this.optionsMenuItems[i].optionName]
             }, this )
+            this._syncingOptions = false
 
             //Remove all and re-add with any changes
             if ( !utils.isEmpty( Me.session.activeSession ) ) {
@@ -689,8 +704,6 @@ export var WorksetsIndicator = GObject.registerClass( {
                 Me.session.Worksets.forEach( ( workset, index ) => {
                     this._addWorksetMenuItemEntry( workset, index )
                 }, this )
-
-                Me.session.saveSession()
             }
         } catch ( e ) { dev.log( e ) }
     }

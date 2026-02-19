@@ -32,7 +32,14 @@ import Gio from "gi://Gio"
 import GLib from "gi://GLib"
 import Gtk from "gi://Gtk?version=3.0"
 
-// Find the root datadir of the extension
+// Find the root datadir of the extension using import.meta.url
+export function getDatadir() {
+    const thisFile = Gio.File.new_for_uri( import.meta.url )
+    // appChooser.js is at lib/ui/appChooser.js, so go up 3 levels to get the extension root, then up 1 more for the repo root
+    return thisFile.get_parent().get_parent().get_parent().get_parent().get_path()
+}
+
+// Old method kept for verification - uses error stack trace for path discovery
 export function getDatadirFromErrorStack() {
     const m = /@(.+):\d+/.exec( ( new Error() ).stack.split( "\n" )[1] )
     const p = m[1].split( ":" )[1]
@@ -41,7 +48,7 @@ export function getDatadirFromErrorStack() {
 
 window.worksets = {
     dir: GLib.build_filenamev( [
-        getDatadirFromErrorStack(),
+        getDatadir(),
         "worksets@blipk.xyz"
     ] )
 }

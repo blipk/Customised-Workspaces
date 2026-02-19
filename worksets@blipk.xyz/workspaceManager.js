@@ -25,13 +25,14 @@
  */
 
 // External imports
+import Gio from "gi://Gio"
 import GLib from "gi://GLib"
 // import Meta from "gi://Meta"
 import Shell from "gi://Shell"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 // import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
-// import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
+import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
@@ -68,7 +69,7 @@ export class WorkspaceManager {
             let min_workspaces = 1
 
             let currents = []
-            Me.session.workspaceMaps.forEachEntry( function ( workspaceMapKey, workspaceMapValues, i ) {
+            utils.forEachEntry( Me.session.workspaceMaps, function ( workspaceMapKey, workspaceMapValues, i ) {
                 // Remove any worksets that are set to current on more than one workspace
                 if ( workspaceMapValues.currentWorkset != "" ) {
                     if ( currents.indexOf( workspaceMapValues.currentWorkset ) > -1 ) {
@@ -80,7 +81,7 @@ export class WorkspaceManager {
 
                 // Minimum workspaces should be one more than the workspace index that the last active workset is on
                 if ( !destroyClean ) {
-                    let index = parseInt( workspaceMapKey.substr( -1, 1 ) )
+                    let index = parseInt( workspaceMapKey.replace( "Workspace", "" ) )
                     if ( workspaceMapValues.currentWorkset != "" && index > min_workspaces - 2 ) {
                         min_workspaces = index + 2
                     }
@@ -224,6 +225,30 @@ export class WorkspaceManager {
         } catch ( e ) { dev.log( e ) }
     }
 
+    _readProcEnviron( pid ) {
+        try {
+            let envFile = Gio.file_new_for_path( "/proc/" + pid + "/environ" )
+            let [success, contents] = envFile.load_contents( null )
+            if ( !success ) return ""
+            // /proc/[pid]/environ uses null bytes as separators
+            return new TextDecoder().decode( contents ).replace( /\0/g, "\n" ).toLowerCase()
+        } catch ( e ) {
+            return ""
+        }
+    }
+    _bamfHintCache = {}
+    _getBamfHint( pid ) {
+        if ( this._bamfHintCache[pid] ) return this._bamfHintCache[pid]
+        let env = this._readProcEnviron( pid )
+        let bamfIdx = env.indexOf( "bamf_desktop_file_hint=" )
+        if ( bamfIdx === -1 ) return ""
+        let hintValue = env.substring( bamfIdx + 23 )
+        let endIdx = hintValue.indexOf( "\n" )
+        if ( endIdx > -1 ) hintValue = hintValue.substring( 0, endIdx )
+        let result = GLib.path_get_basename( hintValue )
+        this._bamfHintCache[pid] = result
+        return result
+    }
     getWorkspaceAppIds( workspaceIndex, excludeFavorites = true ) {
         try {
             if ( utils.isEmpty( workspaceIndex ) ) workspaceIndex = Me.gWorkspaceManager.get_active_workspace_index()
@@ -239,9 +264,8 @@ export class WorkspaceManager {
                 // so need to get the hint that is set for ubuntus BAMF daemon from the apps environment vars
                 // Possible alternative if the BAMF method proves unreliable: Shell.AppSystem.search(w.get_wm_class_instance())
                 if ( id.indexOf( "window:" ) > -1 ) {
-                    let env = GLib.spawn_command_line_sync( "ps e " + w.get_pid() )[1].toString().toLowerCase()
-                    let bamfHint = env.substring( env.indexOf( "bamf_desktop_file_hint=" ) + 23, env.indexOf( ".desktop" ) + 8 )
-                    id = GLib.path_get_basename( bamfHint )
+                    let bamfId = this._getBamfHint( w.get_pid() )
+                    if ( bamfId ) id = bamfId
                 }
 
                 appIDs.push( id )
@@ -291,23 +315,42 @@ export class WorkspaceManager {
 
             if ( Me.session.activeSession.Options.IsolateWorkspaces ) {
                 // Defer to isolaters in other extensions
-                if ( Me.gExtensions.dash2panel() && Me.gExtensions.dash2panelSettings() ) {
-                    if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
+                const hasDash2Panel = Boolean( Me.gExtensions.dash2panel() ) && Boolean( Me.gExtensions.dash2panelSettings() )
+                const enabledDash2Panel = hasDash2Panel && Me.gExtensions.dash2panel().state === extensionUtils.ExtensionState.ENABLED
+
+                const hasDash2Dock = Boolean( Me.gExtensions.dash2dock() ) && Boolean( Me.gExtensions.dash2dockSettings() )
+                const enabledDash2Dock = hasDash2Dock && Me.gExtensions.dash2dock().state === extensionUtils.ExtensionState.ENABLED
+
+                // The .state check above doesn't actually work as it's held on Main.extensionManager
+                // dev.log(
+                //     `hasDash2Panel ${hasDash2Panel}`,
+                //     `enabledDash2Panel ${enabledDash2Panel}`,
+                //     `hasDash2Dock ${hasDash2Dock}`,
+                //     `enabledDash2Dock ${enabledDash2Dock}`
+                // )
+
+                if ( ( hasDash2Panel || hasDash2Dock ) && Me.workspaceIsolater ) {
+                    Me.workspaceIsolater.destroy()
+                    delete Me.workspaceIsolater
+                }
+
+                if ( hasDash2Panel )
                     Me.gExtensions.dash2panelSettings().set_boolean( "isolate-workspaces", true )
-                } else if ( Me.gExtensions.dash2dock() && Me.gExtensions.dash2dockSettings() ) {
-                    if ( Me.workspaceIsolater ) { Me.workspaceIsolater.destroy(); delete Me.workspaceIsolater }
+
+                if ( hasDash2Dock )
                     Me.gExtensions.dash2dockSettings().set_boolean( "isolate-workspaces", true )
-                } else {
+
+                if ( !enabledDash2Panel && !enabledDash2Dock ) {
                     Me.workspaceIsolater = new workspaceIsolater.WorkspaceIsolator()
                     workspaceIsolater.WorkspaceIsolator.refresh()
                 }
             } else {
-                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-panel/isolate-workspaces', 'false']);
-                // util.spawn(['dconf', 'write', '/org/gnome/shell/extensions/dash-to-dock/isolate-workspaces', 'false']);
                 if ( Me.gExtensions.dash2panelSettings() )
                     Me.gExtensions.dash2panelSettings().set_boolean( "isolate-workspaces", false )
+
                 if ( Me.gExtensions.dash2dockSettings() )
                     Me.gExtensions.dash2dockSettings().set_boolean( "isolate-workspaces", false )
+
                 if ( Me.workspaceIsolater ) {
                     Me.workspaceIsolater.destroy()
                     delete Me.workspaceIsolater
@@ -315,11 +358,11 @@ export class WorkspaceManager {
             }
         } catch ( e ) { dev.log( e ) }
 
-        Me.session.saveSession()
+        Me.session.applySession()
     }
 
     spawnOnSwitch( workset ) {
-        const cmd = Me.session.activeSession.Options.CliSwitch.replaceAll( "$CWORKSPACE", workset.WorksetName )
+        const cmd = Me.session.activeSession.Options.CliSwitch.replaceAll( "$CWORKSPACE", GLib.shell_quote( workset.WorksetName ) )
         const args = [
             "/usr/bin/env",
             "bash",
