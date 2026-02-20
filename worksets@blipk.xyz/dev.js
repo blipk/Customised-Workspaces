@@ -47,10 +47,10 @@ export function timer( timerName ) {
     }
 }
 
-export function log( ) {
+export function log( force = false ) {
     try {
         const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-        if ( !_debug_ ) return
+        if ( !_debug_ && force !== true ) return
 
         const args = [...arguments]
         const stack = ( new Error() ).stack.split( "\n" )

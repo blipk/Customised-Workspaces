@@ -39,6 +39,7 @@ import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 // Internal imports
 import { WorksetsInstance as Me } from "../../extension.js"
 import * as dev from "../../dev.js"
+import * as inputValidator from "../../inputValidator.js"
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
 export function createIconButton( parentItem, iconNames, callback, options, tooltip ) { //St.Side.RIGHT
@@ -181,12 +182,16 @@ export function createTooltip( widget, tooltip ) {
                     widget.notificationLabel.attachedTo = widget
                 }
                 // Make sure they're eventually removed for any missed cases
-                widget._tooltipDisappearId = GLib.timeout_add( null, widget.tooltip.disappearTime || 4000, () => {
-                    widget._tooltipDisappearId = 0
-                    if ( widget.notificationLabel )
-                        removeUserNotification( widget.notificationLabel, 1 )
-                    return false
-                } )
+                widget._tooltipDisappearId = GLib.timeout_add(
+                    null,
+                    widget.tooltip.disappearTime || 4000,
+                    () => {
+                        widget._tooltipDisappearId = 0
+                        if ( widget.notificationLabel )
+                            removeUserNotification( widget.notificationLabel, 1 )
+                        return false
+                    } 
+                )
                 Me.session.signals.add( widget._tooltipDisappearId )
                 return false
             } )
@@ -220,6 +225,9 @@ export function setImage( parent, imgFilePath = "" ) {
         let error
         let image
         imgFilePath = imgFilePath.replace( "file://", "" )
+
+        // S15: Validate image path before loading
+        imgFilePath = inputValidator.InputValidator.validateImagePath( imgFilePath, "setImage.imgFilePath" )
 
         if ( knownImages[imgFilePath] ) {
             image = knownImages[imgFilePath]

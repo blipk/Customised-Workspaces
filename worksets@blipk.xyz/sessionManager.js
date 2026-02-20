@@ -48,6 +48,7 @@ import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
 import * as dialogs from "./lib/ui/dialogs.js"
 import * as fileUtils from "./fileUtils.js"
+import * as inputValidator from "./inputValidator.js"
 import * as panelIndicator from "./panelIndicator.js"
 import * as workspaceManager from "./workspaceManager.js"
 import * as workspaceView from "./workspaceView.js"
@@ -82,8 +83,12 @@ export class SessionManager {
             this.iSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.interface"} )
             this.bSettings = new Gio.Settings( {schema_id: "org.gnome.desktop.background"} )
 
-            // Make sure our GTK App chooser is executable
-            util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
+            // Make sure our GTK App chooser is executable (S8: check before chmod, verify integrity)
+            let chmodCheck = inputValidator.InputValidator.ensureAppChooserExecutable()
+            if ( chmodCheck.needsChmod )
+                util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
+            else if ( chmodCheck.error )
+                dev.log( true, "appChooser executable check: " + chmodCheck.error )
 
             // Create sesion or initialize from session file if it exists
             const targetSession = fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" )
@@ -385,24 +390,33 @@ export class SessionManager {
             if ( typeof this.SessionName !== "string" )
                 this.SessionName = "Default"
 
-            // This doesn't work due to gnome bug where the compiled schemas for extensions are not in env properly
-            //const worksetPrototype = Me.settings.get_key("workset-prototype-json").get_default_value()
-            this.Worksets.forEach( function ( worksetBuffer, ii ) {
-                //Fix entries
-                if ( !Array.isArray( worksetBuffer.FavApps ) ) worksetBuffer.FavApps = []
-                if ( typeof worksetBuffer.WorksetName !== "string" ) worksetBuffer.WorksetName = "Workset " + ii
+            // S3: Validate all worksets through InputValidator schema validation
+            this.Worksets = this.Worksets.map( ( worksetBuffer, ii ) => {
+                let validated = inputValidator.InputValidator.validateWorkset( worksetBuffer, ii )
+                if ( validated === null ) {
+                    dev.log( true, `_validateSession: Dropping invalid workset at index ${ii}` )
+                    return null
+                }
+                // Fill in empty background paths from current desktop
+                if ( !validated.BackgroundImage )
+                    validated.BackgroundImage = this.getBackground() || ""
+                if ( !validated.BackgroundImageDark )
+                    validated.BackgroundImageDark = this.getBackgroundDark() || validated.BackgroundImage
+                return validated
+            } ).filter( w => w !== null )
 
-                if ( typeof worksetBuffer.BackgroundImage !== "string" || !worksetBuffer.BackgroundImage )
-                    worksetBuffer.BackgroundImage = this.getBackground()
-                if ( typeof worksetBuffer.BackgroundImageDark !== "string" || !worksetBuffer.BackgroundImageDark )
-                    worksetBuffer.BackgroundImageDark = this.getBackgroundDark() || worksetBuffer.BackgroundImage
-
-                if ( typeof worksetBuffer.BackgroundStyle !== "string" || !worksetBuffer.BackgroundStyle )
-                    worksetBuffer.BackgroundStyle = "ZOOM"
-                if ( typeof worksetBuffer.BackgroundStyleDark !== "string" || !worksetBuffer.BackgroundStyleDark )
-                    worksetBuffer.BackgroundStyleDark = worksetBuffer.BackgroundStyle
-
-            }, this )
+            if ( this.Worksets.length === 0 ) {
+                dev.log( true, "_validateSession: All worksets were invalid, creating fallback" )
+                this.Worksets = [ {
+                    WorksetName         : "Primary",
+                    WindowData          : null,
+                    BackgroundImage     : this.getBackground() || "",
+                    BackgroundImageDark : this.getBackgroundDark() || "",
+                    BackgroundStyle     : "ZOOM",
+                    BackgroundStyleDark : "ZOOM",
+                    FavApps             : []
+                } ]
+            }
             // Remove duplicate entries using Set-based dedup
             let seenHashes = new Set()
             this.Worksets = this.Worksets.filter( function ( workset ) {
@@ -557,6 +571,13 @@ export class SessionManager {
         if ( !bgPath )
             bgPath = this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].BackgroundImage
         bgPath = bgPath.replace( "file://", "" )
+
+        // S11: Validate background path and style
+        bgPath = inputValidator.InputValidator.validateBackgroundPath( bgPath, "setBackground.bgPath" )
+        if ( !bgPath ) return
+        style = inputValidator.InputValidator.safeEnum(
+            style, "setBackground.style", this.wallPaperOptions.map( o => o.enum ), "ZOOM"
+        )
 
         const currentBackground = darkMode ? this.getBackgroundDark() : this.getBackground()
         const currentStyle = this.bSettings.get_string( "picture-options" )
@@ -867,29 +888,41 @@ export class SessionManager {
                 // const timestamp = new Date().toLocaleString().replace( /[^a-zA-Z0-9-. ]/g, "" ).replace( / /g, "-" )
                 let buttonStyles = [{ label: "Cancel", key: Clutter.KEY_Escape, action: function () { this.close( " " ) } },
                     { label: "Done", default: true }]
-                let getNewWorksetNameDialog = new dialogs.ObjectInterfaceDialog( "Please enter name for the new custom workspace:", ( returnText ) => {
-                    if ( !returnText ) return
-                    returnText = returnText.trim()
-                    if ( returnText == "" ) return
+                let getNewWorksetNameDialog = new dialogs.ObjectInterfaceDialog(
+                    "Please enter name for the new custom workspace:",
+                    ( returnText ) => {
+                        if ( !returnText ) return
+                        returnText = returnText.trim()
+                        if ( returnText == "" ) return
 
-                    let exists = false
-                    this.Worksets.forEach( function ( worksetBuffer ) {
-                        if ( worksetBuffer.WorksetName == returnText ) {
-                            exists = true
-                            uiUtils.showUserNotification( "Environment with name '" + returnText + "' already exists." )
+                        // S3: Validate workset name
+                        returnText = inputValidator.InputValidator.validateWorksetName( returnText, "" )
+                        if ( !returnText ) {
+                            uiUtils.showUserNotification( "Invalid name: contains disallowed characters." )
+                            return
                         }
-                    }, this )
-                    if ( exists ) return
 
-                    worksetObject.WorksetName = returnText
+                        let exists = false
+                        this.Worksets.forEach( function ( worksetBuffer ) {
+                            if ( worksetBuffer.WorksetName == returnText ) {
+                                exists = true
+                                uiUtils.showUserNotification( "Environment with name '" + returnText + "' already exists." )
+                            }
+                        }, this )
+                        if ( exists ) return
 
-                    //Push it to the session
-                    this.Worksets.push( worksetObject )
-                    this.saveSession()
-                    if ( activate ) this.displayWorkset( this.Worksets[this.Worksets.length - 1] )
-                    uiUtils.showUserNotification( "Environment " + returnText + " created." )
-                }, true, false, [], [], buttonStyles, "" )
+                        worksetObject.WorksetName = returnText
+
+                        //Push it to the session
+                        this.Worksets.push( worksetObject )
+                        this.saveSession()
+                        if ( activate ) this.displayWorkset( this.Worksets[this.Worksets.length - 1] )
+                        uiUtils.showUserNotification( "Environment " + returnText + " created." )
+                    }, true, false, [], [], buttonStyles, ""
+                )
             } else {
+                // S3: Validate workset name
+                name = inputValidator.InputValidator.validateWorksetName( name, "New Workset" )
                 worksetObject.WorksetName = name
                 //Push it to the session
                 this.Worksets.push( worksetObject )
@@ -934,6 +967,11 @@ export class SessionManager {
                 if ( !returnObject ) return
                 returnObject.WorksetName = returnObject.WorksetName.trim()
                 if ( returnObject.WorksetName == "" ) return
+
+                // S3: Validate edited workset name
+                returnObject.WorksetName = inputValidator.InputValidator.validateWorksetName(
+                    returnObject.WorksetName, worksetIn.WorksetName
+                )
 
                 // Update workspace maps - this currently overrides any previous worksets assigned to the workspace
                 Object.assign( returnObject.workSpaceOptions, returnObject.workSpaceOptions2 )
@@ -1002,6 +1040,13 @@ export class SessionManager {
         try {
             let worksetsDirectory = fileUtils.CONF_DIR() + "/envbackups"
             let loadObjectDialog = new dialogs.ObjectInterfaceDialog( "Select a backup to load in to the session", ( returnObject ) => {
+                // S3: Validate loaded backup object before accepting
+                returnObject = inputValidator.InputValidator.validateWorkset( returnObject )
+                if ( returnObject === null ) {
+                    uiUtils.showUserNotification( "Invalid backup file: failed validation." )
+                    return
+                }
+
                 if ( returnObject.WorksetName ) {
                     let exists = false
                     this.Worksets.forEach( function ( worksetBuffer ) {

@@ -244,7 +244,7 @@ export class WorkspaceViewManager {
 
             for ( const i in this.wsGroups ) {
                 const wsGroup = this.wsGroups[i]
-                const metaWorkspace = wsGroup._workspace || wsGroup.workspace()
+                const metaWorkspace = wsGroup.workspace || wsGroup._workspace
 
                 if ( metaWorkspace )
                     wsGroup._workset = Me.session.Worksets

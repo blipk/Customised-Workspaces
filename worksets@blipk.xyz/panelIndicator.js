@@ -46,6 +46,7 @@ import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
 import * as dialogs from "./lib/ui/dialogs.js"
 import * as fileUtils from "./fileUtils.js"
+import * as inputValidator from "./inputValidator.js"
 
 export var WorksetsIndicator = GObject.registerClass( {
     GTypeName: "WorksetsIndicator"
@@ -594,6 +595,9 @@ export var WorksetsIndicator = GObject.registerClass( {
                         try {
                             if ( !resource ) return
                             let newFav = JSON.parse( resource )
+                            // S14: Validate FavApp from untrusted subprocess output
+                            newFav = inputValidator.InputValidator.validateFavApp( newFav )
+                            if ( newFav === null ) return
                             Me.session.Worksets
                                 .filter( w => w.WorksetName == menuItem.workset.WorksetName )[0]
                                 .FavApps.push( newFav )
@@ -623,10 +627,16 @@ export var WorksetsIndicator = GObject.registerClass( {
                 menuItem.favAppsMenuItems[i].label.set_x_expand( true )
                 uiUtils.createTooltip( menuItem.favAppsMenuItems[i], { msg: "Click to launch '" + displayName + "'" } )
                 menuItem.favAppsMenuItems[i].connect( "activate", () => {
+                    // S6: Validate exec string before launching
+                    let validatedExec = inputValidator.InputValidator.validateExecString( exec, "FavApp.exec" )
+                    if ( !validatedExec ) {
+                        uiUtils.showUserNotification( "Cannot launch: command contains unsafe characters" )
+                        return
+                    }
                     let [
                         success,
                         argv
-                    ] = GLib.shell_parse_argv( exec.replace( "%u", " " ).replace( "%U", " " ) )
+                    ] = GLib.shell_parse_argv( validatedExec.replace( "%u", " " ).replace( "%U", " " ) )
                     util.spawn( argv )
                     // To do get pid and use AppSystem to focus window - same with the bgmenu editor
                 } )
