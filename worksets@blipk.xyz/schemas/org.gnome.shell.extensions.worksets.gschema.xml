@@ -80,5 +80,10 @@
       <summary>JSObject containing all data for the sesion</summary>
       <description>Contains the information on the extensions session.</description>
     </key>
+    <key name="appchooser-sha256" type="s">
+      <default>"eef053ca900cee03ba705fa16755f684b4b1e413c4a50e026ea2cb05c917a983"</default>
+      <summary>appChooser.js SHA256 hash</summary>
+      <description>SHA256 hash of lib/ui/appChooser.js for integrity verification. Updated automatically by _update-appchooser-hash.sh during packaging.</description>
+    </key>
   </schema>
 </schemalist>

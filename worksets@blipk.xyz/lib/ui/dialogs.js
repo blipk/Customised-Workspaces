@@ -290,7 +290,17 @@ export var ObjectEditorDialog = GObject.registerClass( {
     _init(
         dialogInfoTextStyle = "", callback = null,
         editableObject = null, /*object to edit in the editor */
-        editableProperties = [], /* {propertyName: 'Property Display Name', disabled: false, hidden: false, subObjectEditableProperties: editableProperties,  icon: icon-name, hintText: 'Hint text to display for St.Entry', minwidth: 20, subObjectEditableProperties=[]}*/
+        /*{
+            propertyName: 'Property Display Name',
+            disabled: false,
+            hidden: false,
+            subObjectEditableProperties: editableProperties,
+            icon: icon-name,
+            hintText: 'Hint text to display for St.Entry',
+            minwidth: 20,
+            subObjectEditableProperties=[]
+        }*/
+        editableProperties = [],
         buttons = null,
         dialogStyle = null,
         contentLayoutBoxStyleClass = ""
@@ -299,7 +309,9 @@ export var ObjectEditorDialog = GObject.registerClass( {
         if ( typeof callback !== "function" ) throw TypeError( "ObjectEditorDialog._init error: callback must be a function" )
         this._callback = callback
 
-        if ( editableObject[1] ) { throw TypeError( "Array passed to object editor, only supports objects with simple types or sub objects as simple bool/int enums." ) }
+        if ( editableObject[1] ) {
+            throw TypeError( "Array passed to object editor, only supports objects with simple types or sub objects as simple bool/int enums." )
+        }
         this.returnObject = editableObject
         this.editableObject = editableObject
         this._unreferencedObjectCopy = JSON.parse( JSON.stringify( editableObject ) )

@@ -29,6 +29,7 @@ import Gio from "gi://Gio"
 import GLib from "gi://GLib"
 
 // Internal imports
+import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as fileUtils from "./fileUtils.js"
 
@@ -570,13 +571,26 @@ export class InputValidator {
         }
     }
 
-    static verifyAppChooserIntegrity ( expectedHash = null ) {
+    static verifyAppChooserIntegrity () {
         let appChooserPath = fileUtils.APP_CHOOSER_EXEC()
         let actualHash = InputValidator.computeFileSHA256( appChooserPath )
 
         if ( !actualHash ) return false
 
-        if ( expectedHash && actualHash !== expectedHash ) {
+        // Read expected hash from compiled GSettings schema
+        let expectedHash = ""
+        try {
+            expectedHash = Me.settings.get_string( "appchooser-sha256" )
+        } catch ( e ) {
+            dev.log( true, `InputValidator: Could not read appchooser-sha256 from GSettings: ${e.message}` )
+        }
+
+        if ( !expectedHash ) {
+            dev.log( true, "InputValidator: No appchooser-sha256 in GSettings, integrity check disabled" )
+            return actualHash
+        }
+
+        if ( actualHash !== expectedHash ) {
             dev.log( true,
                 `InputValidator: appChooser.js integrity check failed. Expected: ${expectedHash}, Got: ${actualHash}` )
             return false
