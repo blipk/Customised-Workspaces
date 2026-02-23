@@ -218,8 +218,9 @@ export class SessionManager {
                 if ( worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName ) return
                 this.Worksets[worksetIndex].BackgroundImage = bgPath
                 bgStyle = this.Worksets[worksetIndex].BackgroundStyle
-                this.saveSession()
             }, this )
+
+            this.saveSession()
 
             if ( isDarkMode ) return
             this.setBackground( bgPath, bgStyle, false )

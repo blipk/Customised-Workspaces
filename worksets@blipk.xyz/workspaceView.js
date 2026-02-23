@@ -65,6 +65,9 @@ export class WorkspaceViewManager {
             this.wsvWorkspaces = {}
             this.wsGroups = {}
             this.overviewState = 0
+            this._refreshingOverview = false
+            this._lastAdjustmentValue = -1
+            this._lastAdjustmentIntState = -1
 
             // Keep track of the new workspace views so their background can be changed in refreshOverview()
             this.injectionHandler.add(
@@ -156,21 +159,29 @@ export class WorkspaceViewManager {
                     try {
                         if ( thumbnailBox._bgManager )
                             thumbnailBox._bgManager.destroy()
+                        thumbnailBox._bgManager = null
+                        // P9: Destroy leaked Meta.Background GPU textures
+                        if ( thumbnailBox._newbg ) {
+                            thumbnailBox._newbg.destroy()
+                            thumbnailBox._newbg = null
+                        }
+                        // Clear cache key so next overview open recreates backgrounds
+                        thumbnailBox._bgCacheKeyApplied = null
                         if ( Me.workspaceManager.activeWorkspaceIndex != i ) return
                     } catch ( e ) { dev.log( e ) }
                 } )
+                // P17: Reset adjustment state cache for fresh render on next overview open
+                Me.workspaceViewManager._lastAdjustmentIntState = -1
             } )
 
             // Run the correct overlay update when the state adjustment hits values in overviewControls.ControlsState
             this.signals.add( Main.overview._overview._controls._stateAdjustment, "notify::value", ( adjustment ) => {
                 const value = adjustment.value
-                const valueDecimal = parseFloat( "0." + ( value + "" ).split( "." )[1], 10 )
-                const intValue = parseInt( adjustment.value, 10 )
+                const intValue = Math.floor( value )
+                const valueDecimal = value - intValue
 
-                if ( !adjustment.lastValue )
-                    adjustment.lastValue = -1
-                const ascending = value > adjustment.lastValue
-                adjustment.lastValue = Number( value )
+                const ascending = value > this._lastAdjustmentValue
+                this._lastAdjustmentValue = value
 
                 if ( value > 1 && value < 2 ) {
                     if ( ascending ) { // Entering into AppGrid overview
@@ -183,6 +194,9 @@ export class WorkspaceViewManager {
                     return
                 } else if ( value > intValue )
                     return
+
+                if ( intValue === this._lastAdjustmentIntState ) return
+                this._lastAdjustmentIntState = intValue
 
                 Me.workspaceViewManager.refreshOverview( intValue )
             } )
@@ -203,6 +217,20 @@ export class WorkspaceViewManager {
         try {
             this.menus.forEach( menu => { try { menu.destroy() } catch ( e ) { /* already destroyed */ } } )
             this.menus = []
+
+            // Clean up Meta.Background GPU resources
+            for ( const i in this.wsGroups ) {
+                if ( this.wsGroups[i]._newbg ) {
+                    this.wsGroups[i]._newbg.destroy()
+                    this.wsGroups[i]._newbg = null
+                }
+            }
+            for ( const i in this.thumbnailBoxes ) {
+                if ( this.thumbnailBoxes[i]._newbg ) {
+                    this.thumbnailBoxes[i]._newbg.destroy()
+                    this.thumbnailBoxes[i]._newbg = null
+                }
+            }
 
             this.injectionHandler.removeAll()
             this.signals.disconnectAll()
@@ -237,6 +265,13 @@ export class WorkspaceViewManager {
         } catch ( e ) { dev.log( e ) }
     }
 
+    _bgCacheKey( workset ) {
+        if ( !workset ) return ""
+        const path = Me.session.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage
+        const style = Me.session.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle
+        return ( path || "" ) + "|" + ( style || "ZOOM" )
+    }
+
     refreshDesktop() {
         try {
             if ( Me.session.activeSession.Options.DisableWallpaperManagement )
@@ -252,23 +287,31 @@ export class WorkspaceViewManager {
                             wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
 
                 if ( !wsGroup._workset )
-                    return
+                    continue
 
-                if ( wsGroup._newbg )
-                    delete wsGroup._newbg
-                wsGroup._newbg = this.makeWorksetBg( wsGroup._workset )
+                // P11: Only create new Meta.Background when wallpaper path changes
+                const cacheKey = this._bgCacheKey( wsGroup._workset )
+                if ( wsGroup._bgCacheKeyApplied !== cacheKey ) {
+                    // P9: Properly destroy old Meta.Background GPU texture
+                    if ( wsGroup._newbg ) {
+                        wsGroup._newbg.destroy()
+                        wsGroup._newbg = null
+                    }
+                    wsGroup._newbg = this.makeWorksetBg( wsGroup._workset )
+                    wsGroup._bgCacheKeyApplied = cacheKey
+                }
 
-                // For thumbnails on the overview
-                if ( wsGroup._bgManager )
-                    wsGroup._bgManager.destroy()
+                // P11: Reuse existing BackgroundManager, only create if needed
+                if ( !wsGroup._bgManager ) {
+                    wsGroup._bgManager = new background.BackgroundManager( {
+                        monitorIndex    : wsGroup._monitor.index,
+                        container       : wsGroup._background,
+                        controlPosition : false,
+                        vignette        : false,
+                    } )
+                }
 
-                wsGroup._bgManager = new background.BackgroundManager( {
-                    monitorIndex    : wsGroup._monitor.index,
-                    container       : wsGroup._background,
-                    //layoutManager: Main.layoutManager,
-                    controlPosition : false,
-                    vignette        : false,
-                } )
+                // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
                 wsGroup._bgManager.backgroundActor.content.set( {
                     background         : wsGroup._newbg,
                     vignette           : false,
@@ -283,80 +326,95 @@ export class WorkspaceViewManager {
         try {
             if ( !Main.overview._visible ) return
 
-            for ( const i in this.thumbnailBoxes ) {
-                const thumbnailBox = this.thumbnailBoxes[i]
-                let gsWorkspace = this.gsWorkspaces[thumbnailBox.metaWorkspace]
-                if ( !gsWorkspace )
-                    continue //dev.log("No gsWorkspace for thumbnail")
+            // P1: Re-entrancy guard to prevent recursive calls from BackgroundManager "changed" signal
+            if ( this._refreshingOverview ) return
+            this._refreshingOverview = true
 
-                // Find active workset for thumbnailbox
-                thumbnailBox._workset = Me.session.Worksets
-                    .find( ( wset ) => wset.WorksetName == Me.session.workspaceMaps["Workspace" + i].currentWorkset )
-                //  || Me.session.DefaultWorkset
+            try {
+                for ( const i in this.thumbnailBoxes ) {
+                    const thumbnailBox = this.thumbnailBoxes[i]
+                    let gsWorkspace = this.gsWorkspaces[thumbnailBox.metaWorkspace]
+                    if ( !gsWorkspace )
+                        continue
 
-                //if (Me.session.workspaceMaps['Workspace'+i].currentWorkset != thumbnailBox._workset.WorksetName
-                //&& Me.session.workspaceMaps['Workspace'+i].currentWorkset != "")
-                //continue;
+                    // Find active workset for thumbnailbox
+                    thumbnailBox._workset = Me.session.Worksets
+                        .find( ( wset ) => wset.WorksetName == Me.session.workspaceMaps["Workspace" + i].currentWorkset )
 
-                // New background and label for thumbnail box
-                if ( thumbnailBox._newbg )
-                    delete thumbnailBox._newbg
-                thumbnailBox._newbg = this.makeWorksetBg( thumbnailBox._workset )
-                // dev.log( "bb", typeof thumbnailBox._newbg, thumbnailBox._newbg )
+                    // P1/P11: Check if wallpaper actually changed
+                    const cacheKey = this._bgCacheKey( thumbnailBox._workset )
+                    const bgChanged = ( thumbnailBox._bgCacheKeyApplied !== cacheKey )
 
-                if ( !Me.session.activeSession.Options.ShowOverlayThumbnailLabels && thumbnailBox.worksetLabel )
-                    thumbnailBox.remove_child( thumbnailBox.worksetLabel )
+                    if ( bgChanged ) {
+                        // P9: Properly destroy old Meta.Background GPU texture
+                        if ( thumbnailBox._newbg ) {
+                            thumbnailBox._newbg.destroy?.()
+                            thumbnailBox._newbg = null
+                        }
+                        thumbnailBox._newbg = this.makeWorksetBg( thumbnailBox._workset )
+                    }
 
-                if ( thumbnailBox._workset && Me.session.activeSession.Options.ShowOverlayThumbnailLabels ) {
-                    thumbnailBox.worksetLabel ||= new St.Label( {
-                        style_class : "workspace-preview-label",
-                        x_align     : Clutter.ActorAlign.END, x_expand    : false,
-                        y_align     : Clutter.ActorAlign.END, y_expand    : false,
-                    } )
-                    thumbnailBox.worksetLabel.set_text( thumbnailBox._workset.WorksetName )
+                    // Thumbnail label
+                    if ( ( !Me.session.activeSession.Options.ShowOverlayThumbnailLabels || !thumbnailBox._workset ) && thumbnailBox.worksetLabel ) {
+                        // P35: Guard remove_child with parent check
+                        if ( thumbnailBox.worksetLabel.get_parent() === thumbnailBox )
+                            thumbnailBox.remove_child( thumbnailBox.worksetLabel )
+                    }
 
-                    thumbnailBox.add_child( thumbnailBox.worksetLabel )
+                    if ( thumbnailBox._workset && Me.session.activeSession.Options.ShowOverlayThumbnailLabels ) {
+                        thumbnailBox.worksetLabel ||= new St.Label( {
+                            style_class : "workspace-preview-label",
+                            x_align     : Clutter.ActorAlign.END, x_expand    : false,
+                            y_align     : Clutter.ActorAlign.END, y_expand    : false,
+                        } )
+                        thumbnailBox.worksetLabel.set_text( thumbnailBox._workset.WorksetName )
+
+                        // P35: Only add_child if not already a child
+                        if ( !thumbnailBox.worksetLabel.get_parent() )
+                            thumbnailBox.add_child( thumbnailBox.worksetLabel )
+                    }
+
+                    // Always re-apply workspace preview background (setBackground overwrites all bgManagers)
+                    if ( gsWorkspace && thumbnailBox._newbg )
+                        gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg
+
+                    if ( Me.session.activeSession.Options.DisableWallpaperManagement ) {
+                        this.updateOverlay( overviewState, thumbnailBox._workset, i )
+                        continue
+                    }
+
+                    // P1: Reuse BackgroundManager, only create if needed
+                    if ( !thumbnailBox._bgManager ) {
+                        thumbnailBox._bgManager = new background.BackgroundManager( {
+                            monitorIndex    : Main.layoutManager.primaryIndex,
+                            container       : thumbnailBox._contents,
+                            controlPosition : false,
+                            vignette        : false,
+                        } )
+
+                        // P1: Connect "changed" signal only once, with re-entrancy guard
+                        thumbnailBox._bgManager.connect( "changed", () => {
+                            if ( !this._refreshingOverview )
+                                this.refreshOverview()
+                        } )
+                    }
+
+                    // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
+                    if ( thumbnailBox._bgManager.backgroundActor.content )
+                        thumbnailBox._bgManager.backgroundActor.content.set( {
+                            background         : thumbnailBox._newbg,
+                            vignette           : false,
+                            vignette_sharpness : 0.5,
+                            brightness         : 0.5,
+                        } )
+
+                    if ( bgChanged )
+                        thumbnailBox._bgCacheKeyApplied = cacheKey
+
+                    this.updateOverlay( overviewState, thumbnailBox._workset, i )
                 }
-
-                // For larger workspace view and app grid workspace preview
-                if ( gsWorkspace && thumbnailBox._newbg )
-                    gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg
-
-                if ( Me.session.activeSession.Options.DisableWallpaperManagement ) {
-                    this.updateOverlay( overviewState, thumbnailBox, i )
-                    continue
-                }
-
-                // For larger workspace view and app grid workspace preview
-                gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg
-
-                // For thumbnails on the overview
-                if ( thumbnailBox._bgManager )
-                    thumbnailBox._bgManager.destroy()
-
-                thumbnailBox._bgManager = new background.BackgroundManager( {
-                    monitorIndex    : Main.layoutManager.primaryIndex,
-                    container       : thumbnailBox._contents,
-                    //layoutManager: Main.layoutManager,
-                    controlPosition : false,
-                    vignette        : false,
-                } )
-                if ( thumbnailBox._bgManager.backgroundActor.content )
-                    thumbnailBox._bgManager.backgroundActor.content.set( {
-                        background         : thumbnailBox._newbg,
-                        vignette           : false,
-                        vignette_sharpness : 0.5,
-                        brightness         : 0.5,
-                    } )
-
-                // Prevent excessive recursion but enforce background updates during various events
-                thumbnailBox._updated = false
-                thumbnailBox._bgManager.connect( "changed", () => {
-                    if ( !thumbnailBox._updated ) Me.workspaceViewManager.refreshOverview()
-                    thumbnailBox._updated = true
-                } )
-
-                this.updateOverlay( overviewState, thumbnailBox._workset, i )
+            } finally {
+                this._refreshingOverview = false
             }
 
         } catch ( e ) { dev.log( e ) }
@@ -371,7 +429,6 @@ export class WorkspaceViewManager {
             }
 
             // Stop after background change if overlay box is not enabled
-            // dev.log(Main.overview._overview._controls._appDisplay.visible)
             if ( !Me.session.activeSession.Options.ShowWorkspaceOverlay )
                 return
 
@@ -510,6 +567,7 @@ export class WorkspaceViewManager {
                 }, iconOptions, { msg: "Choose a custom workspace to load here" } )
                 btn.connect( "destroy", () => { if ( btn.menu ) btn.menu.bye() } )
             }
+
         } catch ( e ) { dev.log( e ) }
     }
 }

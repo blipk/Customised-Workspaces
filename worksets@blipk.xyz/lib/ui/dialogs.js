@@ -314,7 +314,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
         }
         this.returnObject = editableObject
         this.editableObject = editableObject
-        this._unreferencedObjectCopy = JSON.parse( JSON.stringify( editableObject ) )
+        //this._unreferencedObjectCopy = JSON.parse( JSON.stringify( editableObject ) )
 
 
         try {

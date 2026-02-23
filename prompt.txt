@@ -4,11 +4,10 @@ You can find the gnome shell extension guide here: https://gjs.guide/extensions/
 
 You can find the gnome shell associated libraries documentations here: https://gjs-docs.gnome.org/
 
-You can find the gnome-shell source code here if you need to analyze it: https://gitlab.gnome.org/GNOME/gnome-shell/-/tree/main/js
+You can find the gnome-shell source code here if you need to analyze it: https://github.com/GNOME/gnome-shell/tree/main/js/ui
 
 
 
 
 TO FIX:
 - Menu items re-ordering
-- Overview updates when closing a workset inbetween others
