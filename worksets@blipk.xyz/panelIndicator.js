@@ -293,9 +293,15 @@ export var WorksetsIndicator = GObject.registerClass( {
                 "starred-symbolic" : ["non-starred-symbolic", "starred-symbolic"]
             let iconOpenNew_nameuri = ( activeIndex > -1 ) ? "window-close-symbolic" : "window-new-symbolic"
             let iconOpenHere_nameuri = ( activeIndex > -1 ) ? "view-reveal-symbolic" : "go-jump-symbolic"
-            let openCloseCommand = ( activeIndex > -1 )
-                ? () => { Me.session.closeWorkset( menuItem.workset ); this._refreshMenu() }
-                : () => { Me.session.displayWorkset( menuItem.workset, true ); this._refreshMenu() }
+            let openCloseCommand = () => {
+                ( activeIndex > -1 )
+                    ? Me.session.closeWorkset( menuItem.workset )
+                    : Me.session.displayWorkset( menuItem.workset, true )
+
+                this._refreshMenu()
+                Me.workspaceViewManager.refreshOverview()
+            }
+
             let openCloseMsg = ( activeIndex > -1 )
                 ? "Disengage '" + menuItem.workset.WorksetName + "'"
                 : "Load '" + menuItem.workset.WorksetName + "' in a new workspace"

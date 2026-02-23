@@ -50,6 +50,7 @@ import * as Main from "resource:///org/gnome/shell/ui/main.js"
 // Internal imports
 import * as dev from "./dev.js"
 import * as sessionManager from "./sessionManager.js"
+import * as uiUtils from "./lib/ui/uiUtils.js"
 
 export let WorksetsInstance = null
 
@@ -121,6 +122,7 @@ export default class Worksets extends Extension {
             dev.log( "!~~~~~~~~~~|" )
 
             this.session.saveSession()
+            uiUtils.clearKnownImages()
             if ( this.worksetsIndicator ) this.worksetsIndicator.destroy()
             delete this.worksetsIndicator
             delete Main.panel.statusArea["WorksetsIndicator"]

@@ -89,7 +89,7 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
             iconButton.leaveEvent] )
         parentItem.destroyIconButtons = function () {
             parentItem.iconButtons.forEach( function ( iconButton ) {
-                //iconButton.destroy();
+                iconButton.destroy?.()
             }, this )
             parentItem.iconButtons = []
             parentItem.iconsButtonsPressIds = []
@@ -190,7 +190,7 @@ export function createTooltip( widget, tooltip ) {
                         if ( widget.notificationLabel )
                             removeUserNotification( widget.notificationLabel, 1 )
                         return false
-                    } 
+                    }
                 )
                 Me.session.signals.add( widget._tooltipDisappearId )
                 return false
@@ -220,6 +220,10 @@ export function createTooltip( widget, tooltip ) {
 }
 
 export let knownImages = {} // Save on resources generating these in menu refreshes
+const KNOWN_IMAGES_MAX = 20
+export function clearKnownImages() {
+    knownImages = {}
+}
 export function setImage( parent, imgFilePath = "" ) {
     try {
         let error
@@ -234,7 +238,7 @@ export function setImage( parent, imgFilePath = "" ) {
         } else if ( imgFilePath ) {
             let pixbuf
             try {
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file( imgFilePath )
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale( imgFilePath, -1, 150, true )
             } catch ( e ) {
                 dev.log( e )
                 // if ( e instanceof GLib.FileError )
@@ -267,6 +271,9 @@ export function setImage( parent, imgFilePath = "" ) {
             if ( !success ) throw Error( "error creating Clutter.Image()" )
 
             knownImages[imgFilePath] = image
+            const keys = Object.keys( knownImages )
+            if ( keys.length > KNOWN_IMAGES_MAX )
+                delete knownImages[keys[0]]
         }
 
         // Set the image content on parent (for both cached and newly loaded images)

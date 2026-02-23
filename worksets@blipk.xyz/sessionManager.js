@@ -237,8 +237,8 @@ export class SessionManager {
                 if ( worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName ) return
                 this.Worksets[worksetIndex].BackgroundImageDark = bgPath
                 bgStyle = this.Worksets[worksetIndex].BackgroundStyleDark
-                this.saveSession()
             }, this )
+            this.saveSession()
             if ( !isDarkMode ) return
             this.setBackground( bgPath, bgStyle, true )
         } )
@@ -257,8 +257,8 @@ export class SessionManager {
                     this.Worksets[worksetIndex].BackgroundStyle = bgStyle
                     bgPath = this.Worksets[worksetIndex].BackgroundImage
                 }
-                this.saveSession()
             }, this )
+            this.saveSession()
 
             this.setBackground( bgPath, bgStyle, this.isDarkMode )
         } )
@@ -815,8 +815,8 @@ export class SessionManager {
                             }
                             this.Worksets[worksetIndex].BackgroundStyle = this.Worksets[worksetIndex].BackgroundStyle || "ZOOM"
                             this.Worksets[worksetIndex].BackgroundStyleDark = this.Worksets[worksetIndex].BackgroundStyleDark || "ZOOM"
-                            this.saveSession()
                         }, this )
+                        this.saveSession()
 
                         let msg = darkMode ? "Dark Mode" : "Light Mode"
                         uiUtils.showUserNotification( "Background Image Changed (" + msg + ")", true )
