@@ -162,7 +162,7 @@ export class WorkspaceViewManager {
                         thumbnailBox._bgManager = null
                         // P9: Destroy leaked Meta.Background GPU textures
                         if ( thumbnailBox._newbg ) {
-                            thumbnailBox._newbg.destroy()
+                            thumbnailBox._newbg.destroy?.()
                             thumbnailBox._newbg = null
                         }
                         // Clear cache key so next overview open recreates backgrounds
@@ -221,13 +221,13 @@ export class WorkspaceViewManager {
             // Clean up Meta.Background GPU resources
             for ( const i in this.wsGroups ) {
                 if ( this.wsGroups[i]._newbg ) {
-                    this.wsGroups[i]._newbg.destroy()
+                    this.wsGroups[i]._newbg.destroy?.()
                     this.wsGroups[i]._newbg = null
                 }
             }
             for ( const i in this.thumbnailBoxes ) {
                 if ( this.thumbnailBoxes[i]._newbg ) {
-                    this.thumbnailBoxes[i]._newbg.destroy()
+                    this.thumbnailBoxes[i]._newbg.destroy?.()
                     this.thumbnailBoxes[i]._newbg = null
                 }
             }
@@ -269,7 +269,7 @@ export class WorkspaceViewManager {
         if ( !workset ) return ""
         const path = Me.session.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage
         const style = Me.session.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle
-        return ( path || "" ) + "|" + ( style || "ZOOM" )
+        return ( path || "" ) + "|" + ( style || "ZOOM" ) + "|" + workset.WorksetName
     }
 
     refreshDesktop() {
@@ -294,7 +294,7 @@ export class WorkspaceViewManager {
                 if ( wsGroup._bgCacheKeyApplied !== cacheKey ) {
                     // P9: Properly destroy old Meta.Background GPU texture
                     if ( wsGroup._newbg ) {
-                        wsGroup._newbg.destroy()
+                        wsGroup._newbg.destroy?.()
                         wsGroup._newbg = null
                     }
                     wsGroup._newbg = this.makeWorksetBg( wsGroup._workset )

@@ -228,12 +228,18 @@ export var WorksetsIndicator = GObject.registerClass( {
             let sessionMenuItem = new popupMenu.PopupImageMenuItem( "New Environment", "document-new-symbolic" )
             sessionMenuItem.label.set_x_expand( true )
             this.menu.sessionMenuItem = sessionMenuItem
-            sessionMenuItem.connect( "activate", () => { Me.session.newWorkset(); this._refreshMenu() } )
+            sessionMenuItem.connect( "activate", () => {
+                Me.session.newWorkset()
+                this._refreshMenu()
+            } )
 
             uiUtils.createIconButton(
                 sessionMenuItem,
                 "document-save-symbolic",
-                () => { Me.session.loadObject(); this._refreshMenu() },
+                () => {
+                    Me.session.loadObject()
+                    this._refreshMenu()
+                },
                 {}, { msg: "Load a custom workspace from backups" }
             )
             // uiUtils.createIconButton(
@@ -310,12 +316,19 @@ export var WorksetsIndicator = GObject.registerClass( {
                 : "Load '" + menuItem.workset.WorksetName + "' in this workspace"
             uiUtils.createIconButton(
                 menuItem, icondefault_nameuri,
-                () => { Me.session.setDefaultWorkset( menuItem.workset ); this._refreshMenu(); Me.workspaceViewManager.refreshOverview() },
+                () => {
+                    Me.session.setDefaultWorkset( menuItem.workset )
+                    this._refreshMenu()
+                    Me.workspaceViewManager.refreshOverview()
+                },
                 true, { msg: "Set '" + menuItem.workset.WorksetName + "' as the default" }
             )
             uiUtils.createIconButton(
                 menuItem, "document-edit-symbolic",
-                () => { Me.session.editWorkset( menuItem.workset ); this._refreshMenu() },
+                () => {
+                    Me.session.editWorkset( menuItem.workset )
+                    this._refreshMenu()
+                },
                 {}, { msg: "Edit '" + menuItem.workset.WorksetName + "'" }
             )
             uiUtils.createIconButton( menuItem, iconOpenNew_nameuri, openCloseCommand, {}, { msg: openCloseMsg } )
@@ -334,7 +347,9 @@ export var WorksetsIndicator = GObject.registerClass( {
             let icon = uiUtils.createIconButton(
                 ornamentIcon, iconOpenHere_nameuri,
                 () => {
-                    Me.session.displayWorkset( menuItem.workset ); this._refreshMenu()
+                    Me.session.displayWorkset( menuItem.workset )
+                    this._refreshMenu()
+                    Me.workspaceViewManager.refreshOverview()
                 },
                 { icon_size: 14 }, { msg: viewOpenMessage }
             )
@@ -428,14 +443,22 @@ export var WorksetsIndicator = GObject.registerClass( {
             } )
             uiUtils.createIconButton(
                 menuItem.worksetPopupMenu, "document-save-symbolic",
-                () => { Me.session.saveWorkset( menuItem.workset ); this._refreshMenu() },
+                () => {
+                    Me.session.saveWorkset( menuItem.workset )
+                    this._refreshMenu()
+                },
                 {}, { msg: "Save a backup of '" + menuItem.workset.WorksetName + "'" }
             )
 
             if ( Me.session.Worksets.length > 1 )
                 uiUtils.createIconButton(
                     menuItem.worksetPopupMenu, "user-trash-symbolic",
-                    () => { menuItem.worksetPopupMenu.menu.bye(); Me.session.deleteWorkset( menuItem.workset ); this._refreshMenu() },
+                    () => {
+                        menuItem.worksetPopupMenu.menu.bye()
+                        Me.session.deleteWorkset( menuItem.workset )
+                        this._refreshMenu()
+                        Me.workspaceViewManager.refreshOverview()
+                    },
                     {}, { msg: "Delete '" + menuItem.workset.WorksetName + "' and save a backup" }
                 )
 
