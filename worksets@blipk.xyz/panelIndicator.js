@@ -109,6 +109,10 @@ export var WorksetsIndicator = GObject.registerClass( {
         utils.forEachEntry(
             Me.session.activeSession.Options,
             function ( optionName, optionValue ) {
+
+                if ( optionName === "appchooser-sha256" )
+                    return
+
                 const settingsKeyName = utils.textToKebabCase( optionName )
                 const summary = Me.settings.settings_schema.get_key( settingsKeyName ).get_summary()
                 const description = Me.settings.settings_schema.get_key( settingsKeyName ).get_description()
