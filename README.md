@@ -16,7 +16,6 @@
     </a>
 </p>
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=T35UZZSUMK66L)
 [![Website](https://img.shields.io/badge/Homepage-blue)](https://github.com/blipk/Customised-Isolated-Workspaces)
 
 Customised Workspaces enables creating isolated and customised workspaces.
