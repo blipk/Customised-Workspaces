@@ -47,10 +47,18 @@ export function timer( timerName ) {
     }
 }
 
-export function log( force = false ) {
+
+var FORCE_LOG = false
+export function alwaysLog() {
+    FORCE_LOG = true
+    try { log( ...arguments ) }
+    finally { FORCE_LOG = false }
+}
+
+export function log( ) {
     try {
-        const _debug_ = Me.session?.activeSession?.Options?.DebugMode ?? true
-        if ( !_debug_ && force !== true ) return
+        const shouldLog = FORCE_LOG || ( Me.session?.activeSession?.Options?.DebugMode ?? true )
+        if ( !shouldLog ) return
 
         const args = [...arguments]
         const stack = ( new Error() ).stack.split( "\n" )

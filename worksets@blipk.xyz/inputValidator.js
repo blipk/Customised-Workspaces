@@ -102,11 +102,11 @@ export class InputValidator {
 
     static safeString ( value, fieldName, maxLength = 1024, fallback = "" ) {
         if ( typeof value !== "string" ) {
-            dev.log( true, `InputValidator: '${fieldName}' expected string, got ${typeof value}, using fallback` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' expected string, got ${typeof value}, using fallback` )
             return fallback
         }
         if ( value.length > maxLength ) {
-            dev.log( true, `InputValidator: '${fieldName}' exceeds max length ${maxLength}, truncating` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' exceeds max length ${maxLength}, truncating` )
             return value.substring( 0, maxLength )
         }
         return value
@@ -114,7 +114,7 @@ export class InputValidator {
 
     static safeBoolean ( value, fieldName, fallback = false ) {
         if ( typeof value !== "boolean" ) {
-            dev.log( true, `InputValidator: '${fieldName}' expected boolean, got ${typeof value}, using fallback` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' expected boolean, got ${typeof value}, using fallback` )
             return fallback
         }
         return value
@@ -123,7 +123,7 @@ export class InputValidator {
     static safeEnum ( value, fieldName, allowedValues, fallback ) {
         let str = InputValidator.safeString( value, fieldName, 100, fallback )
         if ( !allowedValues.includes( str ) && !allowedValues.includes( str.toUpperCase() ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' value '${str}' not in [${allowedValues.join( ", " )}], using fallback '${fallback}'` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' value '${str}' not in [${allowedValues.join( ", " )}], using fallback '${fallback}'` )
             return fallback
         }
         return allowedValues.includes( str ) ? str : str.toUpperCase()
@@ -131,11 +131,11 @@ export class InputValidator {
 
     static safeArray ( value, fieldName, maxLength = 100 ) {
         if ( !Array.isArray( value ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' expected array, got ${typeof value}, using empty array` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' expected array, got ${typeof value}, using empty array` )
             return []
         }
         if ( value.length > maxLength ) {
-            dev.log( true, `InputValidator: '${fieldName}' array exceeds max count ${maxLength}, truncating` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' array exceeds max count ${maxLength}, truncating` )
             return value.slice( 0, maxLength )
         }
         return value
@@ -159,26 +159,26 @@ export class InputValidator {
         name = InputValidator.safeString( name, "WorksetName", MAX_WORKSET_NAME_LENGTH, fallback )
 
         if ( name.trim().length === 0 ) {
-            dev.log( true, "InputValidator: WorksetName is empty or whitespace-only, using fallback" )
+            dev.alwaysLog( "InputValidator: WorksetName is empty or whitespace-only, using fallback" )
             return fallback
         }
 
         name = name.trim()
 
         if ( InputValidator.hasShellMetachars( name ) ) {
-            dev.log( true, `InputValidator: WorksetName '${name}' contains shell metacharacters, stripping` )
+            dev.alwaysLog( `InputValidator: WorksetName '${name}' contains shell metacharacters, stripping` )
             name = name.replace( SHELL_METACHAR_PATTERN, "" )
             if ( name.trim().length === 0 ) return fallback
         }
 
         if ( InputValidator.hasPathSeparators( name ) ) {
-            dev.log( true, `InputValidator: WorksetName '${name}' contains path separators, stripping` )
+            dev.alwaysLog( `InputValidator: WorksetName '${name}' contains path separators, stripping` )
             name = name.replace( PATH_SEPARATOR_PATTERN, "" )
             if ( name.trim().length === 0 ) return fallback
         }
 
         if ( name.includes( "\0" ) ) {
-            dev.log( true, "InputValidator: WorksetName contains null bytes, stripping" )
+            dev.alwaysLog( "InputValidator: WorksetName contains null bytes, stripping" )
             name = name.replace( /\0/g, "" )
             if ( name.trim().length === 0 ) return fallback
         }
@@ -211,19 +211,19 @@ export class InputValidator {
 
         // Must be absolute
         if ( !filePath.startsWith( "/" ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' must be an absolute path, got '${filePath}', clearing` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' must be an absolute path, got '${filePath}', clearing` )
             return ""
         }
 
         // Reject path traversal sequences
         if ( InputValidator.hasPathTraversal( filePath ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' contains '..' path traversal, clearing` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' contains '..' path traversal, clearing` )
             return ""
         }
 
         // Reject null bytes
         if ( filePath.includes( "\0" ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' contains null bytes, clearing` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' contains null bytes, clearing` )
             return ""
         }
 
@@ -234,12 +234,12 @@ export class InputValidator {
 
                 if ( !file.query_exists( null ) ) {
                     if ( checkExists ) {
-                        dev.log( true, `InputValidator: '${fieldName}' file does not exist: ${filePath}, clearing` )
+                        dev.alwaysLog( `InputValidator: '${fieldName}' file does not exist: ${filePath}, clearing` )
                         return ""
                     }
                     // File doesn't exist but checkExists not required - clear it anyway
                     // since nonexistent paths shouldn't be stored
-                    dev.log( true, `InputValidator: '${fieldName}' file not found: ${filePath}, clearing` )
+                    dev.alwaysLog( `InputValidator: '${fieldName}' file not found: ${filePath}, clearing` )
                     return ""
                 }
 
@@ -251,24 +251,24 @@ export class InputValidator {
 
                 // Reject symlinks
                 if ( checkNotSymlink && fileInfo.get_is_symlink() ) {
-                    dev.log( true, `InputValidator: '${fieldName}' is a symlink: ${filePath}, clearing` )
+                    dev.alwaysLog( `InputValidator: '${fieldName}' is a symlink: ${filePath}, clearing` )
                     return ""
                 }
 
                 if ( checkIsFile && fileInfo.get_file_type() !== Gio.FileType.REGULAR ) {
-                    dev.log( true, `InputValidator: '${fieldName}' is not a regular file: ${filePath}, clearing` )
+                    dev.alwaysLog( `InputValidator: '${fieldName}' is not a regular file: ${filePath}, clearing` )
                     return ""
                 }
 
                 if ( checkFileSize ) {
                     let size = fileInfo.get_size()
                     if ( size > maxFileSize ) {
-                        dev.log( true, `InputValidator: '${fieldName}' exceeds max size ${maxFileSize} bytes (got ${size}), clearing` )
+                        dev.alwaysLog( `InputValidator: '${fieldName}' exceeds max size ${maxFileSize} bytes (got ${size}), clearing` )
                         return ""
                     }
                 }
             } catch ( e ) {
-                dev.log( true, `InputValidator: '${fieldName}' filesystem check failed for '${filePath}': ${e.message}, clearing` )
+                dev.alwaysLog( `InputValidator: '${fieldName}' filesystem check failed for '${filePath}': ${e.message}, clearing` )
                 return ""
             }
         }
@@ -307,13 +307,13 @@ export class InputValidator {
 
         // Reject shell metacharacters that could enable injection
         if ( InputValidator.hasShellMetachars( execForCheck ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' contains shell metacharacters, rejecting: ${exec}` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' contains shell metacharacters, rejecting: ${exec}` )
             return ""
         }
 
         // Reject null bytes
         if ( exec.includes( "\0" ) ) {
-            dev.log( true, `InputValidator: '${fieldName}' contains null bytes, rejecting` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' contains null bytes, rejecting` )
             return ""
         }
 
@@ -321,11 +321,11 @@ export class InputValidator {
         try {
             let [success, argv] = GLib.shell_parse_argv( exec.replace( /%[uUfFdDnNickvm]/g, " " ) )
             if ( !success || !argv || argv.length === 0 ) {
-                dev.log( true, `InputValidator: '${fieldName}' failed argv parse, rejecting: ${exec}` )
+                dev.alwaysLog( `InputValidator: '${fieldName}' failed argv parse, rejecting: ${exec}` )
                 return ""
             }
         } catch ( e ) {
-            dev.log( true, `InputValidator: '${fieldName}' is not a valid command line: ${e.message}, rejecting` )
+            dev.alwaysLog( `InputValidator: '${fieldName}' is not a valid command line: ${e.message}, rejecting` )
             return ""
         }
 
@@ -336,14 +336,14 @@ export class InputValidator {
 
     static validateFavApp ( favApp, index = 0 ) {
         if ( typeof favApp !== "object" || favApp === null || Array.isArray( favApp ) ) {
-            dev.log( true, `InputValidator: FavApp[${index}] is not a valid object, skipping` )
+            dev.alwaysLog( `InputValidator: FavApp[${index}] is not a valid object, skipping` )
             return null
         }
 
         // Warn about unknown properties
         for ( let key of Object.keys( favApp ) ) {
             if ( !FAVAPP_ALLOWED_KEYS.has( key ) )
-                dev.log( true, `InputValidator: Stripping unknown FavApp[${index}] property '${key}'` )
+                dev.alwaysLog( `InputValidator: Stripping unknown FavApp[${index}] property '${key}'` )
         }
 
         // Build sanitized copy with only whitelisted properties
@@ -367,7 +367,7 @@ export class InputValidator {
 
         // Must have at minimum a name to be useful
         if ( !sanitized.name && !sanitized.displayName ) {
-            dev.log( true, `InputValidator: FavApp[${index}] has no name or displayName, skipping` )
+            dev.alwaysLog( `InputValidator: FavApp[${index}] has no name or displayName, skipping` )
             return null
         }
 
@@ -394,14 +394,14 @@ export class InputValidator {
 
     static validateWorkset ( workset, index = 0, getBackgroundFn = null, getBackgroundDarkFn = null ) {
         if ( typeof workset !== "object" || workset === null || Array.isArray( workset ) ) {
-            dev.log( true, `InputValidator: Workset[${index}] is not a valid object, returning null` )
+            dev.alwaysLog( `InputValidator: Workset[${index}] is not a valid object, returning null` )
             return null
         }
 
         // Warn about unknown properties
         for ( let key of Object.keys( workset ) ) {
             if ( !WORKSET_ALLOWED_KEYS.has( key ) )
-                dev.log( true, `InputValidator: Stripping unknown Workset[${index}] property '${key}'` )
+                dev.alwaysLog( `InputValidator: Stripping unknown Workset[${index}] property '${key}'` )
         }
 
         let sanitized = {}
@@ -445,7 +445,7 @@ export class InputValidator {
 
     static validateSession ( session ) {
         if ( typeof session !== "object" || session === null || Array.isArray( session ) ) {
-            dev.log( true, "InputValidator: Session is not a valid object, returning null" )
+            dev.alwaysLog( "InputValidator: Session is not a valid object, returning null" )
             return null
         }
 
@@ -456,7 +456,7 @@ export class InputValidator {
             session.SessionName || "Default", "SessionName", MAX_SESSION_NAME_LENGTH, "Default"
         )
         if ( InputValidator.hasShellMetachars( sanitized.SessionName ) ) {
-            dev.log( true, "InputValidator: SessionName contains shell metacharacters, stripping" )
+            dev.alwaysLog( "InputValidator: SessionName contains shell metacharacters, stripping" )
             sanitized.SessionName = sanitized.SessionName.replace( SHELL_METACHAR_PATTERN, "" ) || "Default"
         }
 
@@ -479,7 +479,7 @@ export class InputValidator {
         }
 
         if ( sanitized.Worksets.length === 0 ) {
-            dev.log( true, "InputValidator: Session has no valid Worksets, adding fallback" )
+            dev.alwaysLog( "InputValidator: Session has no valid Worksets, adding fallback" )
             sanitized.Worksets.push( {
                 WorksetName         : "Primary",
                 WindowData          : null,
@@ -551,13 +551,13 @@ export class InputValidator {
         try {
             let file = Gio.file_new_for_path( filePath )
             if ( !file.query_exists( null ) ) {
-                dev.log( true, `InputValidator: File does not exist for hash: ${filePath}` )
+                dev.alwaysLog( `InputValidator: File does not exist for hash: ${filePath}` )
                 return null
             }
 
             let [success, contents] = file.load_contents( null )
             if ( !success ) {
-                dev.log( true, `InputValidator: Could not read file for hash: ${filePath}` )
+                dev.alwaysLog( `InputValidator: Could not read file for hash: ${filePath}` )
                 return null
             }
 
@@ -566,7 +566,7 @@ export class InputValidator {
                 contents
             )
         } catch ( e ) {
-            dev.log( true, `InputValidator: SHA256 computation failed for '${filePath}': ${e.message}` )
+            dev.alwaysLog( `InputValidator: SHA256 computation failed for '${filePath}': ${e.message}` )
             return null
         }
     }
@@ -582,17 +582,18 @@ export class InputValidator {
         try {
             expectedHash = Me.settings.get_string( "appchooser-sha256" )
         } catch ( e ) {
-            dev.log( true, `InputValidator: Could not read appchooser-sha256 from GSettings: ${e.message}` )
+            dev.alwaysLog( `InputValidator: Could not read appchooser-sha256 from GSettings: ${e.message}` )
         }
 
         if ( !expectedHash ) {
-            dev.log( true, "InputValidator: No appchooser-sha256 in GSettings, integrity check disabled" )
+            dev.alwaysLog( "InputValidator: No appchooser-sha256 in GSettings, integrity check disabled" )
             return actualHash
         }
 
         if ( actualHash !== expectedHash ) {
-            dev.log( true,
-                `InputValidator: appChooser.js integrity check failed. Expected: ${expectedHash}, Got: ${actualHash}` )
+            dev.alwaysLog(
+                `InputValidator: appChooser.js integrity check failed. Expected: ${expectedHash}, Got: ${actualHash}` 
+            )
             return false
         }
 
@@ -605,7 +606,7 @@ export class InputValidator {
             let file = Gio.file_new_for_path( appChooserPath )
 
             if ( !file.query_exists( null ) ) {
-                dev.log( true, `InputValidator: appChooser.js not found at ${appChooserPath}` )
+                dev.alwaysLog( `InputValidator: appChooser.js not found at ${appChooserPath}` )
                 return { needsChmod: false, error: "File not found" }
             }
 
@@ -623,13 +624,13 @@ export class InputValidator {
             // Not executable -- verify integrity before allowing chmod
             let hashResult = InputValidator.verifyAppChooserIntegrity()
             if ( hashResult === false ) {
-                dev.log( true, "InputValidator: appChooser.js integrity check failed, not making executable" )
+                dev.alwaysLog( "InputValidator: appChooser.js integrity check failed, not making executable" )
                 return { needsChmod: false, error: "Integrity check failed" }
             }
 
             return { needsChmod: true, error: null }
         } catch ( e ) {
-            dev.log( true, `InputValidator: ensureAppChooserExecutable failed: ${e.message}` )
+            dev.alwaysLog( `InputValidator: ensureAppChooserExecutable failed: ${e.message}` )
             return { needsChmod: false, error: e.message }
         }
     }

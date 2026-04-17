@@ -88,7 +88,7 @@ export class SessionManager {
             if ( chmodCheck.needsChmod )
                 util.spawn( ["chmod", "+x", fileUtils.APP_CHOOSER_EXEC()] )
             else if ( chmodCheck.error )
-                dev.log( true, "appChooser executable check: " + chmodCheck.error )
+                dev.alwaysLog( "appChooser executable check: " + chmodCheck.error )
 
             // Create sesion or initialize from session file if it exists
             const targetSession = fileUtils.checkExists( fileUtils.CONF_DIR() + "/session.json" )
@@ -395,7 +395,7 @@ export class SessionManager {
             this.Worksets = this.Worksets.map( ( worksetBuffer, ii ) => {
                 let validated = inputValidator.InputValidator.validateWorkset( worksetBuffer, ii )
                 if ( validated === null ) {
-                    dev.log( true, `_validateSession: Dropping invalid workset at index ${ii}` )
+                    dev.alwaysLog( `_validateSession: Dropping invalid workset at index ${ii}` )
                     return null
                 }
                 // Fill in empty background paths from current desktop
@@ -407,7 +407,7 @@ export class SessionManager {
             } ).filter( w => w !== null )
 
             if ( this.Worksets.length === 0 ) {
-                dev.log( true, "_validateSession: All worksets were invalid, creating fallback" )
+                dev.alwaysLog( "_validateSession: All worksets were invalid, creating fallback" )
                 this.Worksets = [ {
                     WorksetName         : "Primary",
                     WindowData          : null,
