@@ -120,9 +120,6 @@ export class WorkspaceViewManager {
                 ( originalMethod ) =>
                     function ( start, count ) {
                         originalMethod.call( this, start, count )
-                        this.connect( "destroy", () => {
-                            if ( this._bgManager ) { this._bgManager.destroy(); this._bgManager = null }
-                        } )
                         Me.workspaceViewManager.thumbnailsBox = this
                         Me.workspaceViewManager.thumbnailBoxes = this._thumbnails
                         Me.workspaceViewManager.refreshOverview()
@@ -157,9 +154,7 @@ export class WorkspaceViewManager {
             this.signals.add( Main.overview, "hidden", function () {
                 Me.workspaceViewManager.thumbnailBoxes.forEach( function ( thumbnailBox, i ) {
                     try {
-                        if ( thumbnailBox._bgManager )
-                            thumbnailBox._bgManager.destroy()
-                        thumbnailBox._bgManager = null
+                        Me.workspaceViewManager._disposeWorksetBgManager( thumbnailBox )
                         // P9: Destroy leaked Meta.Background GPU textures
                         if ( thumbnailBox._newbg ) {
                             thumbnailBox._newbg.destroy?.()
@@ -218,14 +213,16 @@ export class WorkspaceViewManager {
             this.menus.forEach( menu => { try { menu.destroy() } catch ( e ) { /* already destroyed */ } } )
             this.menus = []
 
-            // Clean up Meta.Background GPU resources
+            // Clean up Meta.Background GPU resources and our bg managers
             for ( const i in this.wsGroups ) {
+                this._disposeWorksetBgManager( this.wsGroups[i] )
                 if ( this.wsGroups[i]._newbg ) {
                     this.wsGroups[i]._newbg.destroy?.()
                     this.wsGroups[i]._newbg = null
                 }
             }
             for ( const i in this.thumbnailBoxes ) {
+                this._disposeWorksetBgManager( this.thumbnailBoxes[i] )
                 if ( this.thumbnailBoxes[i]._newbg ) {
                     this.thumbnailBoxes[i]._newbg.destroy?.()
                     this.thumbnailBoxes[i]._newbg = null
@@ -244,6 +241,60 @@ export class WorkspaceViewManager {
         try {
             if ( this.thumbnailsBox ) this.thumbnailsBox.addThumbnails()
             this.refreshOverview()
+        } catch ( e ) { dev.log( e ) }
+    }
+
+    // Create a BackgroundManager owned by the extension, stored under a distinct
+    // property name so it never collides with upstream GNOME properties. When the
+    // backgroundActor is destroyed (either explicitly by us or via Clutter cascade
+    // from its container — e.g. WorkspaceThumbnail / WorkspaceGroup teardown), the
+    // destroy signal handler does full cleanup: BackgroundManager.destroy() to
+    // release the shared background cache source, and Meta.Background.destroy() to
+    // free the GPU texture. The reentrant actor.destroy() call inside
+    // BackgroundManager.destroy() is a no-op thanks to Clutter's
+    // CLUTTER_ACTOR_IN_DESTRUCTION guard, so no warning is produced.
+    _createWorksetBgManager( container, options ) {
+        try {
+            const bgManager = new background.BackgroundManager( options )
+            container._worksetBgManager = bgManager
+
+            const bgActor = bgManager.backgroundActor
+            container._worksetBgActorDestroyId = bgActor.connect( "destroy", () => {
+                const staleBgManager = container._worksetBgManager
+                const staleNewbg = container._newbg
+                const staleChangedId = container._worksetBgChangedId
+                container._worksetBgManager = null
+                container._worksetBgActorDestroyId = 0
+                container._worksetBgChangedId = 0
+                container._bgCacheKeyApplied = null
+                container._newbg = null
+                if ( staleBgManager ) {
+                    if ( staleChangedId )
+                        try { staleBgManager.disconnect( staleChangedId ) } catch ( e ) { /* already gone */ }
+                    try { staleBgManager.destroy() } catch ( e ) { /* in destruction */ }
+                }
+                if ( staleNewbg )
+                    try { staleNewbg.destroy?.() } catch ( e ) { /* already gone */ }
+            } )
+            return bgManager
+        } catch ( e ) { dev.log( e ); return null }
+    }
+
+    _disposeWorksetBgManager( container ) {
+        try {
+            const bgManager = container._worksetBgManager
+            const destroyId = container._worksetBgActorDestroyId
+            const changedId = container._worksetBgChangedId
+            container._worksetBgManager = null
+            container._worksetBgActorDestroyId = 0
+            container._worksetBgChangedId = 0
+            if ( !bgManager ) return
+
+            if ( destroyId && bgManager.backgroundActor )
+                try { bgManager.backgroundActor.disconnect( destroyId ) } catch ( e ) { /* actor gone */ }
+            if ( changedId )
+                try { bgManager.disconnect( changedId ) } catch ( e ) { /* already gone */ }
+            try { bgManager.destroy() } catch ( e ) { /* already destroyed */ }
         } catch ( e ) { dev.log( e ) }
     }
 
@@ -302,17 +353,18 @@ export class WorkspaceViewManager {
                 }
 
                 // P11: Reuse existing BackgroundManager, only create if needed
-                if ( !wsGroup._bgManager ) {
-                    wsGroup._bgManager = new background.BackgroundManager( {
+                if ( !wsGroup._worksetBgManager )
+                    this._createWorksetBgManager( wsGroup, {
                         monitorIndex    : wsGroup._monitor.index,
                         container       : wsGroup._background,
                         controlPosition : false,
                         vignette        : false,
                     } )
-                }
+
+                if ( !wsGroup._worksetBgManager ) continue
 
                 // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
-                wsGroup._bgManager.backgroundActor.content.set( {
+                wsGroup._worksetBgManager.backgroundActor.content.set( {
                     background         : wsGroup._newbg,
                     vignette           : false,
                     vignette_sharpness : 0.5,
@@ -384,8 +436,8 @@ export class WorkspaceViewManager {
                     }
 
                     // P1: Reuse BackgroundManager, only create if needed
-                    if ( !thumbnailBox._bgManager ) {
-                        thumbnailBox._bgManager = new background.BackgroundManager( {
+                    if ( !thumbnailBox._worksetBgManager ) {
+                        const bgManager = this._createWorksetBgManager( thumbnailBox, {
                             monitorIndex    : Main.layoutManager.primaryIndex,
                             container       : thumbnailBox._contents,
                             controlPosition : false,
@@ -393,15 +445,16 @@ export class WorkspaceViewManager {
                         } )
 
                         // P1: Connect "changed" signal only once, with re-entrancy guard
-                        thumbnailBox._bgManager.connect( "changed", () => {
-                            if ( !this._refreshingOverview )
-                                this.refreshOverview()
-                        } )
+                        if ( bgManager )
+                            thumbnailBox._worksetBgChangedId = bgManager.connect( "changed", () => {
+                                if ( !this._refreshingOverview )
+                                    this.refreshOverview()
+                            } )
                     }
 
                     // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
-                    if ( thumbnailBox._bgManager.backgroundActor.content )
-                        thumbnailBox._bgManager.backgroundActor.content.set( {
+                    if ( thumbnailBox._worksetBgManager && thumbnailBox._worksetBgManager.backgroundActor.content )
+                        thumbnailBox._worksetBgManager.backgroundActor.content.set( {
                             background         : thumbnailBox._newbg,
                             vignette           : false,
                             vignette_sharpness : 0.5,
