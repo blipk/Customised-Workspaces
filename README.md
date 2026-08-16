@@ -1,3 +1,5 @@
+
+
 > **Maintenance Mode Notice**
 >
 > This extension is in **maintenance mode**. Future updates and bugfixes are not guaranteed.
@@ -48,7 +50,8 @@ https://extensions.gnome.org/extension/1583/worksets/
 ###### Git
 ```
 cd ~/.local/share/gnome-shell
-git clone https://github.com/blipk/Customised-Workspaces.git extensions
+mkdir -p extensions
+git clone https://github.com/blipk/Customised-Workspaces.git extensions/worksets@blipk.xyz
 ```
 
 ###### Clickable installer in the release or run
