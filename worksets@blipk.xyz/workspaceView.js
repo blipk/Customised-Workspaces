@@ -40,6 +40,7 @@ import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThu
 import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
 import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
 import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.js"
+import * as appDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
 // import * as layout from "resource:///org/gnome/shell/ui/layout.js"
 // import * as overview from "resource:///org/gnome/shell/ui/overview.js"
 
@@ -68,6 +69,15 @@ export class WorkspaceViewManager {
             this._refreshingOverview = false
             this._lastAdjustmentValue = -1
             this._lastAdjustmentIntState = -1
+
+            // Favorites changes synchronously refresh even hidden folder grids.
+            // Keep the dock update immediate and defer only the hidden app views.
+            for ( const prototype of [appDisplay.AppDisplay.prototype, appDisplay.FolderView.prototype] ) {
+                this.injectionHandler.add(
+                    prototype, "_redisplay",
+                    originalMethod => this._createFavoritesRedisplayOverride( originalMethod )
+                )
+            }
 
             // Keep track of the new workspace views so their background can be changed in refreshOverview()
             this.injectionHandler.add(
@@ -208,6 +218,21 @@ export class WorkspaceViewManager {
         } catch ( e ) { dev.log( e ) }
     }
 
+    _createFavoritesRedisplayOverride( originalMethod ) {
+        return function redisplayAfterFavoritesChange( ...args ) {
+            if ( Me?.session?.favoritesSet && !Main.overview.visible && !this.mapped ) {
+                const display = Main.overview._overview?.controls?.appDisplay
+                const workId = display?._redisplayWorkId
+                if ( workId ) {
+                    // GNOME's callback refreshes the main grid and its folders
+                    // before display, or on its normal deferred-work timeout.
+                    Main.queueDeferredWork( workId )
+                    return
+                }
+            }
+            return originalMethod.apply( this, args )
+        }
+    }
     destroy() {
         try {
             this.menus.forEach( menu => { try { menu.destroy() } catch ( e ) { /* already destroyed */ } } )

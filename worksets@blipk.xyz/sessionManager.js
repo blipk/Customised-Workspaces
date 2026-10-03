@@ -631,9 +631,16 @@ export class SessionManager {
             // dev.timer( "setFavorites" )
 
             const outFavorites = favArray.map( fav => fav.name )
+            const currentFavorites = global.settings.get_strv( "favorite-apps" )
+            if ( currentFavorites.length === outFavorites.length &&
+                 currentFavorites.every( ( id, index ) => id === outFavorites[index] ) )
+                return
             this.favoritesSet = true
-            global.settings.set_strv( "favorite-apps", outFavorites )
-            this.favoritesSet = false
+            try {
+                global.settings.set_strv( "favorite-apps", outFavorites )
+            } finally {
+                this.favoritesSet = false
+            }
 
 
             // dev.timer( "setFavorites" )

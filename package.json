@@ -1,5 +1,6 @@
 {
 	"scripts": {
+		"test": "node --test tests/*.test.cjs",
 		"lintfix": "eslint . --fix"
 	},
 	"dependencies": {
