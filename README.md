@@ -24,6 +24,7 @@ Customised Workspaces enables creating isolated and customised workspaces.
 * Applications will only show on the dash in their active workspace
 * Set up a custom background for each workspace
 * Set up the custom dash favourites for each workspace
+* Add an application to the dash favourites of all workspaces at once, at the position that you choose
 * Edit your load settings and save your customised environments
 
 
@@ -53,6 +54,13 @@ git clone https://github.com/blipk/Customised-Workspaces.git extensions
 
 ###### Clickable installer in the release or run
 `chmod +x install.sh && ./install.sh`
+
+### Development
+
+###### End-to-end tests
+
+The extension has end-to-end tests that run it in an isolated headless GNOME Shell, with real pointer and keyboard input: `pnpm run test:e2e`.
+See [testing/e2e/README.md](testing/e2e/README.md).
 
 ### Support
 

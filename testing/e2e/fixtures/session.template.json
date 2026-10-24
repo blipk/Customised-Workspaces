@@ -1,0 +1,46 @@
+{
+ "SessionName": "Default",
+ "Default": "Primary",
+ "Options": {
+  "ShowNotifications": false,
+  "ShowHelpers": true,
+  "IsolateWorkspaces": false,
+  "ShowPanelIndicator": true,
+  "ShowWorkspaceOverlay": true,
+  "DisableWallpaperManagement": false
+ },
+ "Worksets": [
+  {
+   "WorksetName": "Primary",
+   "WindowData": null,
+   "BackgroundImage": "@WALLPAPER_DIR@/red.png",
+   "BackgroundImageDark": "@WALLPAPER_DIR@/red.png",
+   "BackgroundStyle": "ZOOM",
+   "BackgroundStyleDark": "ZOOM",
+   "FavApps": [
+    { "name": "org.gnome.Console.desktop", "displayName": "Console", "icon": "org.gnome.Console", "exec": "kgx" }
+   ]
+  },
+  {
+   "WorksetName": "Work",
+   "WindowData": null,
+   "BackgroundImage": "@WALLPAPER_DIR@/green.png",
+   "BackgroundImageDark": "@WALLPAPER_DIR@/green.png",
+   "BackgroundStyle": "ZOOM",
+   "BackgroundStyleDark": "ZOOM",
+   "FavApps": [
+    { "name": "org.gnome.TextEditor.desktop", "displayName": "Text Editor", "icon": "org.gnome.TextEditor", "exec": "gnome-text-editor" }
+   ]
+  }
+ ],
+ "workspaceMaps": {
+  "Workspace0": { "defaultWorkset": "Primary", "currentWorkset": "Primary" },
+  "Workspace1": { "defaultWorkset": "Work", "currentWorkset": "Work" },
+  "Workspace2": { "defaultWorkset": "", "currentWorkset": "" },
+  "Workspace3": { "defaultWorkset": "", "currentWorkset": "" },
+  "Workspace4": { "defaultWorkset": "", "currentWorkset": "" },
+  "Workspace5": { "defaultWorkset": "", "currentWorkset": "" },
+  "Workspace6": { "defaultWorkset": "", "currentWorkset": "" },
+  "Workspace7": { "defaultWorkset": "", "currentWorkset": "" }
+ }
+}

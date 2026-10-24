@@ -29,7 +29,6 @@
 import GLib from "gi://GLib"
 import Shell from "gi://Shell"
 // import GObject from "gi://GObject"
-const AppSystem = Shell.AppSystem.get_default()
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as AppDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
@@ -47,6 +46,8 @@ import * as dev from "./dev.js"
 export class WorkspaceIsolator {
     constructor() {
         try {
+            // Get the shell singleton here, not when the module loads (before enable())
+            const AppSystem = Shell.AppSystem.get_default()
             // S9: Guard against double-construction patching already-patched methods
             if ( AppSystem._workspace_isolated_dash_nyuki_get_running ) return
 
@@ -92,6 +93,7 @@ export class WorkspaceIsolator {
 
     destroy() {
         // Revert the AppSystem function
+        const AppSystem = Shell.AppSystem.get_default()
         if ( AppSystem._workspace_isolated_dash_nyuki_get_running ) {
             AppSystem.get_running = AppSystem._workspace_isolated_dash_nyuki_get_running
             delete AppSystem._workspace_isolated_dash_nyuki_get_running
@@ -132,6 +134,7 @@ WorkspaceIsolator.refresh = function () {
     WorkspaceIsolator._refreshPending = GLib.timeout_add( GLib.PRIORITY_DEFAULT, 50, () => {
         WorkspaceIsolator._refreshPending = 0
         // Update icon state of all running applications
+        const AppSystem = Shell.AppSystem.get_default()
         let running
         if ( AppSystem._workspace_isolated_dash_nyuki_get_running )
             running = AppSystem._workspace_isolated_dash_nyuki_get_running()

@@ -1,0 +1,23 @@
+# Settings for the isolated test session. run.sh replaces @EXTENSION_UUID@ and @WALLPAPER_DIR@
+# and loads the result with "dconf load /" into the private dconf database of the test session.
+# Values use the GVariant text format.
+# The tests use dconf (as a desktop session does) and not the GSettings keyfile backend:
+# the keyfile backend emits "changed" also for writes that do not change a value, which the
+# extension does not expect.
+
+[org/gnome/shell]
+enabled-extensions=['@EXTENSION_UUID@']
+disable-user-extensions=false
+
+[org/gnome/desktop/interface]
+color-scheme='default'
+# The virtual pointer starts in the top left corner, where the hot corner would open the overview
+enable-hot-corners=false
+
+[org/gnome/desktop/background]
+picture-uri='file://@WALLPAPER_DIR@/blue.png'
+picture-uri-dark='file://@WALLPAPER_DIR@/blue.png'
+picture-options='zoom'
+
+[org/gnome/shell/extensions/worksets]
+debug-mode=true

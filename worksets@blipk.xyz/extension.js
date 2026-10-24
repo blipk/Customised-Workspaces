@@ -42,15 +42,15 @@ import Meta from "gi://Meta"
 
 import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
-// import * as config from "resource:///org/gnome/shell/misc/config.js"
-
-// const [major] = config.PACKAGE_VERSION.split( "." )
-// const shellVersion = Number.parseInt( major )
 
 // Internal imports
 import * as dev from "./dev.js"
+import * as compat from "./compat.js"
 import * as sessionManager from "./sessionManager.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
+
+const DASH_TO_PANEL_UUID = "dash-to-panel@jderose9.github.com"
+const DASH_TO_DOCK_UUID = "dash-to-dock@micxgx.gmail.com"
 
 export let WorksetsInstance = null
 
@@ -70,7 +70,8 @@ export default class Worksets extends Extension {
 
             // To tune behaviour based on other extensions
             this.gExtensions = new Object()
-            this.gExtensions.dash2panel = () => Extension.lookupByUUID( "dash-to-panel@jderose9.github.com" )
+            this.gExtensions.dash2panel = () => Extension.lookupByUUID( DASH_TO_PANEL_UUID )
+            this.gExtensions.dash2panelActive = () => compat.isExtensionActive( DASH_TO_PANEL_UUID )
 
             this.gExtensions._dash2panelSettingsCache = null
             this.gExtensions.dash2panelSettings = ( useCache = true ) => {
@@ -88,7 +89,8 @@ export default class Worksets extends Extension {
                 }
             }
 
-            this.gExtensions.dash2dock = () => Extension.lookupByUUID( "dash-to-dock@micxgx.gmail.com" )
+            this.gExtensions.dash2dock = () => Extension.lookupByUUID( DASH_TO_DOCK_UUID )
+            this.gExtensions.dash2dockActive = () => compat.isExtensionActive( DASH_TO_DOCK_UUID )
             this.gExtensions._dash2dockSettingsCache = null
             this.gExtensions.dash2dockSettings = ( useCache = true ) => {
                 if ( useCache && this.gExtensions._dash2dockSettingsCache )
@@ -135,7 +137,14 @@ export default class Worksets extends Extension {
             if ( this.session ) this.session.destroy()
             delete this.session
 
-            delete this.settings
+            this.settings = null
+
+            // Release the settings objects of other extensions. enable() makes gExtensions again.
+            if ( this.gExtensions ) {
+                this.gExtensions._dash2panelSettingsCache = null
+                this.gExtensions._dash2dockSettingsCache = null
+            }
+            this.gExtensions = null
 
             dev.log( "!^^^^^^^^^^|\r\n" )
         } catch ( e ) {

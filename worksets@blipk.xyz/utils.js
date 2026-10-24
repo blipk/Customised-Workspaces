@@ -276,23 +276,59 @@ export class InjectionHandler {
     }
 }
 
+// Remove the IDs of completed GLib sources when this many sources are recorded
+const SOURCE_PRUNE_SIZE = 100
+
+/**
+ * Keeps signal connections and GLib sources (for example from GLib.timeout_add()), so that
+ * disconnectAll() can remove all of them when the extension is disabled.
+ */
 export class SignalHandler {
     constructor() {
-        this.signalIds = new Map()
+        // Signal handler IDs and GLib source IDs are separate number ranges with the same values,
+        // thus they are kept apart: [target, handler ID] pairs, and a set of source IDs.
+        this._connections = []
+        this._sources = new Set()
     }
 
+    /**
+     * Connects a signal handler, or records a GLib source.
+     * @param {object|number} target - The object to connect to, or a GLib source ID
+     * @param {string|null} [signal=null] - The signal name
+     * @param {function|null} [fn=null] - The signal handler
+     * @returns {number|undefined} The handler ID or the source ID
+     */
     add( target, signal = null, fn = null ) {
         try {
-            let signalId = target.connect ? target.connect( signal, fn ) : target
-            this.signalIds.set( signalId, target )
+            if ( typeof target === "number" ) {
+                if ( this._sources.size >= SOURCE_PRUNE_SIZE ) this._pruneCompletedSources()
+                this._sources.add( target )
+                return target
+            }
+            const handlerId = target.connect( signal, fn )
+            this._connections.push( [target, handlerId] )
+            return handlerId
         } catch ( e ) { dev.log( e ) }
     }
 
     disconnectAll() {
-        try {
-            this.signalIds.forEach( ( target, id ) => target.disconnect ? target.disconnect( id ) : GLib.Source.remove( id ) )
-            this.signalIds.clear()
-        } catch ( e ) { dev.log( e ) }
+        for ( const [target, handlerId] of this._connections ) {
+            try {
+                target.disconnect( handlerId )
+            } catch ( e ) { dev.log( e ) }
+        }
+        this._connections = []
+
+        this._pruneCompletedSources()
+        this._sources.forEach( sourceId => GLib.Source.remove( sourceId ) )
+        this._sources.clear()
+    }
+
+    /** Forgets the sources that are not in the main context any more, for example time-outs that completed. */
+    _pruneCompletedSources() {
+        const mainContext = GLib.MainContext.default()
+        for ( const sourceId of [...this._sources] )
+            if ( !mainContext.find_source_by_id( sourceId ) ) this._sources.delete( sourceId )
     }
 
     destroy() {

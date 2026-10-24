@@ -26,15 +26,11 @@
 
 // External imports
 import St from "gi://St"
-import Gio from "gi://Gio"
 import GLib from "gi://GLib"
-import Meta from "gi://Meta"
 import Clutter from "gi://Clutter"
-import GDesktopEnums from "gi://GDesktopEnums"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
-import * as background from "resource:///org/gnome/shell/ui/background.js"
 import * as overviewControls from "resource:///org/gnome/shell/ui/overviewControls.js"
 import * as workspaceThumbnail from "resource:///org/gnome/shell/ui/workspaceThumbnail.js"
 import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
@@ -49,6 +45,7 @@ import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
+import * as worksetBackgrounds from "./worksetBackgrounds.js"
 
 export class WorkspaceViewManager {
     constructor() {
@@ -57,51 +54,64 @@ export class WorkspaceViewManager {
             this.injectionHandler = new utils.InjectionHandler()
             this.signals = new utils.SignalHandler()
             this.menus = []
+            // Show the wallpapers again when a wallpaper finishes loading in the background (GNOME Shell 51 and later)
+            this.backgrounds = new worksetBackgrounds.WorksetBackgrounds( () => {
+                this.refreshDesktop()
+                this.refreshOverview()
+            } )
 
             this.thumbnailsBox = null
-            this.thumbnailBoxes = []
             this.overviewControls = null
-            this.gsWorkspaces = {}
-            this.wsvWorkspaces = {}
-            this.wsGroups = {}
+            // Overview workspace previews (workspace.Workspace) and workspace switch animation groups
+            // (workspaceAnimation.WorkspaceGroup) that exist now, with the ID of their "destroy" handler
+            this.gsWorkspaces = new Map()
+            this.wsGroups = new Map()
+            this.wsvWorkspaces = []
             this.overviewState = 0
             this._refreshingOverview = false
             this._lastAdjustmentValue = -1
             this._lastAdjustmentIntState = -1
 
-            // Keep track of the new workspace views so their background can be changed in refreshOverview()
+            // Keep track of the overview workspace previews so their background can be changed in refreshOverview()
             this.injectionHandler.add(
                 workspace.Workspace.prototype, "_init",
                 ( originalMethod ) =>
                     function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
                         originalMethod.call( this, metaWorkspace, monitorIndex, overviewAdjustment )
-                        Me.workspaceViewManager.gsWorkspaces[metaWorkspace] = this
-                        this.connect( "destroy", () => delete Me.workspaceViewManager.gsWorkspaces[metaWorkspace] )
+                        Me.workspaceViewManager._trackOverviewWorkspace( this )
                     }
             )
 
-            // Extra reference to workspace views in overview
+            // Extra reference to the workspace views in the overview of the primary monitor, for the overlays
             this.injectionHandler.add(
                 workspacesView.WorkspacesView.prototype, "_init",
                 ( originalMethod ) =>
                     function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
                         originalMethod.call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
-                        Me.workspaceViewManager.wsvWorkspaces = this._workspaces
-                        this.connect( "destroy", () => delete Me.workspaceViewManager.wsvWorkspaces )
+                        if ( monitorIndex !== Main.layoutManager.primaryIndex )
+                            return
+                        const workspaces = this._workspaces
+                        Me.workspaceViewManager.wsvWorkspaces = workspaces
+                        // This handler stays connected after the extension is disabled
+                        this.connect( "destroy", () => {
+                            if ( Me.workspaceViewManager?.wsvWorkspaces === workspaces )
+                                Me.workspaceViewManager.wsvWorkspaces = []
+                        } )
                     }
             )
 
-            // For gestures from desktop
+            // Keep track of the workspace switch animation groups, for gestures and switches from the desktop.
+            // WorkspaceGroup uses a constructor, thus _createBackground() is the first method that has the workspace.
             this.injectionHandler.add(
-                workspaceAnimation.WorkspaceGroup.prototype, "_init",
+                workspaceAnimation.WorkspaceGroup.prototype, "_createBackground",
                 ( originalMethod ) =>
-                    function ( workspace, monitor, movingWindow ) {
-                        originalMethod.call( this, workspace, monitor, movingWindow )
-                        if ( !workspace )
+                    function () {
+                        originalMethod.call( this )
+                        if ( !this._workspace )
                             return
-                        Me.workspaceViewManager.wsGroups[workspace] = this
-                        Me.workspaceViewManager.refreshDesktop()
-                        this.connect( "destroy", () => delete Me.workspaceViewManager.wsGroups[workspace] )
+                        const viewManager = Me.workspaceViewManager
+                        viewManager._track( viewManager.wsGroups, this )
+                        viewManager._refreshWorkspaceGroup( this )
                     }
             )
 
@@ -121,7 +131,6 @@ export class WorkspaceViewManager {
                     function ( start, count ) {
                         originalMethod.call( this, start, count )
                         Me.workspaceViewManager.thumbnailsBox = this
-                        Me.workspaceViewManager.thumbnailBoxes = this._thumbnails
                         Me.workspaceViewManager.refreshOverview()
                     }
             )
@@ -149,24 +158,13 @@ export class WorkspaceViewManager {
                     }
             )
 
-            // Delete all the extra background managers when the overview is hidden so the desktop is set correctly
+            // GNOME destroys the thumbnails (and their background actors) when the overview is hidden
             /* hidden, hiding, showing */
-            this.signals.add( Main.overview, "hidden", function () {
-                Me.workspaceViewManager.thumbnailBoxes.forEach( function ( thumbnailBox, i ) {
-                    try {
-                        Me.workspaceViewManager._disposeWorksetBgManager( thumbnailBox )
-                        // P9: Destroy leaked Meta.Background GPU textures
-                        if ( thumbnailBox._newbg ) {
-                            thumbnailBox._newbg.destroy?.()
-                            thumbnailBox._newbg = null
-                        }
-                        // Clear cache key so next overview open recreates backgrounds
-                        thumbnailBox._bgCacheKeyApplied = null
-                        if ( Me.workspaceManager.activeWorkspaceIndex != i ) return
-                    } catch ( e ) { dev.log( e ) }
-                } )
+            this.signals.add( Main.overview, "hidden", () => {
+                // P9: Release the wallpapers that the worksets do not use any more
+                this.backgrounds.prune( Me.session.Worksets )
                 // P17: Reset adjustment state cache for fresh render on next overview open
-                Me.workspaceViewManager._lastAdjustmentIntState = -1
+                this._lastAdjustmentIntState = -1
             } )
 
             // Run the correct overlay update when the state adjustment hits values in overviewControls.ControlsState
@@ -205,7 +203,38 @@ export class WorkspaceViewManager {
                     }
             )
 
+            // GNOME makes the overview before the extension is enabled, and the overview can be visible
+            // already (for example at login). Start with the overview actors that exist now.
+            this._adoptOverviewActors()
+            this.refreshOverview()
         } catch ( e ) { dev.log( e ) }
+    }
+
+    /** Starts to track the overview actors that GNOME made before the extension was enabled. */
+    _adoptOverviewActors() {
+        const controls = Main.overview._overview?.controls
+        if ( !controls ) return
+
+        this.overviewControls = controls
+        this.thumbnailsBox = controls._thumbnailsBox ?? null
+
+        const workspacesDisplay = controls._workspacesDisplay
+        const views = workspacesDisplay?._workspacesViews ?? []
+        // The primary monitor has a WorkspacesView, other monitors have a SecondaryMonitorDisplay that contains one
+        views.forEach( ( view ) => {
+            for ( const gsWorkspace of view._workspaces ?? view._workspacesView?._workspaces ?? [] )
+                this._trackOverviewWorkspace( gsWorkspace )
+        } )
+        this.wsvWorkspaces = views[workspacesDisplay._primaryIndex]?._workspaces ?? []
+    }
+
+    /**
+     * Records an overview workspace preview, so that refreshOverview() can show the workset wallpaper in it.
+     * @param {Clutter.Actor} gsWorkspace - A workspace.Workspace
+     */
+    _trackOverviewWorkspace( gsWorkspace ) {
+        const bgManager = gsWorkspace._background?._bgManager
+        this._track( this.gsWorkspaces, gsWorkspace, () => this.backgrounds.restore( bgManager ) )
     }
 
     destroy() {
@@ -213,28 +242,28 @@ export class WorkspaceViewManager {
             this.menus.forEach( menu => { try { menu.destroy() } catch ( e ) { /* already destroyed */ } } )
             this.menus = []
 
-            // Clean up Meta.Background GPU resources and our bg managers
-            for ( const i in this.wsGroups ) {
-                this._disposeWorksetBgManager( this.wsGroups[i] )
-                if ( this.wsGroups[i]._newbg ) {
-                    this.wsGroups[i]._newbg.destroy?.()
-                    this.wsGroups[i]._newbg = null
-                }
-            }
-            for ( const i in this.thumbnailBoxes ) {
-                this._disposeWorksetBgManager( this.thumbnailBoxes[i] )
-                if ( this.thumbnailBoxes[i]._newbg ) {
-                    this.thumbnailBoxes[i]._newbg.destroy?.()
-                    this.thumbnailBoxes[i]._newbg = null
-                }
-            }
-
             this.injectionHandler.removeAll()
             this.signals.disconnectAll()
+
+            // Remove everything that the extension added to GNOME actors, and put the GNOME wallpapers back
+            this.clearWorksetBackgrounds()
+            this.backgrounds.destroy()
+            this.thumbnailBoxes.forEach( thumbnailBox => this._removeThumbnailLabel( thumbnailBox ) )
+            this.wsvWorkspaces.forEach( view => this._removeOverlay( view ) )
+            for ( const trackedActors of [this.gsWorkspaces, this.wsGroups] ) {
+                for ( const [actor, destroyId] of trackedActors )
+                    actor.disconnect( destroyId )
+                trackedActors.clear()
+            }
 
             delete this.injectionHandler
             delete this.signals
         } catch ( e ) { dev.log( e ) }
+    }
+
+    /** The workspace thumbnails at the top of the overview. GNOME makes a new array each time the overview is shown. */
+    get thumbnailBoxes() {
+        return this.thumbnailsBox?._thumbnails ?? []
     }
 
     refreshThumbnailBoxes() {
@@ -244,133 +273,86 @@ export class WorkspaceViewManager {
         } catch ( e ) { dev.log( e ) }
     }
 
-    // Create a BackgroundManager owned by the extension, stored under a distinct
-    // property name so it never collides with upstream GNOME properties. When the
-    // backgroundActor is destroyed (either explicitly by us or via Clutter cascade
-    // from its container — e.g. WorkspaceThumbnail / WorkspaceGroup teardown), the
-    // destroy signal handler does full cleanup: BackgroundManager.destroy() to
-    // release the shared background cache source, and Meta.Background.destroy() to
-    // free the GPU texture. The reentrant actor.destroy() call inside
-    // BackgroundManager.destroy() is a no-op thanks to Clutter's
-    // CLUTTER_ACTOR_IN_DESTRUCTION guard, so no warning is produced.
-    _createWorksetBgManager( container, options ) {
-        try {
-            const bgManager = new background.BackgroundManager( options )
-            container._worksetBgManager = bgManager
-
-            const bgActor = bgManager.backgroundActor
-            container._worksetBgActorDestroyId = bgActor.connect( "destroy", () => {
-                const staleBgManager = container._worksetBgManager
-                const staleNewbg = container._newbg
-                const staleChangedId = container._worksetBgChangedId
-                container._worksetBgManager = null
-                container._worksetBgActorDestroyId = 0
-                container._worksetBgChangedId = 0
-                container._bgCacheKeyApplied = null
-                container._newbg = null
-                if ( staleBgManager ) {
-                    if ( staleChangedId )
-                        try { staleBgManager.disconnect( staleChangedId ) } catch ( e ) { /* already gone */ }
-                    try { staleBgManager.destroy() } catch ( e ) { /* in destruction */ }
-                }
-                if ( staleNewbg )
-                    try { staleNewbg.destroy?.() } catch ( e ) { /* already gone */ }
-            } )
-            return bgManager
-        } catch ( e ) { dev.log( e ); return null }
+    /**
+     * Records a GNOME actor in a map until the actor is destroyed.
+     * @param {Map<Clutter.Actor, number>} trackedActors - The map, from actor to the ID of its "destroy" handler
+     * @param {Clutter.Actor} actor - The actor to record
+     * @param {function(): void} [onDestroy] - Called when the actor is destroyed
+     */
+    _track( trackedActors, actor, onDestroy = null ) {
+        if ( trackedActors.has( actor ) ) return
+        trackedActors.set( actor, actor.connect( "destroy", () => {
+            trackedActors.delete( actor )
+            onDestroy?.()
+        } ) )
     }
 
-    _disposeWorksetBgManager( container ) {
+    /** Removes the workset wallpapers from the overview and from the desktop, and puts the GNOME wallpapers back. */
+    clearWorksetBackgrounds() {
         try {
-            const bgManager = container._worksetBgManager
-            const destroyId = container._worksetBgActorDestroyId
-            const changedId = container._worksetBgChangedId
-            container._worksetBgManager = null
-            container._worksetBgActorDestroyId = 0
-            container._worksetBgChangedId = 0
-            if ( !bgManager ) return
-
-            if ( destroyId && bgManager.backgroundActor )
-                try { bgManager.backgroundActor.disconnect( destroyId ) } catch ( e ) { /* actor gone */ }
-            if ( changedId )
-                try { bgManager.disconnect( changedId ) } catch ( e ) { /* already gone */ }
-            try { bgManager.destroy() } catch ( e ) { /* already destroyed */ }
+            for ( const wsGroup of this.wsGroups.keys() )
+                this.backgrounds.removeOwnActor( wsGroup )
+            this.thumbnailBoxes.forEach( thumbnailBox => this.backgrounds.removeOwnActor( thumbnailBox ) )
+            this.backgrounds.restoreAll()
         } catch ( e ) { dev.log( e ) }
     }
 
-    makeWorksetBg( workset ) {
-        try {
-            const newbg = new Meta.Background( { meta_display: Me.gScreen } )
-            workset = workset || Me.session.DefaultWorkset
-            const bgPath = Me.session.isDarkMode
-                ? workset.BackgroundImageDark.replace( "file://", "" )
-                : workset.BackgroundImage.replace( "file://", "" )
-            const backgroundStyle = Me.session.isDarkMode
-                ? workset.BackgroundStyleDark.toUpperCase()
-                : workset.BackgroundStyle.toUpperCase()
-            newbg.set_file(
-                Gio.file_new_for_path( bgPath ),
-                GDesktopEnums.BackgroundStyle[backgroundStyle] || GDesktopEnums.BackgroundStyle.ZOOM
-            )
-            return newbg
-        } catch ( e ) { dev.log( e ) }
+    get _wallpaperManagementDisabled() {
+        return Me.session.activeSession.Options.DisableWallpaperManagement
     }
 
-    _bgCacheKey( workset ) {
-        if ( !workset ) return ""
-        const path = Me.session.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage
-        const style = Me.session.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle
-        return ( path || "" ) + "|" + ( style || "ZOOM" ) + "|" + workset.WorksetName
+    /**
+     * Finds the workset that is active on a workspace.
+     * @param {number} workspaceIndex - Index of the workspace
+     * @returns {object|undefined} The workset, or undefined if no workset is active on the workspace
+     */
+    _worksetForWorkspace( workspaceIndex ) {
+        const workspaceMap = Me.session.workspaceMaps["Workspace" + workspaceIndex]
+        if ( !workspaceMap ) return undefined
+        return Me.session.Worksets.find( ( wset ) => wset.WorksetName == workspaceMap.currentWorkset )
+    }
+
+    /**
+     * Gets the wallpaper for a workspace. A workspace without an active workset shows the
+     * wallpaper of the default workset, the same as the desktop does.
+     * @param {number} workspaceIndex - Index of the workspace
+     * @returns {Meta.Background|null} The wallpaper, or null if it is not loaded yet
+     */
+    _backgroundForWorkspace( workspaceIndex ) {
+        const workset = this._worksetForWorkspace( workspaceIndex ) ?? Me.session.DefaultWorkset
+        return this.backgrounds.forWorkset( workset, Me.session.isDarkMode )
     }
 
     refreshDesktop() {
         try {
-            if ( Me.session.activeSession.Options.DisableWallpaperManagement )
+            for ( const wsGroup of this.wsGroups.keys() )
+                this._refreshWorkspaceGroup( wsGroup )
+        } catch ( e ) { dev.log( e ) }
+    }
+
+    /**
+     * Shows the workset wallpaper in a workspace switch animation group.
+     * @param {Clutter.Actor} wsGroup - A workspaceAnimation.WorkspaceGroup
+     */
+    _refreshWorkspaceGroup( wsGroup ) {
+        try {
+            const container = wsGroup._background
+            const metaWorkspace = wsGroup.workspace ?? wsGroup._workspace
+            const background = !this._wallpaperManagementDisabled && container && metaWorkspace
+                ? this._backgroundForWorkspace( metaWorkspace.index() )
+                : null
+
+            if ( !background ) {
+                this.backgrounds.removeOwnActor( wsGroup )
                 return
-
-            for ( const i in this.wsGroups ) {
-                const wsGroup = this.wsGroups[i]
-                const metaWorkspace = wsGroup.workspace || wsGroup._workspace
-
-                if ( metaWorkspace )
-                    wsGroup._workset = Me.session.Worksets
-                        .find( ( wset ) =>
-                            wset.WorksetName == Me.session.workspaceMaps["Workspace" + metaWorkspace.index()].currentWorkset )
-
-                if ( !wsGroup._workset )
-                    continue
-
-                // P11: Only create new Meta.Background when wallpaper path changes
-                const cacheKey = this._bgCacheKey( wsGroup._workset )
-                if ( wsGroup._bgCacheKeyApplied !== cacheKey ) {
-                    // P9: Properly destroy old Meta.Background GPU texture
-                    if ( wsGroup._newbg ) {
-                        wsGroup._newbg.destroy?.()
-                        wsGroup._newbg = null
-                    }
-                    wsGroup._newbg = this.makeWorksetBg( wsGroup._workset )
-                    wsGroup._bgCacheKeyApplied = cacheKey
-                }
-
-                // P11: Reuse existing BackgroundManager, only create if needed
-                if ( !wsGroup._worksetBgManager )
-                    this._createWorksetBgManager( wsGroup, {
-                        monitorIndex    : wsGroup._monitor.index,
-                        container       : wsGroup._background,
-                        controlPosition : false,
-                        vignette        : false,
-                    } )
-
-                if ( !wsGroup._worksetBgManager ) continue
-
-                // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
-                wsGroup._worksetBgManager.backgroundActor.content.set( {
-                    background         : wsGroup._newbg,
-                    vignette           : false,
-                    vignette_sharpness : 0.5,
-                    brightness         : 0.5,
-                } )
             }
+
+            // Above the GNOME wallpaper, so that GNOME can replace its wallpaper below it during the animation,
+            // and below the desktop windows (for example desktop icons)
+            this.backgrounds.showInOwnActor( wsGroup, container, background, {
+                monitorIndex : wsGroup._monitor.index,
+                siblingBelow : container._bgManager?.backgroundActor?.get_parent() ?? null,
+            } )
         } catch ( e ) { dev.log( e ) }
     }
 
@@ -378,33 +360,16 @@ export class WorkspaceViewManager {
         try {
             if ( !Main.overview._visible ) return
 
-            // P1: Re-entrancy guard to prevent recursive calls from BackgroundManager "changed" signal
+            // P1: Re-entrancy guard to prevent recursive calls
             if ( this._refreshingOverview ) return
             this._refreshingOverview = true
 
             try {
-                for ( const i in this.thumbnailBoxes ) {
-                    const thumbnailBox = this.thumbnailBoxes[i]
-                    let gsWorkspace = this.gsWorkspaces[thumbnailBox.metaWorkspace]
-                    if ( !gsWorkspace )
-                        continue
+                const wallpaperManagementDisabled = this._wallpaperManagementDisabled
 
+                this.thumbnailBoxes.forEach( ( thumbnailBox, i ) => {
                     // Find active workset for thumbnailbox
-                    thumbnailBox._workset = Me.session.Worksets
-                        .find( ( wset ) => wset.WorksetName == Me.session.workspaceMaps["Workspace" + i].currentWorkset )
-
-                    // P1/P11: Check if wallpaper actually changed
-                    const cacheKey = this._bgCacheKey( thumbnailBox._workset )
-                    const bgChanged = ( thumbnailBox._bgCacheKeyApplied !== cacheKey )
-
-                    if ( bgChanged ) {
-                        // P9: Properly destroy old Meta.Background GPU texture
-                        if ( thumbnailBox._newbg ) {
-                            thumbnailBox._newbg.destroy?.()
-                            thumbnailBox._newbg = null
-                        }
-                        thumbnailBox._newbg = this.makeWorksetBg( thumbnailBox._workset )
-                    }
+                    thumbnailBox._workset = this._worksetForWorkspace( i )
 
                     // Thumbnail label
                     if ( ( !Me.session.activeSession.Options.ShowOverlayThumbnailLabels || !thumbnailBox._workset ) && thumbnailBox.worksetLabel ) {
@@ -426,45 +391,36 @@ export class WorkspaceViewManager {
                             thumbnailBox.add_child( thumbnailBox.worksetLabel )
                     }
 
-                    // Always re-apply workspace preview background (setBackground overwrites all bgManagers)
-                    if ( gsWorkspace && thumbnailBox._newbg )
-                        gsWorkspace._background._bgManager.backgroundActor.content.background = thumbnailBox._newbg
-
-                    if ( Me.session.activeSession.Options.DisableWallpaperManagement ) {
-                        this.updateOverlay( overviewState, thumbnailBox._workset, i )
-                        continue
-                    }
-
-                    // P1: Reuse BackgroundManager, only create if needed
-                    if ( !thumbnailBox._worksetBgManager ) {
-                        const bgManager = this._createWorksetBgManager( thumbnailBox, {
-                            monitorIndex    : Main.layoutManager.primaryIndex,
-                            container       : thumbnailBox._contents,
-                            controlPosition : false,
-                            vignette        : false,
+                    // Thumbnail background. GNOME does not show wallpapers in the thumbnails, so the actor is our own.
+                    // Do not show wallpapers in the overview when wallpaper management is disabled (#70)
+                    const background = wallpaperManagementDisabled ? null : this._backgroundForWorkspace( i )
+                    if ( background ) {
+                        const monitor = Main.layoutManager.monitors[thumbnailBox.monitorIndex] ?? Main.layoutManager.primaryMonitor
+                        // The thumbnail contents use stage coordinates, and the window clones must be above the wallpaper
+                        this.backgrounds.showInOwnActor( thumbnailBox, thumbnailBox._contents, background, {
+                            monitorIndex : monitor.index,
+                            x            : monitor.x,
+                            y            : monitor.y,
+                            atBottom     : true,
                         } )
-
-                        // P1: Connect "changed" signal only once, with re-entrancy guard
-                        if ( bgManager )
-                            thumbnailBox._worksetBgChangedId = bgManager.connect( "changed", () => {
-                                if ( !this._refreshingOverview )
-                                    this.refreshOverview()
-                            } )
+                    } else {
+                        this.backgrounds.removeOwnActor( thumbnailBox )
                     }
-
-                    // Always re-apply content (sessionManager.setBackground overwrites all bgManagers)
-                    if ( thumbnailBox._worksetBgManager && thumbnailBox._worksetBgManager.backgroundActor.content )
-                        thumbnailBox._worksetBgManager.backgroundActor.content.set( {
-                            background         : thumbnailBox._newbg,
-                            vignette           : false,
-                            vignette_sharpness : 0.5,
-                            brightness         : 0.5,
-                        } )
-
-                    if ( bgChanged )
-                        thumbnailBox._bgCacheKeyApplied = cacheKey
 
                     this.updateOverlay( overviewState, thumbnailBox._workset, i )
+                } )
+
+                // Overview workspace previews. These actors belong to GNOME, so the GNOME wallpaper is recorded to put back later.
+                for ( const gsWorkspace of this.gsWorkspaces.keys() ) {
+                    const bgManager = gsWorkspace._background?._bgManager
+                    const workspaceIndex = gsWorkspace.metaWorkspace?.index()
+                    if ( !bgManager || workspaceIndex === undefined ) continue
+
+                    const background = wallpaperManagementDisabled ? null : this._backgroundForWorkspace( workspaceIndex )
+                    if ( background )
+                        this.backgrounds.override( bgManager, background )
+                    else
+                        this.backgrounds.restore( bgManager )
                 }
             } finally {
                 this._refreshingOverview = false
@@ -473,25 +429,35 @@ export class WorkspaceViewManager {
         } catch ( e ) { dev.log( e ) }
     }
 
+    _removeThumbnailLabel( thumbnailBox ) {
+        thumbnailBox.worksetLabel?.destroy()
+        thumbnailBox.worksetLabel = null
+    }
+
+    _removeOverlay( view ) {
+        view._worksetOverlayBox?.destroy()
+        view._worksetOverlayBox = null
+    }
+
     updateOverlay( overviewState, workset, i ) {
         try {
+            const view = this.wsvWorkspaces[i]
+            if ( !view ) return
+
             // Delete old overlay box and rebuild
-            if ( this.wsvWorkspaces[i]._worksetOverlayBox ) {
-                this.wsvWorkspaces[i]._worksetOverlayBox.destroy_all_children()
-                this.wsvWorkspaces[i]._worksetOverlayBox.destroy()
-            }
+            this._removeOverlay( view )
 
             // Stop after background change if overlay box is not enabled
             if ( !Me.session.activeSession.Options.ShowWorkspaceOverlay )
                 return
 
             // Global box
-            this.wsvWorkspaces[i]._worksetOverlayBox = new St.BoxLayout( {
+            view._worksetOverlayBox = new St.BoxLayout( {
                 style_class : "workspace-overlay",
                 x_align     : Clutter.ActorAlign.FILL, x_expand    : true,
                 y_align     : Clutter.ActorAlign.FILL, y_expand    : true,
             } )
-            this.wsvWorkspaces[i].add_child( this.wsvWorkspaces[i]._worksetOverlayBox )
+            view.add_child( view._worksetOverlayBox )
 
             // Label text
             let worksetLabel = new St.Label( {
@@ -499,8 +465,8 @@ export class WorkspaceViewManager {
                 x_align     : Clutter.ActorAlign.START, x_expand    : true,
                 y_align     : Clutter.ActorAlign.START, y_expand    : true,
             } )
-            worksetLabel.set_text( Me.session.workspaceMaps["Workspace" + i].currentWorkset || "" )
-            this.wsvWorkspaces[i]._worksetOverlayBox.add_child( worksetLabel )
+            worksetLabel.set_text( workset?.WorksetName || "" )
+            view._worksetOverlayBox.add_child( worksetLabel )
 
             if ( overviewState >= overviewControls.ControlsState.APP_GRID )
                 return
@@ -510,7 +476,7 @@ export class WorkspaceViewManager {
                 x_align  : Clutter.ActorAlign.END, x_expand : true,
                 y_align  : Clutter.ActorAlign.START, y_expand : false,
             } )
-            this.wsvWorkspaces[i]._worksetOverlayBox.add_child( iconsBox )
+            view._worksetOverlayBox.add_child( iconsBox )
 
             let iconOptions = {
                 style_class: "overlay-icon", icon_size: 24

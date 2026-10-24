@@ -27,16 +27,14 @@
 // External imports
 import Gio from "gi://Gio"
 import GLib from "gi://GLib"
-import Meta from "gi://Meta"
 import Shell from "gi://Shell"
 import Clutter from "gi://Clutter"
-import GDesktopEnums from "gi://GDesktopEnums"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as appFavorites from "resource:///org/gnome/shell/ui/appFavorites.js"
 // import * as appMenu from "resource:///org/gnome/shell/ui/appMenu.js"
-// import * as appDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
+import * as appDisplay from "resource:///org/gnome/shell/ui/appDisplay.js"
 // import * as dash from "resource:///org/gnome/shell/ui/dash.js"
 
 
@@ -63,6 +61,20 @@ const wallPaperOptions = [
     { enum: "SPANNED", icon: "zoom-fit-best-symbolic" }
 ]
 
+/**
+ * Converts a favourites position to an array index.
+ * 1 is the first position and 2 is the second. -1 is the last position and -2 is the second last.
+ * 0 is the same as -1. A position that is out of range goes to the nearest end of the list.
+ * @param {number} position - The position
+ * @param {number} length - Length of the list that the item goes into
+ * @returns {number} The index for Array.prototype.splice()
+ */
+const favoriteInsertIndex = ( position, length ) => {
+    if ( position > 0 ) return Math.min( position - 1, length )
+    if ( position < 0 ) return Math.max( length + position + 1, 0 )
+    return length
+}
+
 export class SessionManager {
     constructor() {
         try {
@@ -75,6 +87,16 @@ export class SessionManager {
             this.activeFunctions = {}
             this._allAppsScanned = false
             this.signals.add( Shell.AppSystem.get_default(), "installed-changed", () => { this._allAppsScanned = false } )
+
+            // Each favourites change makes GNOME rebuild the app grid and all of its folders at once,
+            // also when the overview is hidden. This made workspace switches slow (#71, #56).
+            // Keep the dash update immediate, but let GNOME rebuild the hidden app views later.
+            this.injectionHandler = new utils.InjectionHandler()
+            for ( const prototype of [appDisplay.AppDisplay.prototype, appDisplay.FolderView.prototype] )
+                this.injectionHandler.add(
+                    prototype, "_redisplay",
+                    ( originalMethod ) => this._createFavoritesRedisplayOverride( originalMethod )
+                )
 
             // Change tracking for session saves
             this._sessionHash = null
@@ -147,7 +169,31 @@ export class SessionManager {
         try {
             this.saveSession()
             this.signals.destroy()
+            this.injectionHandler.removeAll()
         } catch ( e ) { dev.log( e ) }
+    }
+
+    /**
+     * Makes a replacement for AppDisplay._redisplay() and FolderView._redisplay().
+     * While setFavorites() writes the favourites and the overview is hidden, the replacement
+     * queues the deferred redisplay work of the main app grid. GNOME runs that work, which also
+     * refreshes the folders, when the app grid is shown or after its normal timeout.
+     * In all other cases the original method runs.
+     * @param {function} originalMethod - The original _redisplay() method
+     * @returns {function} The replacement method
+     */
+    _createFavoritesRedisplayOverride( originalMethod ) {
+        const session = this
+        return function redisplayAfterFavoritesChange( ...args ) {
+            if ( session.favoritesSet && !Main.overview.visible && !this.mapped ) {
+                const redisplayWorkId = Main.overview._overview?.controls?.appDisplay?._redisplayWorkId
+                if ( redisplayWorkId ) {
+                    Main.queueDeferredWork( redisplayWorkId )
+                    return undefined
+                }
+            }
+            return originalMethod.apply( this, args )
+        }
     }
     _watchOptions() {
         if ( this.optionsWatched )
@@ -191,27 +237,28 @@ export class SessionManager {
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } )
         this.signals.add( Me.settings, "changed::disable-wallpaper-management", () => {
-            this.setBackground()
+            this.activeSession.Options.DisableWallpaperManagement = Me.settings.get_boolean( "disable-wallpaper-management" )
+            // Put the GNOME wallpapers back everywhere that the extension changed them (#70)
+            if ( this.activeSession.Options.DisableWallpaperManagement )
+                Me.workspaceViewManager?.clearWorksetBackgrounds()
+            else
+                this._setDisplayedWorksetBackground()
             if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } )
 
         // iSettings and bSettings are now initialized in constructor
         this.signals.add( this.iSettings, "changed::color-scheme", () => {
             // switched theme mode
-            let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
-            this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
-                if ( worksetBuffer.WorksetName != Me.workspaceManager.activeWorksetName ) return
-                let bgPath = isDarkMode ? this.Worksets[worksetIndex].BackgroundImageDark : this.Worksets[worksetIndex].BackgroundImage
-                let bgStyle = isDarkMode ? this.Worksets[worksetIndex].BackgroundStyleDark : this.Worksets[worksetIndex].BackgroundStyle
-                this.setBackground( bgPath, bgStyle, isDarkMode )
-            }, this )
+            this._setDisplayedWorksetBackground()
+            if ( Me.workspaceViewManager ) Me.workspaceViewManager.refreshOverview()
         } )
 
+        // When wallpaper management is disabled, do not record wallpaper changes in the worksets (#70)
         this.signals.add( this.bSettings, "changed::picture-uri", () => {
-            if ( this.backgroundSet ) return
+            if ( this.backgroundSet || this.activeSession.Options.DisableWallpaperManagement ) return
             // Update active workset wallpaper info if changed elsewhere in gnome
             let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
-            let bgPath = this.bSettings.get_string( "picture-uri" )
+            let bgPath = this.getBackground()
             let bgStyle
 
             this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
@@ -226,11 +273,11 @@ export class SessionManager {
             this.setBackground( bgPath, bgStyle, false )
         } )
         this.signals.add( this.bSettings, "changed::picture-uri-dark", () => {
-            if ( this.backgroundSet ) return
+            if ( this.backgroundSet || this.activeSession.Options.DisableWallpaperManagement ) return
             // Update active workset wallpaper info if changed elsewhere in gnome
 
             let isDarkMode = this.iSettings.get_string( "color-scheme" ) === "prefer-dark" ? true : false
-            let bgPath = this.bSettings.get_string( "picture-uri-dark" )
+            let bgPath = this.getBackgroundDark()
             let bgStyle
 
             this.Worksets.forEach( function ( worksetBuffer, worksetIndex ) {
@@ -243,7 +290,7 @@ export class SessionManager {
             this.setBackground( bgPath, bgStyle, true )
         } )
         this.signals.add( this.bSettings, "changed::picture-options", () => {
-            if ( this.backgroundSet ) return
+            if ( this.backgroundSet || this.activeSession.Options.DisableWallpaperManagement ) return
 
             let bgStyle = this.bSettings.get_string( "picture-options" )
             let bgPath = ""
@@ -301,6 +348,8 @@ export class SessionManager {
                 this.activeSession.Options[utils.textToPascalCase( key )] = Me.settings.get_boolean( key )
             } else if ( defaultValue.toString().includes( "\"s\"" ) && !key.includes( "prototype" ) ) {
                 this.activeSession.Options[utils.textToPascalCase( key )] = Me.settings.get_string( key )
+            } else if ( defaultValue.toString().includes( "\"i\"" ) ) { // GLib Variant Int32
+                this.activeSession.Options[utils.textToPascalCase( key )] = Me.settings.get_int( key )
             }
         }, this )
         utils.forEachEntry( this.activeSession.Options, function ( optionName, optionValue ) {
@@ -320,6 +369,8 @@ export class SessionManager {
                     Me.settings.set_boolean( utils.textToKebabCase( optionName ), this.activeSession.Options[optionName] )
             } else if ( defaultValue.toString().includes( "\"s\"" ) ) {
                 Me.settings.set_string( utils.textToKebabCase( optionName ), this.activeSession.Options[optionName] )
+            } else if ( defaultValue.toString().includes( "\"i\"" ) ) {
+                Me.settings.set_int( utils.textToKebabCase( optionName ), this.activeSession.Options[optionName] )
             }
         }, this )
         // This has to be last or the signal callback will change the other options
@@ -339,6 +390,8 @@ export class SessionManager {
                 this.activeSession.Options[optionName] = Me.settings.get_boolean( utils.textToKebabCase( optionName ) )
             } else if ( defaultValue.toString().includes( "\"s\"" ) ) {
                 this.activeSession.Options[optionName] = Me.settings.get_string( utils.textToKebabCase( optionName ) )
+            } else if ( defaultValue.toString().includes( "\"i\"" ) ) {
+                this.activeSession.Options[optionName] = Me.settings.get_int( utils.textToKebabCase( optionName ) )
             }
         }, this )
 
@@ -556,22 +609,37 @@ export class SessionManager {
     }
     getBackground() {
         try {
-            let bgURI = this.bSettings.get_string( "picture-uri" )
-            return bgURI.replace( "file://", "" )
+            return fileUtils.uriToPath( this.bSettings.get_string( "picture-uri" ) )
         } catch ( e ) { dev.log( e ) }
     }
     getBackgroundDark() {
         try {
-            let bgURI = this.bSettings.get_string( "picture-uri-dark" )
-            return bgURI.replace( "file://", "" )
+            return fileUtils.uriToPath( this.bSettings.get_string( "picture-uri-dark" ) )
         } catch ( e ) { dev.log( e ) }
+    }
+    /**
+     * Finds the workset that the active workspace shows: the workset that is active on it, else the default workset.
+     * @returns {object} The workset
+     */
+    _displayedWorkset() {
+        return this.Worksets.find( w => w.WorksetName == Me.workspaceManager.activeWorksetName ) ?? this.DefaultWorkset
+    }
+    /** Sets the desktop wallpaper to the wallpaper of the displayed workset, for the current colour scheme. */
+    _setDisplayedWorksetBackground() {
+        const workset = this._displayedWorkset()
+        if ( !workset ) return
+        this.setBackground(
+            this.isDarkMode ? workset.BackgroundImageDark : workset.BackgroundImage,
+            this.isDarkMode ? workset.BackgroundStyleDark : workset.BackgroundStyle,
+            this.isDarkMode
+        )
     }
     setBackground( bgPath = "", style = "ZOOM", darkMode = false ) {
         if ( this.activeSession.Options.DisableWallpaperManagement ) return
 
         if ( !bgPath )
-            bgPath = this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].BackgroundImage
-        bgPath = bgPath.replace( "file://", "" )
+            bgPath = this._displayedWorkset()?.BackgroundImage
+        bgPath = fileUtils.uriToPath( bgPath )
 
         // S11: Validate background path and style
         bgPath = inputValidator.InputValidator.validateBackgroundPath( bgPath, "setBackground.bgPath" )
@@ -581,59 +649,51 @@ export class SessionManager {
         )
 
         const currentBackground = darkMode ? this.getBackgroundDark() : this.getBackground()
-        const currentStyle = this.bSettings.get_string( "picture-options" )
+        const currentStyle = this.bSettings.get_string( "picture-options" ).toUpperCase()
 
         if ( currentBackground == bgPath && currentStyle == style )
             return
 
         this.backgroundSet = true
-        darkMode
-            ? this.bSettings.set_string( "picture-uri-dark", "file://" + bgPath )
-            : this.bSettings.set_string( "picture-uri", "file://" + bgPath )
+        try {
+            this.bSettings.set_string( darkMode ? "picture-uri-dark" : "picture-uri", fileUtils.pathToUri( bgPath ) )
+            this.bSettings.set_string( "picture-options", style.toLowerCase() )
+        } finally {
+            this.backgroundSet = false
+        }
 
-        this.bSettings.set_string( "picture-options", style.toLowerCase() )
+        if ( darkMode !== this.isDarkMode ) return
 
-        this.backgroundSet = false
-
-        if ( ( darkMode && !this.isDarkMode ) || ( !darkMode && this.isDarkMode ) ) return
-
-        // workspaceView is losing track of the original bgmanager so this has to be updated here to affect other changes in the system
-        let newbg = new Meta.Background( { meta_display: Me.gScreen } )
-        newbg.set_file( Gio.file_new_for_path( bgPath ), GDesktopEnums.BackgroundStyle[style.toUpperCase()] || GDesktopEnums.BackgroundStyle.ZOOM )
-
-        Main.layoutManager._bgManagers.forEach( function ( bgMan, ii ) {
-            if ( bgMan.backgroundActor ) {
-                if ( bgMan.backgroundActor.content )
-                    bgMan.backgroundActor.content.background = newbg
-                else
-                    bgMan.backgroundActor.background = newbg
-            }
-        }, this )
-        //*/
-        /*
-        Main.layoutManager._bgManagers.forEach(function(bgMan, ii) {
-            let x = bgMan._backgroundSource.getBackground(Main.layoutManager.primaryIndex);
-            bgMan._backgroundSource._backgrounds = [];
-            bgMan._backgroundSource._backgrounds[Main.layoutManager.primaryIndex] = x;
-            bgMan._backgroundSource._backgrounds[0] = x;
-            bgMan._backgroundSource._backgrounds[1] = x;
-            bgMan._backgroundSource._backgrounds[2] = x;
-            x.emit('bg-changed');
-            bgMan._newBackgroundActor = "true";
-            bgMan._updateBackgroundActor()
-        }, this);
-        //*/
+        // Show the new wallpaper on the desktop at once. GNOME loads the new settings soon after,
+        // and then replaces these background actors with actors that show the same wallpaper.
+        const background = Me.workspaceViewManager?.backgrounds.lookup( bgPath, style )
+        if ( !background ) return
+        Main.layoutManager._bgManagers.forEach( ( bgManager ) => {
+            if ( bgManager.backgroundActor?.content )
+                bgManager.backgroundActor.content.background = background
+        } )
     }
     setFavorites( favArray ) {
         try {
-            favArray = favArray || this.Worksets.filter( w => w.WorksetName == Me.workspaceManager.activeWorksetName )[0].FavApps
+            favArray = favArray || this._displayedWorkset()?.FavApps
             if ( !favArray ) return
             // dev.timer( "setFavorites" )
 
             const outFavorites = favArray.map( fav => fav.name )
+
+            // Writing the same list again makes GNOME rebuild the dash and the app grid for no change (#71)
+            const currentFavorites = global.settings.get_strv( "favorite-apps" )
+            if ( currentFavorites.length === outFavorites.length &&
+                 currentFavorites.every( ( id, index ) => id === outFavorites[index] ) )
+                return
+
             this.favoritesSet = true
-            global.settings.set_strv( "favorite-apps", outFavorites )
-            this.favoritesSet = false
+            try {
+                global.settings.set_strv( "favorite-apps", outFavorites )
+            } finally {
+                // Make sure that later redisplays are not deferred after a failed write
+                this.favoritesSet = false
+            }
 
 
             // dev.timer( "setFavorites" )
@@ -657,6 +717,26 @@ export class SessionManager {
                 }
             }, this )
             return newFavorites
+        } catch ( e ) { dev.log( e ) }
+    }
+    /**
+     * Adds an application to the favourites of all worksets (#69). If a workset already has the
+     * application, the application moves to the position. The position is kept in the
+     * "all-environments-app-position" setting, as the default for the next time.
+     * @param {{name: string, displayName: string, icon: string, exec: string}} favApp - The validated application
+     * @param {number} [position] - 1 is the first position, -1 is the last. The last position that was used, if not given.
+     */
+    addFavoriteToAllWorksets( favApp, position = this.activeSession.Options.AllEnvironmentsAppPosition ) {
+        try {
+            this.activeSession.Options.AllEnvironmentsAppPosition = position
+            this.Worksets.forEach( ( workset ) => {
+                const favApps = ( workset.FavApps || [] ).filter( fav => fav.name !== favApp.name )
+                favApps.splice( favoriteInsertIndex( position, favApps.length ), 0, { ...favApp } )
+                workset.FavApps = favApps
+            } )
+            this.saveSession()
+            this.setFavorites()
+            uiUtils.showUserNotification( `'${favApp.displayName || favApp.name}' added to all environments.` )
         } catch ( e ) { dev.log( e ) }
     }
     removeFavorite( workset, appid ) {

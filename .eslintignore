@@ -1,0 +1,5 @@
+node_modules/
+# Local Python virtual environment (git ignores it too)
+venv/
+# End-to-end test output, which has a copy of the extension
+testing/e2e/out/

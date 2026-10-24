@@ -31,22 +31,24 @@ import GObject from "gi://GObject"
 import Clutter from "gi://Clutter"
 
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js"
-import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as util from "resource:///org/gnome/shell/misc/util.js"
 import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 import * as panelMenu from "resource:///org/gnome/shell/ui/panelMenu.js"
-import * as boxpointer from "resource:///org/gnome/shell/ui/boxpointer.js"
 
 //Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
+import * as compat from "./compat.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
 import * as dialogs from "./lib/ui/dialogs.js"
 import * as fileUtils from "./fileUtils.js"
 import * as inputValidator from "./inputValidator.js"
+
+// Name that the app chooser shows in "Will be added to '...' favourites"
+const ALL_ENVIRONMENTS_LABEL = "All Environments"
 
 export var WorksetsIndicator = GObject.registerClass( {
     GTypeName: "WorksetsIndicator"
@@ -110,7 +112,8 @@ export var WorksetsIndicator = GObject.registerClass( {
             Me.session.activeSession.Options,
             function ( optionName, optionValue ) {
 
-                if ( optionName === "AppchooserSha256" )
+                // Internal value, and the last position that "Add app to all environments" used
+                if ( optionName === "AppchooserSha256" || optionName === "AllEnvironmentsAppPosition" )
                     return
 
                 const settingsKeyName = utils.textToKebabCase( optionName )
@@ -143,27 +146,12 @@ export var WorksetsIndicator = GObject.registerClass( {
                     break
                 case "CliSwitch":
                     apply = () => {
-                        const buttonStyles = [
-                            {
-                                label  : "Cancel",
-                                key    : Clutter.KEY_Escape,
-                                action : function () { this.close( " " ) }
-                            },
-                            { label: "Done", default: true }
-                        ]
                         const dialogMsg = "Please enter a valid terminal command.\nUse $CWORKSPACE var for the workspace name\nSet empty to not run anything"
-                        const getWorksetSwitchCLIArgs = new dialogs.ObjectInterfaceDialog(
-                            dialogMsg,
-                            ( returnText ) => {
-                                if ( !returnText ) return
-                                returnText = returnText.trim()
-                                if ( returnText === "" ) return
-                                Me.session.activeSession.Options["CliSwitch"] = returnText
-                                Me.session.applySession()
-                                uiUtils.showUserNotification( "CLI command saved." )
-                            },
-                            true, false, [], [], buttonStyles, Me.session.activeSession.Options["CliSwitch"]
-                        )
+                        this._promptForText( dialogMsg, Me.session.activeSession.Options["CliSwitch"], ( returnText ) => {
+                            Me.session.activeSession.Options["CliSwitch"] = returnText
+                            Me.session.applySession()
+                            uiUtils.showUserNotification( "CLI command saved." )
+                        } )
                     }
                     break
                 default: apply = toggleOpt
@@ -187,6 +175,98 @@ export var WorksetsIndicator = GObject.registerClass( {
             }, this
         )
 
+        // This is an action, not a setting: add an application to the favourites of every environment (#69)
+        const addToAllMenuItem = new popupMenu.PopupImageMenuItem( _( "Add app to all environments" ), "list-add-symbolic" )
+        addToAllMenuItem.connect( "activate", () => this._addApplicationToAllEnvironments() )
+        uiUtils.createTooltip( addToAllMenuItem, {
+            msg   : "Choose an application and its position, to add it to the favourites of all environments",
+            delay : 1400
+        } )
+        this.optionsMenuItems.push( addToAllMenuItem )
+        this.optionsMenuItem.menu.addMenuItem( addToAllMenuItem )
+    }
+
+    /**
+     * Adds an application to the favourites of all environments (#69), in one flow:
+     * the user chooses the application, and then its position.
+     */
+    _addApplicationToAllEnvironments() {
+        this._chooseApplication( ALL_ENVIRONMENTS_LABEL, ( favApp ) => this._promptForFavoritePosition( favApp ) )
+    }
+
+    /**
+     * Asks for the position of an application in the favourites of all environments, and then adds it.
+     * The dialog shows the last position that was used, thus Enter keeps it. Cancel adds nothing.
+     * @param {{name: string, displayName: string, icon: string, exec: string}} favApp - The validated application
+     * @param {string} [defaultText] - Text for the entry. The last position that was used, if not given.
+     */
+    _promptForFavoritePosition( favApp, defaultText = String( Me.session.activeSession.Options.AllEnvironmentsAppPosition ) ) {
+        // The dialog cuts long lines, so keep each line short
+        const dialogMsg = `Position for '${favApp.displayName || favApp.name}'\n`
+            + "in the favourites of all environments.\n"
+            + "1 is the first, 2 is the second.\n"
+            + "-1 is the last, -2 is the second last."
+        this._promptForText( dialogMsg, defaultText, ( returnText ) => {
+            const position = inputValidator.InputValidator.validateFavoritePosition( returnText )
+            if ( position === null ) {
+                uiUtils.showUserNotification( "The position must be a whole number, for example 1 or -1." )
+                this._promptForFavoritePosition( favApp, returnText )
+                return
+            }
+            Me.session.addFavoriteToAllWorksets( favApp, position )
+        }, { selectAll: true } )
+    }
+
+    /**
+     * Shows a dialog that asks the user for a line of text.
+     * @param {string} message - The text above the text entry
+     * @param {string} defaultText - The text in the entry when the dialog opens
+     * @param {function(string): void} onText - Called with the trimmed text when the user selects Done and the text is not empty
+     * @param {object} [options] - Options
+     * @param {boolean} [options.selectAll=false] - Select the default text, so that typed text replaces it
+     */
+    _promptForText( message, defaultText, onText, { selectAll = false } = {} ) {
+        const buttonStyles = [
+            {
+                label  : "Cancel",
+                key    : Clutter.KEY_Escape,
+                action : function () { this.close( " " ) }
+            },
+            { label: "Done", default: true }
+        ]
+        const dialog = new dialogs.ObjectInterfaceDialog(
+            message,
+            ( returnText ) => {
+                const text = returnText?.trim()
+                if ( text ) onText( text )
+            },
+            true, false, [], [], buttonStyles, defaultText
+        )
+        if ( selectAll ) dialog.stEntryUText?.clutter_text.set_selection( 0, -1 )
+    }
+
+    /**
+     * Opens the application chooser and gives the chosen application to a callback.
+     * @param {string} targetName - Name that the chooser shows in "Will be added to '...' favourites"
+     * @param {function({name: string, displayName: string, icon: string, exec: string}): void} onChosen - Called with the validated application
+     */
+    _chooseApplication( targetName, onChosen ) {
+        utils.spawnWithCallback(
+            null,
+            [fileUtils.APP_CHOOSER_EXEC(), "-w", targetName],
+            GLib.get_environ(),
+            0,
+            null,
+            ( resource ) => {
+                try {
+                    if ( !resource ) return
+                    // S14: Validate FavApp from untrusted subprocess output
+                    const favApp = inputValidator.InputValidator.validateFavApp( JSON.parse( resource ) )
+                    if ( favApp === null ) return
+                    onChosen( favApp )
+                } catch ( e ) { dev.log( e ) }
+            }
+        )
     }
     _buildMenu() {
         try {
@@ -253,7 +333,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             // );
 
             // Orient menu
-            const reverseMenu = Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED
+            const reverseMenu = Me.gExtensions.dash2panelActive()
                 ? true : Me.session.activeSession.Options.ReverseMenu
             if ( reverseMenu ) {
                 this.menu.addMenuItem( this.viewSection )
@@ -413,7 +493,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                             duration         : 250,
                             mode             : Clutter.AnimationMode.EASE_OUT_EXPO,
                         } )
-                        if ( pass ) menuItem.worksetPopupMenu.menu.close( boxpointer.PopupAnimation.FULL )
+                        if ( pass ) menuItem.worksetPopupMenu.menu.close( compat.menuAnimation() )
                         // Wait for the close animation
                         Me.worksetsIndicator.signals.add( GLib.timeout_add( null, 100, function () { wspopupMenu.destroy(); return false } ) )
                         wspopupMenu.menuItem.worksetPopupMenu = null
@@ -568,7 +648,7 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             menuItem.bgMenuButton.clickSignalId = menuItem.bgMenuButton.connect( "activate", () => {
                 Me.session.setWorksetBackgroundImage( menuItem.workset, btnDarkMode.viewingDarkMode )
-                this.menu.itemActivated( boxpointer.PopupAnimation.FULL )
+                this.menu.itemActivated( compat.menuAnimation() )
             } )
 
             let updateBackgroundStyle = ( style, menuItem ) => {
@@ -618,27 +698,13 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.infoMenuButton.setOrnament( popupMenu.Ornament.DOT )
             let addApps = () => {
                 this.menu.toggle()
-                utils.spawnWithCallback(
-                    null,
-                    [fileUtils.APP_CHOOSER_EXEC(), "-w", menuItem.workset.WorksetName],
-                    GLib.get_environ(),
-                    0,
-                    null,
-                    ( resource ) => {
-                        try {
-                            if ( !resource ) return
-                            let newFav = JSON.parse( resource )
-                            // S14: Validate FavApp from untrusted subprocess output
-                            newFav = inputValidator.InputValidator.validateFavApp( newFav )
-                            if ( newFav === null ) return
-                            Me.session.Worksets
-                                .filter( w => w.WorksetName == menuItem.workset.WorksetName )[0]
-                                .FavApps.push( newFav )
-                            Me.session.saveSession()
-                            Me.session.setFavorites()
-                        } catch ( e ) { dev.log( e ) }
-                    }
-                )
+                this._chooseApplication( menuItem.workset.WorksetName, ( newFav ) => {
+                    Me.session.Worksets
+                        .filter( w => w.WorksetName == menuItem.workset.WorksetName )[0]
+                        .FavApps.push( newFav )
+                    Me.session.saveSession()
+                    Me.session.setFavorites()
+                } )
             }
             uiUtils.createIconButton(
                 menuItem.infoMenuButton,
@@ -715,7 +781,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                     mode             : Clutter.AnimationMode.EASE_OUT_EXPO,
                 } )
             } else {
-                let angle = ( Me.gExtensions.dash2panelSettings() && Me.gExtensions.dash2panel()?.state === extensionUtils.ExtensionState.ENABLED )
+                let angle = ( Me.gExtensions.dash2panelSettings() && Me.gExtensions.dash2panelActive() )
                     ? -90 : 90
                 menuItem._triangle.ease( {
                     rotation_angle_z : angle,
@@ -723,7 +789,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                     mode             : Clutter.AnimationMode.EASE_OUT_EXPO,
                 } )
                 menuItem.isShowing = true
-                viewArea.open( boxpointer.PopupAnimation.FULL )
+                viewArea.open( compat.menuAnimation() )
                 menuItem.worksetPopupMenu.show()
                 this.optionsMenuItem.hide()
             }

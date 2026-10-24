@@ -1,6 +1,7 @@
 {
 	"scripts": {
-		"lintfix": "eslint . --fix"
+		"lintfix": "eslint . --fix",
+		"test:e2e": "bash testing/e2e/run.sh"
 	},
 	"dependencies": {
 		"eslint": "^8.56.0"

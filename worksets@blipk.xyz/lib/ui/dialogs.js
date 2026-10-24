@@ -424,7 +424,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     this._propertyBoxes[i] = new St.BoxLayout( this.propertyBoxStyle[i] )
                     if ( this.propertyIconStyle[i] != undefined && this.propertyIconStyle[i] != {} ) {
                         this._propertyBoxes[i].propertyBoxStNameIcon = new St.Icon( this.propertyIconStyle[i] )
-                        this._propertyBoxes[i].add_child( this._propertyBoxes[i].propertyBoxStNameIcon, this.propertyIconStyle[i] )
+                        this._propertyBoxes[i].add_child( this._propertyBoxes[i].propertyBoxStNameIcon )
                     }
 
                     Array( this._propertyBoxes[i] ).map( b => {

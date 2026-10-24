@@ -27,6 +27,7 @@
 // External imports
 import St from "gi://St"
 import GLib from "gi://GLib"
+import GObject from "gi://GObject"
 import Cogl from "gi://Cogl"
 import Clutter from "gi://Clutter"
 import GdkPixbuf from "gi://GdkPixbuf"
@@ -74,11 +75,12 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
         parentItem.iconButtons.push( iconButton )
 
         iconButton.focus = false
+        // Clutter does not let enter and leave event handlers stop an event, and it warns when they try
         iconButton.leaveEvent = iconButton.connect( "leave-event", () => {
-            iconButton.focus = false; iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_STOP
+            iconButton.focus = false; iconButton.icon.icon_name = iconNameURI; return Clutter.EVENT_PROPAGATE
         } )
         iconButton.enterEvent = iconButton.connect( "enter-event", () => {
-            if ( alternateIconName ) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_STOP
+            if ( alternateIconName ) iconButton.icon.icon_name = alternateIconName; return Clutter.EVENT_PROPAGATE
         } )
         iconButton.pressEvent = iconButton.connect( "button-press-event", () => { iconButton.focus = true; return Clutter.EVENT_STOP } )
         iconButton.releaseEvent = iconButton.connect( "button-release-event", () => {
@@ -87,6 +89,13 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
         parentItem.iconsButtonsPressIds.push( [iconButton.pressEvent,
             iconButton.releaseEvent,
             iconButton.leaveEvent] )
+        // When the parent is destroyed while the pointer is on the button, Clutter can send a leave
+        // event after the icon is destroyed. The handlers must not change the icon after that.
+        // Some callers disconnect a handler themselves, for example the leave handler.
+        iconButton.connect( "destroy", () => {
+            for ( const handlerId of [iconButton.enterEvent, iconButton.leaveEvent, iconButton.pressEvent, iconButton.releaseEvent] )
+                if ( GObject.signal_handler_is_connected( iconButton, handlerId ) ) iconButton.disconnect( handlerId )
+        } )
         parentItem.destroyIconButtons = function () {
             parentItem.iconButtons.forEach( function ( iconButton ) {
                 iconButton.destroy?.()
@@ -99,6 +108,9 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
 }
 
 // Notifications - Gnome Notification - Or a Tooltip that overlays the screen
+const MILLISECONDS_PER_SECOND = 1000
+const DEFAULT_FADE_SECONDS = 1.4
+// The notification labels that are on the screen now (also while they fade out)
 export let messages = []
 export function showUserNotification( input, overviewMessage = false, fadeTime = 2.9 ) {
     dev.log( "Notification", input )
@@ -125,26 +137,52 @@ export function showUserNotification( input, overviewMessage = false, fadeTime =
     return label
 }
 
+/**
+ * Removes a notification label, at once or after it fades out.
+ * @param {St.Label} label - A label from showUserNotification()
+ * @param {number} [fadeTime] - Fade time in seconds. 0 or no value removes the label at once.
+ */
 export function removeUserNotification( label, fadeTime ) {
-    if ( !label ) return
+    // A label that is not in messages is already removed (and destroyed)
+    if ( !label || !messages.includes( label ) ) return
     if ( !fadeTime ) {
-        Main.uiGroup.remove_child( label )
-        messages = messages.filter( item => item != label )
-        if ( label.attachedTo ) label.attachedTo.notificationLabel = null
-        label = null
-    } else {
-        label.ease( {
-            opacity    : 0,
-            time       : fadeTime || 1.4,
-            transition : "easeOutQuad",
-            onComplete : () => {
-                Main.uiGroup.remove_child( label )
-                messages = messages.filter( item => item != label )
-                if ( label.attachedTo ) label.attachedTo.notificationLabel = null
-                label = null
-            }
-        } )
+        destroyUserNotification( label )
+        return
     }
+    // A new ease of the opacity replaces a fade that is in progress
+    label.ease( {
+        opacity    : 0,
+        duration   : fadeTime * MILLISECONDS_PER_SECOND,
+        mode       : Clutter.AnimationMode.EASE_OUT_QUAD,
+        onComplete : () => destroyUserNotification( label ),
+    } )
+}
+
+/**
+ * Stops the fade of a notification label and destroys it.
+ * @param {St.Label} label - A label from showUserNotification()
+ */
+function destroyUserNotification( label ) {
+    messages = messages.filter( item => item !== label )
+    if ( label.attachedTo?.notificationLabel === label ) label.attachedTo.notificationLabel = null
+    label.remove_all_transitions()
+
+    if ( label.has_allocation() ) {
+        label.destroy()
+        return
+    }
+    // The stage keeps a label that has no allocation yet in its list of pending relayouts, and
+    // allocates it also after it is removed or destroyed, which makes St and Clutter log criticals.
+    // This occurs when a notification replaces another one at once. Thus hide the label, and destroy
+    // it after its first allocation.
+    label.opacity = 0
+    const allocationId = label.connect( "notify::allocation", () => {
+        label.disconnect( allocationId )
+        GLib.idle_add( GLib.PRIORITY_DEFAULT_IDLE, () => {
+            label.destroy()
+            return GLib.SOURCE_REMOVE
+        } )
+    } )
 }
 export function removeAllUserNotifications( fadeTime ) {
     messages.forEach( function ( message, i ) {
@@ -160,11 +198,20 @@ export function createTooltip( widget, tooltip ) {
         if ( widget.tooltipEnterEvent ) widget.disconnect( widget.tooltipEnterEvent )
         if ( widget.tooltipLeaveEvent ) widget.disconnect( widget.tooltipLeaveEvent )
         if ( widget.tooltipPressEvent ) widget.disconnect( widget.tooltipPressEvent )
+        if ( widget.tooltipDestroyEvent ) widget.disconnect( widget.tooltipDestroyEvent )
         if ( widget.notificationLabel ) {
             removeUserNotification( widget.notificationLabel, 0.1 )
             widget.notificationLabel = false
             widget.hovering = false
         }
+
+        // Stop the tooltip timers and remove the tooltip when the widget is destroyed
+        widget.tooltipDestroyEvent = widget.connect( "destroy", () => {
+            widget.hovering = false
+            if ( widget._tooltipTimerId ) { GLib.Source.remove( widget._tooltipTimerId ); widget._tooltipTimerId = 0 }
+            if ( widget._tooltipDisappearId ) { GLib.Source.remove( widget._tooltipDisappearId ); widget._tooltipDisappearId = 0 }
+            removeUserNotification( widget.notificationLabel )
+        } )
 
         widget.tooltipEnterEvent = widget.connect( "enter_event", () => {
             widget.hovering = true
@@ -179,9 +226,11 @@ export function createTooltip( widget, tooltip ) {
                     widget.notificationLabel = showUserNotification(
                         widget.tooltip.msg, widget.tooltip.overviewMessage || false, widget.tooltip.fadeTime || 0
                     )
-                    widget.notificationLabel.attachedTo = widget
+                    // An overview message is a GNOME notification and has no label
+                    if ( widget.notificationLabel ) widget.notificationLabel.attachedTo = widget
                 }
                 // Make sure they're eventually removed for any missed cases
+                if ( widget._tooltipDisappearId ) GLib.Source.remove( widget._tooltipDisappearId )
                 widget._tooltipDisappearId = GLib.timeout_add(
                     null,
                     widget.tooltip.disappearTime || 4000,
@@ -203,7 +252,7 @@ export function createTooltip( widget, tooltip ) {
             widget.hovering = false
             if ( widget._tooltipTimerId ) { GLib.Source.remove( widget._tooltipTimerId ); widget._tooltipTimerId = 0 }
             if ( widget.notificationLabel )
-                removeUserNotification( widget.notificationLabel, widget.tooltip.leaveFadeTime || 1.4 )
+                removeUserNotification( widget.notificationLabel, widget.tooltip.leaveFadeTime || DEFAULT_FADE_SECONDS )
             //return Clutter.EVENT_STOP;
         } )
 

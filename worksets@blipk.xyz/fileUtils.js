@@ -52,6 +52,24 @@ export const RES_DIR = () => GLib.build_pathv( "/", [INSTALL_DIR(), "res"] )
 export const CONF_DIR = () => GLib.build_pathv( "/", [USER_CONF_DIR, Me.uuid] )
 export const APP_CHOOSER_EXEC = () => GLib.build_filenamev( [INSTALL_DIR(), "lib", "ui", "appChooser.js"] )
 
+/**
+ * Converts a local path or a URI (for example the GNOME "picture-uri" setting) to a local path.
+ * Escaped characters such as "%20" are decoded.
+ * @param {string} pathOrUri - A local path, or a URI such as "file:///home/user/My%20Wallpaper.png"
+ * @returns {string} The local path, or "" if the value is empty or is not a local file
+ */
+export const uriToPath = ( pathOrUri ) => {
+    if ( !pathOrUri ) return ""
+    return Gio.File.new_for_commandline_arg( pathOrUri ).get_path() ?? ""
+}
+
+/**
+ * Converts a local path to a "file://" URI with correct escaping.
+ * @param {string} path - A local path
+ * @returns {string} The URI for the path
+ */
+export const pathToUri = ( path ) => Gio.File.new_for_path( path ).get_uri()
+
 export function checkExists( path ) {
     let result = false
     if ( typeof path == "string" ) {

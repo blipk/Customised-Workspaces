@@ -60,6 +60,12 @@
       <summary>Grayscale Icon</summary>
       <description>Change the panel/dash icon to be grayscale</description>
     </key>
+    <key name="all-environments-app-position" type="i">
+      <range min="-100" max="100"/>
+      <default>-1</default>
+      <summary>Last position for apps added to all environments</summary>
+      <description>The last position that "Add app to all environments" used. The position dialog of that action shows it first. 1 is the first position and 2 is the second position. -1 is the last position and -2 is the second last position.</description>
+    </key>
     <key name="favorites-prototype" type="s">
       <default>"[{\"name\": \"org.gnome.Terminal.desktop\", \"displayName\": \"Terminal\", \"icon\": \"org.gnome.Terminal\", \"exec\": \"gnome-terminal\" }]"</default>
       <summary>Object represting the current favorite apps on the panel</summary>

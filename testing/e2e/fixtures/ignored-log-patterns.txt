@@ -1,0 +1,8 @@
+# GNOME Shell log lines that do not come from the extension, but from the isolated test session.
+# run.sh does not count a warning line that matches one of these extended regular expressions.
+# Lines that start with "#" and empty lines are ignored.
+
+# The private D-Bus session has no systemd user instance
+GnomeDesktop-WARNING \*\*: .*Could not create transient scope
+# The private D-Bus session has no PipeWire
+xdg-desktop-portal-WARNING \*\*: .*Failed to connect to PipeWire

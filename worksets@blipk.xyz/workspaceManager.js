@@ -32,7 +32,6 @@ import Shell from "gi://Shell"
 
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 // import * as workspace from "resource:///org/gnome/shell/ui/workspace.js"
-import * as extensionUtils from "resource:///org/gnome/shell/misc/extensionUtils.js"
 
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
@@ -316,12 +315,11 @@ export class WorkspaceManager {
             if ( Me.session.activeSession.Options.IsolateWorkspaces ) {
                 // Defer to isolaters in other extensions
                 const hasDash2Panel = Boolean( Me.gExtensions.dash2panel() ) && Boolean( Me.gExtensions.dash2panelSettings() )
-                const enabledDash2Panel = hasDash2Panel && Me.gExtensions.dash2panel().state === extensionUtils.ExtensionState.ENABLED
+                const enabledDash2Panel = hasDash2Panel && Me.gExtensions.dash2panelActive()
 
                 const hasDash2Dock = Boolean( Me.gExtensions.dash2dock() ) && Boolean( Me.gExtensions.dash2dockSettings() )
-                const enabledDash2Dock = hasDash2Dock && Me.gExtensions.dash2dock().state === extensionUtils.ExtensionState.ENABLED
+                const enabledDash2Dock = hasDash2Dock && Me.gExtensions.dash2dockActive()
 
-                // The .state check above doesn't actually work as it's held on Main.extensionManager
                 // dev.log(
                 //     `hasDash2Panel ${hasDash2Panel}`,
                 //     `enabledDash2Panel ${enabledDash2Panel}`,

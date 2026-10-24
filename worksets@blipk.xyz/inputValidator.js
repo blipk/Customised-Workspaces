@@ -44,6 +44,7 @@ const MAX_PATH_LENGTH = 4096
 const MAX_FAVAPPS_COUNT = 100
 const MAX_WORKSETS_COUNT = 50
 const MAX_IMAGE_FILE_SIZE = 524288000 // 500MB for HDR wallpapers
+const DEFAULT_FAVORITE_POSITION = -1 // Last position, the same as the schema default
 
 // Regex patterns
 // eslint-disable-next-line no-control-regex
@@ -118,6 +119,36 @@ export class InputValidator {
             return fallback
         }
         return value
+    }
+
+    /**
+     * Validates a whole number and clamps it to a range.
+     * @param {number|string} value - The value, as a number or as text such as "-2"
+     * @param {string} fieldName - Name of the field for the log
+     * @param {number} min - Smallest permitted value
+     * @param {number} max - Largest permitted value
+     * @param {number|null} fallback - Value to return if the value is not a whole number
+     * @returns {number|null} The value in the range, or the fallback
+     */
+    static safeInteger ( value, fieldName, min, max, fallback ) {
+        const number = typeof value === "string" && /^\s*[-+]?\d+\s*$/.test( value ) ? Number( value ) : value
+        if ( !Number.isInteger( number ) ) {
+            dev.alwaysLog( `InputValidator: '${fieldName}' expected whole number, got '${value}', using fallback` )
+            return fallback
+        }
+        return Math.min( Math.max( number, min ), max )
+    }
+
+    /**
+     * Validates the position for apps that are added to all environments.
+     * @param {number|string} value - The position, as a number or as text
+     * @param {number|null} [fallback=null] - Value to return if the position is not a whole number
+     * @returns {number|null} The position, clamped to the permitted range, or the fallback
+     */
+    static validateFavoritePosition ( value, fallback = null ) {
+        return InputValidator.safeInteger(
+            value, "AllEnvironmentsAppPosition", -MAX_FAVAPPS_COUNT, MAX_FAVAPPS_COUNT, fallback
+        )
     }
 
     static safeEnum ( value, fieldName, allowedValues, fallback ) {
@@ -517,6 +548,13 @@ export class InputValidator {
         if ( "CliSwitch" in options ) {
             sanitized.CliSwitch = InputValidator.safeString(
                 options.CliSwitch, "Options.CliSwitch", MAX_EXEC_LENGTH, ""
+            )
+        }
+
+        // AllEnvironmentsAppPosition -- integer option
+        if ( "AllEnvironmentsAppPosition" in options ) {
+            sanitized.AllEnvironmentsAppPosition = InputValidator.validateFavoritePosition(
+                options.AllEnvironmentsAppPosition, DEFAULT_FAVORITE_POSITION
             )
         }
 
