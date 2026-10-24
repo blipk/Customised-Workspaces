@@ -299,23 +299,19 @@ export class SignalHandler {
      * @returns {number|undefined} The handler ID or the source ID
      */
     add( target, signal = null, fn = null ) {
-        try {
-            if ( typeof target === "number" ) {
-                if ( this._sources.size >= SOURCE_PRUNE_SIZE ) this._pruneCompletedSources()
-                this._sources.add( target )
-                return target
-            }
-            const handlerId = target.connect( signal, fn )
-            this._connections.push( [target, handlerId] )
-            return handlerId
-        } catch ( e ) { dev.log( e ) }
+        if ( typeof target === "number" ) {
+            if ( this._sources.size >= SOURCE_PRUNE_SIZE ) this._pruneCompletedSources()
+            this._sources.add( target )
+            return target
+        }
+        const handlerId = target.connect( signal, fn )
+        this._connections.push( [target, handlerId] )
+        return handlerId
     }
 
     disconnectAll() {
         for ( const [target, handlerId] of this._connections ) {
-            try {
-                target.disconnect( handlerId )
-            } catch ( e ) { dev.log( e ) }
+            target.disconnect( handlerId )
         }
         this._connections = []
 
