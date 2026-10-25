@@ -43,6 +43,7 @@ import * as workspacesView from "resource:///org/gnome/shell/ui/workspacesView.j
 // Internal imports
 import { WorksetsInstance as Me } from "./extension.js"
 import * as dev from "./dev.js"
+import * as compat from "./compat.js"
 import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
 import * as worksetBackgrounds from "./worksetBackgrounds.js"
@@ -102,11 +103,12 @@ export class WorkspaceViewManager {
 
             // Keep track of the workspace switch animation groups, for gestures and switches from the desktop.
             // WorkspaceGroup uses a constructor, thus _createBackground() is the first method that has the workspace.
+            // GNOME Shell 47 and earlier have no _createBackground() and make the background in _init().
             this.injectionHandler.add(
-                workspaceAnimation.WorkspaceGroup.prototype, "_createBackground",
+                workspaceAnimation.WorkspaceGroup.prototype, compat.workspaceGroupBackgroundMethod,
                 ( originalMethod ) =>
-                    function () {
-                        originalMethod.call( this )
+                    function ( ...args ) {
+                        originalMethod.call( this, ...args )
                         if ( !this._workspace )
                             return
                         const viewManager = Me.workspaceViewManager

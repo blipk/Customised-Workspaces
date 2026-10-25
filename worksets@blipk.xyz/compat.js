@@ -31,21 +31,57 @@
  */
 
 // External imports
+import Clutter from "gi://Clutter"
 import * as Main from "resource:///org/gnome/shell/ui/main.js"
 import * as Config from "resource:///org/gnome/shell/misc/config.js"
 import * as boxpointer from "resource:///org/gnome/shell/ui/boxpointer.js"
+import * as workspaceAnimation from "resource:///org/gnome/shell/ui/workspaceAnimation.js"
 import { ExtensionState } from "resource:///org/gnome/shell/misc/extensionUtils.js"
 
 /** First GNOME Shell version without Meta.Background.set_file(). Wallpapers must be loaded into textures. */
 const BACKGROUND_TEXTURES_SHELL_VERSION = 51
 /** First GNOME Shell version where PopupMenu.open(), close() and itemActivated() take a params object. */
 const MENU_PARAMS_SHELL_VERSION = 51
+/** First GNOME Shell version where St.BoxLayout has the orientation property instead of vertical. */
+const BOX_ORIENTATION_SHELL_VERSION = 48
+/** First GNOME Shell version where St.ImageContent.set_data() takes a Cogl.Context as its first argument. */
+const IMAGE_CONTEXT_SHELL_VERSION = 48
 
 /** Major version of the GNOME Shell that runs the extension, for example 51 for "51.1". */
 export const SHELL_MAJOR_VERSION = Number.parseInt( Config.PACKAGE_VERSION.split( "." )[0], 10 )
 
 /** True when wallpapers must be decoded into a texture for Meta.Background.set_texture(). */
 export const needsBackgroundTextures = SHELL_MAJOR_VERSION >= BACKGROUND_TEXTURES_SHELL_VERSION
+
+/**
+ * Makes the St.BoxLayout constructor properties for a vertical box.
+ * GNOME Shell 47 and earlier take { vertical }. GNOME Shell 48 and later take { orientation }.
+ * @returns {object} The properties for the GNOME Shell version that runs the extension
+ */
+export const verticalBox = () => SHELL_MAJOR_VERSION >= BOX_ORIENTATION_SHELL_VERSION
+    ? { orientation: Clutter.Orientation.VERTICAL }
+    : { vertical: true }
+
+/**
+ * Calls St.ImageContent.set_data() with the arguments for the GNOME Shell version that runs the extension.
+ * GNOME Shell 47 and earlier inherit it from Clutter.Image, without the Cogl.Context argument.
+ * @param {St.ImageContent} image - The image content
+ * @param {...*} args - The pixels, pixel format, width, height and rowstride
+ * @returns {boolean} True if the data was set
+ */
+export const setImageData = ( image, ...args ) => {
+    if ( SHELL_MAJOR_VERSION < IMAGE_CONTEXT_SHELL_VERSION ) return image.set_data( ...args )
+    const coglContext = global.stage.context.get_backend().get_cogl_context()
+    return image.set_data( coglContext, ...args )
+}
+
+/**
+ * Name of the first workspaceAnimation.WorkspaceGroup method that has the workspace and the background.
+ * GNOME Shell 47 and earlier make the background in _init(), later versions in _createBackground().
+ */
+export const workspaceGroupBackgroundMethod = workspaceAnimation.WorkspaceGroup.prototype._createBackground
+    ? "_createBackground"
+    : "_init"
 
 /**
  * Makes the animation argument for PopupMenu.open(), PopupMenu.close() and PopupMenuBase.itemActivated().

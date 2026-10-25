@@ -13,6 +13,7 @@ import * as shellEntry from "resource:///org/gnome/shell/ui/shellEntry.js"
 
 // Internal imports
 import * as dev from "../../dev.js"
+import * as compat from "../../compat.js"
 import * as utils from "../../utils.js"
 import * as fileUtils from "../../fileUtils.js"
 import * as uiUtils from "./uiUtils.js"
@@ -534,7 +535,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                             //Vertical box area for each subobject property
                             this._propertyBoxes[i]._boolBox[n] = new St.BoxLayout( {
-                                orientation : Clutter.Orientation.VERTICAL,
+                                ...compat.verticalBox(),
                                 reactive    : true,
                                 track_hover : true,
                                 x_expand    : true,

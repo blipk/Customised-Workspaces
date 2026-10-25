@@ -40,6 +40,7 @@ import * as popupMenu from "resource:///org/gnome/shell/ui/popupMenu.js"
 // Internal imports
 import { WorksetsInstance as Me } from "../../extension.js"
 import * as dev from "../../dev.js"
+import * as compat from "../../compat.js"
 import * as inputValidator from "../../inputValidator.js"
 
 //For adding IconButtons on to PanelMenu.MenuItem buttons or elsewhere
@@ -300,14 +301,13 @@ export function setImage( parent, imgFilePath = "" ) {
             const { width, height } = pixbuf
             if ( height == 0 ) return
 
-            const coglContext = global.stage.context.get_backend().get_cogl_context()
             image = new St.ImageContent( {
                 preferred_width  : width,
                 preferred_height : height
             } )
 
-            let success = image.set_data(
-                coglContext,
+            let success = compat.setImageData(
+                image,
                 pixbuf.get_pixels(),
                 pixbuf.get_has_alpha()
                     ? Cogl.PixelFormat.RGBA_8888

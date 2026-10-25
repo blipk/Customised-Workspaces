@@ -564,7 +564,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             viewArea.addMenuItem( menuItem.bgMenuButton )
 
             let backgroundStyleOptionsBox = new St.BoxLayout( {
-                orientation : Clutter.Orientation.VERTICAL,
+                ...compat.verticalBox(),
                 reactive    : true,
                 track_hover : true,
                 x_expand    : true,
@@ -580,7 +580,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             // );
 
             let backgroundOtherOptionsBox = new St.BoxLayout( {
-                orientation : Clutter.Orientation.VERTICAL,
+                ...compat.verticalBox(),
                 reactive    : true,
                 track_hover : true,
                 x_expand    : true,
