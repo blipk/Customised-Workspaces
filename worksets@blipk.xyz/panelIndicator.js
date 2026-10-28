@@ -110,7 +110,7 @@ export var WorksetsIndicator = GObject.registerClass( {
         // Sub menu for option switches
         utils.forEachEntry(
             Me.session.activeSession.Options,
-            function ( optionName, optionValue ) {
+            ( optionName, optionValue ) => {
 
                 // Internal value, and the last position that "Add app to all environments" used
                 if ( optionName === "AppchooserSha256" || optionName === "AllEnvironmentsAppPosition" )
@@ -483,7 +483,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             menuItem.worksetPopupMenu.icon.icon_name = "org.gnome.tweaks"
             menuItem.worksetPopupMenu.actor.add_style_class_name( "panel-menu" )
             menuItem.worksetPopupMenu.menuItem = menuItem
-            menuItem.worksetPopupMenu.menu.bye = function ( pass = false ) {
+            menuItem.worksetPopupMenu.menu.bye = function bye ( pass = false ) {
                 try {
                     Me.worksetsIndicator.popUpMenus.forEach( wspopupMenu => {
                         //Main.uiGroup.remove_child(wspopupMenu.actor);
@@ -495,7 +495,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                         } )
                         if ( pass ) menuItem.worksetPopupMenu.menu.close( compat.menuAnimation() )
                         // Wait for the close animation
-                        Me.worksetsIndicator.signals.add( GLib.timeout_add( null, 100, function () { wspopupMenu.destroy(); return false } ) )
+                        Me.worksetsIndicator.signals.add( GLib.timeout_add( null, 100, function t () { wspopupMenu.destroy(); return false } ) )
                         wspopupMenu.menuItem.worksetPopupMenu = null
                     }, this )
 
@@ -504,7 +504,7 @@ export var WorksetsIndicator = GObject.registerClass( {
                     // Wait for the close animation, only if a new view area menu has not been requested
                     if ( !pass ) Me.worksetsIndicator.signals.add(
                         GLib.timeout_add(
-                            null, 100, function () {
+                            null, 100, function t () {
                                 Me.worksetsIndicator.optionsMenuItem.show(); return false
                             }
                         )
@@ -653,7 +653,10 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             let updateBackgroundStyle = ( style, menuItem ) => {
                 backgroundStyleOptionsBox.iconButtons.forEach( ( iconButton ) => {
-                    if ( iconButton.tooltip ) iconButton.style_class = ( iconButton.tooltip.msg.includes( style ) ) ? "active-icon" : "worksets-icon-button"
+                    if ( !iconButton.tooltip ) return
+                    iconButton.style_class = iconButton.tooltip.msg.includes( style )
+                        ? "active-icon"
+                        : "worksets-icon-button"
                 } )
 
                 if ( btnDarkMode.viewingDarkMode ) {
@@ -719,7 +722,7 @@ export var WorksetsIndicator = GObject.registerClass( {
             viewArea.addMenuItem( menuItem.infoMenuButton )
 
             // Favorite Apps entries
-            menuItem.workset.FavApps.forEach( function ( favApp, i ) {
+            menuItem.workset.FavApps.forEach( function f ( favApp, i ) {
                 let { name, displayName, exec, icon } = favApp
                 icon = icon || "web-browser-sybmolic"
                 menuItem.favAppsMenuItems[i] = new popupMenu.PopupImageMenuItem( _( displayName ), icon )
@@ -801,7 +804,7 @@ export var WorksetsIndicator = GObject.registerClass( {
 
             // Ensure option switches match settings
             this._syncingOptions = true
-            this.optionsMenuItems.forEach( function ( menuItem, i ) {
+            this.optionsMenuItems.forEach( function f ( menuItem, i ) {
                 if ( typeof this.optionsMenuItems[i]._switch !== "undefined" )
                     this.optionsMenuItems[i]._switch.state = Me.session.activeSession.Options[this.optionsMenuItems[i].optionName]
             }, this )
@@ -824,7 +827,7 @@ export var WorksetsIndicator = GObject.registerClass( {
         return this.historySection._getMenuItems().concat( this.favoritesSection._getMenuItems() ).concat( this.defaultSection._getMenuItems() )
     }
     _worksetMenuItemsRemoveAll() {
-        this._worksetMenuItemsGetAll().forEach( function ( mItem ) { if ( mItem.destroyIconButtons ) mItem.destroyIconButtons(); mItem.destroy() } )
+        this._worksetMenuItemsGetAll().forEach( function f ( mItem ) { if ( mItem.destroyIconButtons ) mItem.destroyIconButtons(); mItem.destroy() } )
     }
     _worksetMenuItemMoveToTop( menuItem ) {
         try {

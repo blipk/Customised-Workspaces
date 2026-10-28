@@ -53,13 +53,13 @@ export class WorkspaceIsolator {
 
             // Extend AppSystem to only return applications running on the active workspace
             AppSystem._workspace_isolated_dash_nyuki_get_running = AppSystem.get_running
-            AppSystem.get_running = function () {
+            AppSystem.get_running = function get_running () {
                 let running = AppSystem._workspace_isolated_dash_nyuki_get_running()
                 return running.filter( WorkspaceIsolator.isActiveApp )
             }
             // Extend App's activate to open a new window if no windows exist on the active workspace
             Shell.App.prototype._workspace_isolated_dash_nyuki_activate = Shell.App.prototype.activate
-            Shell.App.prototype.activate = function () {
+            Shell.App.prototype.activate = function activate () {
                 let activeWorkspace = Me.gWorkspaceManager.get_active_workspace()
                 let windows = this.get_windows().filter( w => w.get_workspace().index() == activeWorkspace.index() )
 
@@ -75,7 +75,7 @@ export class WorkspaceIsolator {
             }
             // Extend AppIcon's state change to hide 'running' indicator for applications not on the active workspace
             AppIcon.prototype._workspace_isolated_dash_nyuki__updateRunningStyle = AppIcon.prototype._updateRunningStyle
-            AppIcon.prototype._updateRunningStyle = function () {
+            AppIcon.prototype._updateRunningStyle = function _updateRunningStyle () {
                 if ( WorkspaceIsolator.isActiveApp( this.app ) )
                     this._workspace_isolated_dash_nyuki__updateRunningStyle()
                 else
@@ -124,12 +124,12 @@ export class WorkspaceIsolator {
 }
 
 // Check if an application is on the active workspace
-WorkspaceIsolator.isActiveApp = function ( app ) {
+WorkspaceIsolator.isActiveApp = function isActiveApp ( app ) {
     return app.is_on_workspace( Me.gWorkspaceManager.get_active_workspace() )
 }
 // Refresh dash (debounced)
 WorkspaceIsolator._refreshPending = 0
-WorkspaceIsolator.refresh = function () {
+WorkspaceIsolator.refresh = function refresh () {
     if ( WorkspaceIsolator._refreshPending ) GLib.Source.remove( WorkspaceIsolator._refreshPending )
     WorkspaceIsolator._refreshPending = GLib.timeout_add( GLib.PRIORITY_DEFAULT, 50, () => {
         WorkspaceIsolator._refreshPending = 0
@@ -141,7 +141,7 @@ WorkspaceIsolator.refresh = function () {
         else
             running = AppSystem.get_running()
 
-        running.forEach( function ( app ) {
+        running.forEach( function f ( app ) {
             app.notify( "state" )
         } )
 

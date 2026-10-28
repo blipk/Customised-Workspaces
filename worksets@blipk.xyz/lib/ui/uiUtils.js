@@ -96,8 +96,8 @@ export function createIconButton( parentItem, iconNames, callback, options, tool
             for ( const handlerId of [iconButton.enterEvent, iconButton.leaveEvent, iconButton.pressEvent, iconButton.releaseEvent] )
                 if ( GObject.signal_handler_is_connected( iconButton, handlerId ) ) iconButton.disconnect( handlerId )
         } )
-        parentItem.destroyIconButtons = function () {
-            parentItem.iconButtons.forEach( function ( iconButton ) {
+        parentItem.destroyIconButtons = function destroyIconButtons () {
+            parentItem.iconButtons.forEach( function f ( iconButton ) {
                 iconButton.destroy?.()
             }, this )
             parentItem.iconButtons = []
@@ -185,7 +185,7 @@ function destroyUserNotification( label ) {
     } )
 }
 export function removeAllUserNotifications( fadeTime ) {
-    messages.forEach( function ( message, i ) {
+    messages.forEach( function f ( message, i ) {
         removeUserNotification( message, fadeTime )
     }, this )
 }

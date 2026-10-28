@@ -79,7 +79,7 @@ export function log( ) {
             } else if ( typeof obj === "object" ) {
                 label = "\n@Object |>\n"
                 let seen = new Set()
-                output = JSON.stringify( obj, function ( key, val ) {
+                output = JSON.stringify( obj, ( key, val ) => {
                     if ( val != null && typeof val == "object" ) {
                         if ( seen.has( val ) ) return
                         seen.add( val )
@@ -130,7 +130,7 @@ export function dump( object, objectName ) {
 
     let out = ""
     let seen = new Set()
-    out += JSON.stringify( object, function ( key, val ) {
+    out += JSON.stringify( object, ( key, val ) => {
         if ( val != null && typeof val == "object" ) {
             if ( seen.has( val ) ) return
             seen.add( val )

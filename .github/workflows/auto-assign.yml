@@ -1,0 +1,31 @@
+# Assigns the repository owner to each new or reopened issue and pull request.
+name: "auto-assign"
+
+on:
+  issues:
+    types: [opened, reopened]
+  # pull_request_target gives a write token also for pull requests from forks.
+  # This workflow does not check out or run code from the pull request.
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  auto-assign:
+    name: "Assign owner"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Add assignee"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSIGNEE: "blipk"
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        # The issues API also applies to pull requests.
+        run: |
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/${NUMBER}/assignees" \
+            -f "assignees[]=${ASSIGNEE}"

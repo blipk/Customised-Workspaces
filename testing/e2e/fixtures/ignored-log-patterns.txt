@@ -6,3 +6,6 @@
 GnomeDesktop-WARNING \*\*: .*Could not create transient scope
 # The private D-Bus session has no PipeWire
 xdg-desktop-portal-WARNING \*\*: .*Failed to connect to PipeWire
+# GNOME Shell reads this property when it locks the screen (suite "screen-lock"). GJS warns about the AccountsService
+# introspection data of the system, not about the extension.
+Gjs-WARNING \*\*: .*AccountsService\.User::password-mode does not match return type

@@ -46,6 +46,51 @@ export class WorkspaceManager {
             this.signals = new utils.SignalHandler()
             this.signals.add( global.window_manager, "switch-workspace", this._activeWorkspaceChanged.bind( this ) )
 
+            // GNOME does not remove a workspace that has a "_keepAliveId" (WorkspaceTracker in js/ui/windowManager.js).
+            // GNOME also keeps the ID of its own GLib timer there, and gives that value to GLib.source_remove().
+            // Thus the extension marks its workspaces with "_worksetKeepAlive", and sets "_keepAliveId" only while GNOME checks them.
+            this.injectionHandler = new utils.InjectionHandler()
+            this.injectionHandler.add(
+                Object.getPrototypeOf( Main.wm._workspaceTracker ), "_checkWorkspaces",
+                ( originalMethod ) =>
+                    function checkWorkspaces() {
+                        const keptWorkspaces = this._workspaces.filter( ( workspace ) => workspace._worksetKeepAlive && !workspace._keepAliveId )
+                        keptWorkspaces.forEach( ( workspace ) => { workspace._keepAliveId = true } )
+                        try {
+                            return originalMethod.call( this )
+                        } finally {
+                            keptWorkspaces.forEach( ( workspace ) => { workspace._keepAliveId = 0 } )
+                        }
+                    }
+            )
+
+            // The environments follow their workspaces when Mutter or GNOME adds, removes or reorders workspaces
+            this._mappedWorkspaces = this._allWorkspaces()
+            this._releasedWorksets = null
+            for ( const signal of ["workspace-added", "workspace-removed", "workspaces-reordered", "notify::n-workspaces"] )
+                this.signals.add( Me.gWorkspaceManager, signal, () => this._followWorkspaces() )
+
+            // GNOME inserts a workspace when a window or an application is dropped between the overview thumbnails, and when
+            // a window moves to a workspace before the first one. It adds the new workspace at the end, and moves the windows
+            // from the insert position one workspace up. The workspace objects do not move, thus the environments must move here.
+            const workspaceManager = this
+            this.injectionHandler.add(
+                Object.getPrototypeOf( Main.wm ), "insertWorkspace",
+                ( originalMethod ) =>
+                    function insertWorkspace( pos ) {
+                        const countBefore = Me.gWorkspaceManager.n_workspaces
+                        workspaceManager._insertingWorkspace = true
+                        workspaceManager._switchedWhileInserting = false
+                        try {
+                            originalMethod.call( this, pos )
+                        } finally {
+                            workspaceManager._insertingWorkspace = false
+                            if ( Me.gWorkspaceManager.n_workspaces > countBefore ) workspaceManager._workspaceInserted( pos )
+                            if ( workspaceManager._switchedWhileInserting ) workspaceManager._activeWorkspaceChanged()
+                        }
+                    }
+            )
+
             this.loadDefaults = true
             this.noUpdate = false
 
@@ -57,18 +102,105 @@ export class WorkspaceManager {
     }
     destroy() {
         try {
-            this.switchToWorkspace( 0 )
-            this._workspaceUpdate( true )
-            this.signals.destroy()
+            this._releaseWorkspaces()
+        } catch ( e ) { dev.log( e ) }
+        this.injectionHandler?.destroy()
+        this.signals?.destroy()
+    }
+    /**
+     * Gives all workspaces back to GNOME, which then removes the empty ones (GNOME keeps the active workspace).
+     * GNOME disables the extension at the lock screen, thus the environments of the removed workspaces go after the
+     * last remaining workspace with windows or an environment. Then, when the extension is enabled again, the
+     * environments are still on the workspaces with their windows.
+     */
+    _releaseWorkspaces() {
+        // _workspaceUpdate() would keep the workspaces again
+        this.noUpdate = true
+        this._releasedWorksets = []
+        try {
+            for ( const workspace of this._allWorkspaces() ) delete workspace._worksetKeepAlive
+            // The removals call _followWorkspaces(), which records the environments of the removed workspaces
+            Main.wm._workspaceTracker._checkWorkspaces()
+            this._followWorkspaces()
+
+            const released = this._releasedWorksets.sort( ( a, b ) => a.index - b.index ).map( ( { name } ) => name )
+            if ( released.length === 0 ) return
+            const workspaces = this._allWorkspaces()
+            Me.session.moveCurrentWorksets( ( currents ) => {
+                const lastUsed = workspaces.findLastIndex( ( workspace, i ) =>
+                    currents[i] || workspace.list_windows().some( ( window ) => !window.is_on_all_workspaces() ) )
+                // A used workspace can have no map yet, thus make the list long enough before the insert
+                const padded = Array.from( { length: Math.max( currents.length, lastUsed + 1 ) }, ( _, i ) => currents[i] ?? "" )
+                return padded.toSpliced( lastUsed + 1, 0, ...released )
+            } )
+        } finally {
+            this._releasedWorksets = null
+        }
+    }
+    /**
+     * Moves the current environments of the workspace maps with their workspaces when Mutter or GNOME adds, removes or
+     * reorders workspaces. Mutter does not always emit "workspace-removed" (for example when a fixed number of workspaces
+     * gets smaller), thus this compares the workspace objects with the ones of the last call.
+     * - A workspace keeps its environment when it moves to another position.
+     * - A new workspace at the end gets the environment of its position. A workspace inserted before others gets none.
+     * - The environment of a removed workspace closes. While _releaseWorkspaces() runs, it is recorded instead.
+     * - The environments of positions after the last workspace move with the workspaces before them.
+     */
+    _followWorkspaces() {
+        try {
+            const before = this._mappedWorkspaces
+            const after = this._allWorkspaces()
+            if ( before.length === after.length && before.every( ( workspace, i ) => workspace === after[i] ) ) return
+            this._mappedWorkspaces = after
+
+            Me.session.moveCurrentWorksets( ( currents ) => {
+                const pending = currents.slice( before.length )
+                const lastKnown = after.findLastIndex( ( workspace ) => before.includes( workspace ) )
+                const moved = after.map( ( workspace, i ) => {
+                    const index = before.indexOf( workspace )
+                    if ( index > -1 ) return currents[index] ?? ""
+                    return i > lastKnown ? pending.shift() ?? "" : ""
+                } )
+                before.forEach( ( workspace, i ) => {
+                    if ( !after.includes( workspace ) && currents[i] ) this._releasedWorksets?.push( { index: i, name: currents[i] } )
+                } )
+                return [...moved, ...pending]
+            } )
+            this._queueOverviewRefresh()
         } catch ( e ) { dev.log( e ) }
     }
-    _workspaceUpdate( destroyClean = false ) {
+    /** Refreshes the overview when GNOME Shell is idle, thus after GNOME updated its views for a workspace change. */
+    _queueOverviewRefresh() {
+        if ( this._overviewRefreshId ) return
+        this._overviewRefreshId = this.signals.add( GLib.idle_add( GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._overviewRefreshId = 0
+            Me.workspaceViewManager?.refreshOverview()
+            return GLib.SOURCE_REMOVE
+        } ) )
+    }
+    /** @returns {Array<Meta.Workspace>} All workspaces, in index order */
+    _allWorkspaces() {
+        return Array.from( { length: Me.gWorkspaceManager.n_workspaces }, ( _, i ) => Me.gWorkspaceManager.get_workspace_by_index( i ) )
+    }
+    /**
+     * Moves the current environments from the position of an inserted workspace one position up, as GNOME did with the
+     * windows (see the insertWorkspace() override), and keeps the workspaces at their new positions.
+     * @param {number} position - Position of the inserted workspace
+     */
+    _workspaceInserted( position ) {
+        try {
+            Me.session.moveCurrentWorksets( ( currents ) => currents.toSpliced( position, 0, "" ) )
+            this._workspaceUpdate()
+            this._queueOverviewRefresh()
+        } catch ( e ) { dev.log( e ) }
+    }
+    _workspaceUpdate() {
         if ( this.noUpdate ) return
         try {
             let min_workspaces = 1
 
             let currents = []
-            utils.forEachEntry( Me.session.workspaceMaps, function ( workspaceMapKey, workspaceMapValues, i ) {
+            utils.forEachEntry( Me.session.workspaceMaps, ( workspaceMapKey, workspaceMapValues, i ) => {
                 // Remove any worksets that are set to current on more than one workspace
                 if ( workspaceMapValues.currentWorkset != "" ) {
                     if ( currents.indexOf( workspaceMapValues.currentWorkset ) > -1 ) {
@@ -79,12 +211,9 @@ export class WorkspaceManager {
                 }
 
                 // Minimum workspaces should be one more than the workspace index that the last active workset is on
-                if ( !destroyClean ) {
-                    let index = parseInt( workspaceMapKey.replace( "Workspace", "" ) )
-                    if ( workspaceMapValues.currentWorkset != "" && index > min_workspaces - 2 ) {
-                        min_workspaces = index + 2
-                    }
-
+                let index = parseInt( workspaceMapKey.replace( "Workspace", "" ) )
+                if ( workspaceMapValues.currentWorkset != "" && index > min_workspaces - 2 ) {
+                    min_workspaces = index + 2
                 }
             }, this )
 
@@ -97,7 +226,7 @@ export class WorkspaceManager {
             // Make all workspaces non-persistent
             for ( let i = n_global_workspaces - 1; i >= 0; i-- ) {
                 currentWorkspaces[i] = Me.gWorkspaceManager.get_workspace_by_index( i )
-                currentWorkspaces[i]._keepAliveId = false
+                currentWorkspaces[i]._worksetKeepAlive = false
             }
 
 
@@ -107,7 +236,7 @@ export class WorkspaceManager {
                     currentWorkspaces[i] = Me.gWorkspaceManager.append_new_workspace( false, global.get_current_time() )
 
                 // Make all workspaces persistent again
-                currentWorkspaces[i]._keepAliveId = true
+                currentWorkspaces[i]._worksetKeepAlive = true
             }
 
 
@@ -116,12 +245,17 @@ export class WorkspaceManager {
         } catch ( e ) { dev.log( e ) }
     }
     _activeWorkspaceChanged() {
+        // GNOME can switch workspaces while it inserts one. Wait until the environments moved (see _workspaceInserted()).
+        if ( this._insertingWorkspace ) {
+            this._switchedWhileInserting = true
+            return
+        }
         try {
             this._workspaceUpdate()
             let foundActive = false
             //Loop through worksets and load the one which is set to current
-            Me.session.Worksets.forEach( function ( workset, worksetIndex ) {
-                if ( Me.session.workspaceMaps["Workspace" + this.activeWorkspaceIndex].currentWorkset == workset.WorksetName ) {
+            Me.session.Worksets.forEach( function f ( workset, worksetIndex ) {
+                if ( Me.session.workspaceMap( this.activeWorkspaceIndex ).currentWorkset == workset.WorksetName ) {
                     foundActive = workset.WorksetName
                     Me.session.displayWorkset( Me.session.Worksets[worksetIndex] )
                 }
@@ -142,12 +276,14 @@ export class WorkspaceManager {
             if ( !this.loadDefaults ) return
 
             let found = false
-            Me.session.Worksets.forEach( function ( workset, worksetIndex ) {
-                let map = Me.session.workspaceMaps["Workspace" + this.activeWorkspaceIndex]
+            Me.session.Worksets.forEach( function f ( workset, worksetIndex ) {
+                let map = Me.session.workspaceMap( this.activeWorkspaceIndex )
+                // A default environment that is open on another workspace stays there (see displayWorkset())
                 if ( map.currentWorkset == workset.WorksetName ||
-                    ( map.currentWorkset == "" && map.defaultWorkset == workset.WorksetName ) ) {
+                    ( map.currentWorkset == "" && map.defaultWorkset == workset.WorksetName
+                      && !Me.session.ActiveWorksets.includes( workset.WorksetName ) ) ) {
                     Me.session.displayWorkset( Me.session.Worksets[worksetIndex] )
-                    Me.session.workspaceMaps["Workspace" + this.activeWorkspaceIndex].currentWorkset = workset.WorksetName
+                    Me.session.workspaceMap( this.activeWorkspaceIndex ).currentWorkset = workset.WorksetName
                     found = true
                 }
             }, this )
@@ -162,7 +298,7 @@ export class WorkspaceManager {
             const workspace = Me.gWorkspaceManager.get_workspace_by_index( workspaceIndex )
             const windows = workspace
                 .list_windows()
-                .filter( function ( w ) { return !w.is_skip_taskbar() && !w.is_on_all_workspaces() } )
+                .filter( ( w ) => !w.is_skip_taskbar() && !w.is_on_all_workspaces() )
             return windows
         } catch ( e ) { dev.log( e ) }
     }
@@ -188,6 +324,7 @@ export class WorkspaceManager {
             }
             return Me.session.workspaceMaps["Workspace" + this.activeWorkspaceIndex].currentWorkset
         } catch ( e ) { dev.log( e ) }
+        return null
     }
     set activeWorksetName( workset ) {
         try {
@@ -248,7 +385,7 @@ export class WorkspaceManager {
             const windows = this.getWorkspaceWindows( workspaceIndex )
             let appIDs = []
 
-            windows.forEach( function ( w ) {
+            windows.forEach( function f ( w ) {
                 let id = windowTracker.get_window_app( w ).get_id()
 
                 // Snap installed applications are launched as window backed,
@@ -263,12 +400,12 @@ export class WorkspaceManager {
             }, this )
 
             //remove duplicates from apps with multiple windows
-            appIDs = appIDs.filter( function ( item, pos ) {
+            appIDs = appIDs.filter( ( item, pos ) => {
                 return appIDs.indexOf( item ) === pos
             }, this )
 
             //remove un-apped windows
-            appIDs = appIDs.filter( function ( item, pos ) {
+            appIDs = appIDs.filter( ( item, pos ) => {
                 if ( item.match( "window:" ) ) return false
                 return true
             }, this )
@@ -277,7 +414,7 @@ export class WorkspaceManager {
                 let favApps = global.settings.get_strv( "favorite-apps" )
                 appIDs = appIDs.filter( ( item, pos ) => {
                     let ret = true
-                    favApps.forEach( function ( favItem ) {
+                    favApps.forEach( function f ( favItem ) {
                         if ( item.match( favItem ) ) ret = false
                     }, this )
                     return ret

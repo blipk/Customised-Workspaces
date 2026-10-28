@@ -75,7 +75,7 @@ DCONF_SETTINGS_FILE="$WORK_DIR/dconf-settings"
 WALLPAPER_DIR="$E2E_DIR/fixtures/wallpapers"
 
 # Prepare the isolated home directories
-rm -rf "$WORK_DIR" "$SCREENSHOT_DIR" "$RESULTS_FILE" "$SHELL_LOG" "$DEBUG_LOG"
+rm -rf "$WORK_DIR" "$SCREENSHOT_DIR" "$RESULTS_FILE" "$SHELL_LOG" "$DEBUG_LOG" "$OUTPUT_DIR"/test-window-*.log
 mkdir -p "$(dirname "$EXTENSION_DIR")" "$EXTENSION_CONFIG_DIR" "$WORK_DIR/cache" "$SCREENSHOT_DIR"
 
 cp -r "$REPO_DIR/$EXTENSION_UUID" "$EXTENSION_DIR"
@@ -113,6 +113,9 @@ export WSE2E_RESULTS_FILE="$RESULTS_FILE"
 export WSE2E_SCREENSHOT_DIR="$SCREENSHOT_DIR"
 export WSE2E_WALLPAPER_DIR="$WALLPAPER_DIR"
 export WSE2E_SUITES="$SUITES"
+export WSE2E_OUTPUT_DIR="$OUTPUT_DIR"
+# Test windows (lib/windows.js) connect to the compositor of the test session
+export WSE2E_WAYLAND_DISPLAY="$WAYLAND_DISPLAY_NAME"
 unset DISPLAY WAYLAND_DISPLAY
 
 echo "Running the end-to-end tests in a headless $(gnome-shell --version)"

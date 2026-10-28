@@ -84,7 +84,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
             buttons = ( buttons == null ) ? "Done" : buttons
             let defaults = [{ label: ( buttons ), default: true }] //key: Clutter.KEY_Escape
             buttons = ( typeof buttons == "string" ) ? defaults : buttons
-            buttons.forEach( function ( button, i ) {
+            buttons.forEach( function f ( button, i ) {
                 if ( button.action ) button.action = button.action.bind( this )
                 else if ( button.default ) button.action = () => { this._confirmed = true; this.close() }
                 else button.action = () => { this.close() }
@@ -109,10 +109,10 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
             //Build objects in jsobjectSets from .json files in directory (or multiple - one objectSet of objects per directory)
             if ( !utils.isEmpty( jsobjectsSearchDirectories ) ) {
                 jsobjectsSets = []
-                jsobjectsSearchDirectories.forEach( function ( directory, i ) {
+                jsobjectsSearchDirectories.forEach( function f ( directory, i ) {
                     let childrenFilePropertiesArray = fileUtils.enumarateDirectoryChildren( directory )
                     let tmpObjectsSet = []
-                    childrenFilePropertiesArray.forEach( function ( fileProperties, ii ) {
+                    childrenFilePropertiesArray.forEach( function f ( fileProperties, ii ) {
                         if ( fileProperties.extension === "json" ) {
                             let objectFromDirectoryFile = fileUtils.loadJSObjectFromFile( fileProperties.fullname, directory )
                             tmpObjectsSet.push( objectFromDirectoryFile )
@@ -148,7 +148,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
 
             if ( jsobjectsSets ) {
                 //Build an area for each object set
-                jsobjectsSets.forEach( function ( objectSet, i ) {
+                jsobjectsSets.forEach( function f ( objectSet, i ) {
                     this._objectsSetBoxes[i] = new St.BoxLayout(
                         { style_class: "object-dialog-error-box", y_expand: true, x_expand: true, x_align: Clutter.ActorAlign.CENTER }
                     )
@@ -169,7 +169,7 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
                     let count = 0
                     this._objectsSetBoxes[i]._objectBoxes = []
                     let setDisplayName = "Object Set " + i
-                    objectSet.forEach( function ( object, ii ) {
+                    objectSet.forEach( function f ( object, ii ) {
                         // Create a new line if there are too many objects
                         if ( count == 4 ) {
                             i++
@@ -210,8 +210,8 @@ export var ObjectInterfaceDialog = GObject.registerClass( {
 
                         // Object labels
                         let objectDisplayName = "Object " + ii
-                        Object.keys( object ).forEach( function ( objectkey, objectkeyIndex ) {
-                            objectSetMasks.forEach( function ( objectMask, objectMaskIndex ) {
+                        Object.keys( object ).forEach( function f ( objectkey, objectkeyIndex ) {
+                            objectSetMasks.forEach( function f ( objectMask, objectMaskIndex ) {
                                 if ( objectSetMasks[objectMaskIndex][objectkey] ) {
                                     objectDisplayName = object[objectkey]
                                     setDisplayName = objectSetMasks[objectMaskIndex][objectkey]
@@ -316,6 +316,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
         this.editableObject = editableObject
         //this._unreferencedObjectCopy = JSON.parse( JSON.stringify( editableObject ) )
 
+        this.DIALOG_GROW_TIME = 0.1
 
         try {
             // Initialize dialog with style
@@ -353,7 +354,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
             buttons = ( buttons == null ) ? "Done" : buttons
             defaults = [{ label: ( buttons ), default: true }] //key: Clutter.KEY_Escape
             buttons = ( typeof buttons == "string" ) ? defaults : buttons
-            buttons.forEach( function ( button, i ) {
+            buttons.forEach( function f ( button, i ) {
                 if ( button.action ) button.action = button.action.bind( this )
                 else button.action = this.close.bind( this )
 
@@ -377,7 +378,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
             this.subObjectMasks = Array()
             this.propertyBoxClickCallbacks = Array()
             if ( editableObject ) {
-                utils.forEachEntry( editableObject, function ( key, value, i ) {
+                utils.forEachEntry( editableObject, ( key, value, i ) => {
                     // Options for how to display each property section
                     this.propertyKeys[i] = key
                     this.propertyValues[i] = value
@@ -394,7 +395,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                     this.propertyIconStyle[i] = {}
                     this.subObjectMasks[i] = []
                     this.propertyBoxClickCallbacks[i] = ( () => { dev.log( "Clicked on " + this.propertyDisplayName[i] ) } )
-                    editableProperties.forEach( function ( propertyDisplayOption, index ) {
+                    editableProperties.forEach( function f ( propertyDisplayOption, index ) {
                         if ( editableProperties[index][key] ) {
                             this.propertyDisplayName[i] = editableProperties[index][key] || this.propertyDisplayName[i]
 
@@ -506,21 +507,21 @@ export var ObjectEditorDialog = GObject.registerClass( {
 
                         // Check for valid types in the sub object
                         let containsBooleans = true
-                        utils.forEachEntry( value, function ( subobjectKey, subobjectValue, i ) {
+                        utils.forEachEntry( value, ( subobjectKey, subobjectValue, i ) => {
                             if ( typeof subobjectValue != "boolean" ) containsBooleans = false
                         }, this )
                         if ( !containsBooleans ) return
 
                         // Build UI
                         this._propertyBoxes[i]._boolBox = Array()
-                        utils.forEachEntry( value, function ( subobjectKey, subobjectValue, n ) {
+                        utils.forEachEntry( value, ( subobjectKey, subobjectValue, n ) => {
                             // Set up display masks for the subobject properties
                             let subObjectPropertyDisplayName = key
                             let subObjectPropertyDisabled = false // TODO
                             let subObjectPropertyHidden = false
                             let subObjectLabelOnly = false
                             let subObjectToggleValidationCallback = ( () => { return [true] } )
-                            this.subObjectMasks[i].forEach( function ( propertyMask, index ) {
+                            this.subObjectMasks[i].forEach( function f ( propertyMask, index ) {
                                 if ( this.subObjectMasks[i][index][subobjectKey] ) {
                                     subObjectPropertyDisplayName = this.subObjectMasks[i][index][subobjectKey] || subObjectPropertyDisplayName
                                     subObjectPropertyDisabled = this.subObjectMasks[i][index].disabled || subObjectPropertyDisabled
@@ -660,7 +661,7 @@ export var ObjectEditorDialog = GObject.registerClass( {
                 let [errorBoxMinHeight, errorBoxNaturalHeight] = this._errorBox.get_preferred_height( -1 )
                 let parentActor = this._errorBox.get_parent()
                 parentActor.ease( {
-                    height     : parentActor.height + errorBoxNaturalHeight, time       : DIALOG_GROW_TIME, transition : "easeOutQuad",
+                    height     : parentActor.height + errorBoxNaturalHeight, time       : this.DIALOG_GROW_TIME, transition : "easeOutQuad",
                     onComplete : () => {
                         parentActor.set_height( -1 )
                         this._errorBox.show()

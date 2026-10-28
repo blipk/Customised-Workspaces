@@ -47,6 +47,18 @@ import * as utils from "./utils.js"
 import * as uiUtils from "./lib/ui/uiUtils.js"
 import * as worksetBackgrounds from "./worksetBackgrounds.js"
 
+/**
+ * GNOME removes the views of a removed workspace some time after the removal, and index() of a removed workspace
+ * logs a critical. Thus views must check their workspace with this before they use index().
+ * @param {Meta.Workspace} metaWorkspace - A workspace
+ * @returns {boolean} True if Mutter still has the workspace
+ */
+const isCurrentWorkspace = ( metaWorkspace ) => {
+    for ( let i = 0; i < Me.gWorkspaceManager.n_workspaces; i++ )
+        if ( Me.gWorkspaceManager.get_workspace_by_index( i ) === metaWorkspace ) return true
+    return false
+}
+
 export class WorkspaceViewManager {
     constructor() {
         try {
@@ -76,7 +88,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspace.Workspace.prototype, "_init",
                 ( originalMethod ) =>
-                    function ( metaWorkspace, monitorIndex, overviewAdjustment ) {
+                    function _init ( metaWorkspace, monitorIndex, overviewAdjustment ) {
                         originalMethod.call( this, metaWorkspace, monitorIndex, overviewAdjustment )
                         Me.workspaceViewManager._trackOverviewWorkspace( this )
                     }
@@ -86,7 +98,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspacesView.WorkspacesView.prototype, "_init",
                 ( originalMethod ) =>
-                    function ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
+                    function _init ( monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment ) {
                         originalMethod.call( this, monitorIndex, controls, scrollAdjustment, fitModeAdjustment, overviewAdjustment )
                         if ( monitorIndex !== Main.layoutManager.primaryIndex )
                             return
@@ -105,7 +117,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspaceAnimation.WorkspaceGroup.prototype, "_createBackground",
                 ( originalMethod ) =>
-                    function () {
+                    function _createBackground () {
                         originalMethod.call( this )
                         if ( !this._workspace )
                             return
@@ -118,7 +130,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 overviewControls.ControlsManager.prototype, "_init",
                 ( originalMethod ) =>
-                    function () {
+                    function _init () {
                         originalMethod.call( this )
                         Me.workspaceViewManager.overviewControls = this
                         Me.workspaceViewManager.thumbnailsBox = this._thumbnailsBox
@@ -128,7 +140,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspaceThumbnail.ThumbnailsBox.prototype, "addThumbnails",
                 ( originalMethod ) =>
-                    function ( start, count ) {
+                    function addThumbnails ( start, count ) {
                         originalMethod.call( this, start, count )
                         Me.workspaceViewManager.thumbnailsBox = this
                         Me.workspaceViewManager.refreshOverview()
@@ -139,7 +151,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 workspaceThumbnail.WorkspaceThumbnail.prototype, "_addWindowClone",
                 ( originalMethod ) =>
-                    function ( win ) {
+                    function _addWindowClone ( win ) {
                         let clone = new workspaceThumbnail.WindowClone( win )
                         clone.connect( "selected", ( o, time ) => { this.activate( time ) } )
                         clone.connect( "drag-begin", () => { Main.overview.beginWindowDrag( clone.metaWindow ) } )
@@ -197,7 +209,7 @@ export class WorkspaceViewManager {
             this.injectionHandler.add(
                 overviewControls.ControlsManager.prototype, "gestureBegin",
                 ( originalMethod ) =>
-                    function ( tracker ) {
+                    function gestureBegin ( tracker ) {
                         originalMethod.call( this, tracker )
                         Me.workspaceViewManager.refreshOverview( 2 )
                     }
@@ -338,7 +350,7 @@ export class WorkspaceViewManager {
         try {
             const container = wsGroup._background
             const metaWorkspace = wsGroup.workspace ?? wsGroup._workspace
-            const background = !this._wallpaperManagementDisabled && container && metaWorkspace
+            const background = !this._wallpaperManagementDisabled && container && isCurrentWorkspace( metaWorkspace )
                 ? this._backgroundForWorkspace( metaWorkspace.index() )
                 : null
 
@@ -413,10 +425,9 @@ export class WorkspaceViewManager {
                 // Overview workspace previews. These actors belong to GNOME, so the GNOME wallpaper is recorded to put back later.
                 for ( const gsWorkspace of this.gsWorkspaces.keys() ) {
                     const bgManager = gsWorkspace._background?._bgManager
-                    const workspaceIndex = gsWorkspace.metaWorkspace?.index()
-                    if ( !bgManager || workspaceIndex === undefined ) continue
+                    if ( !bgManager || !isCurrentWorkspace( gsWorkspace.metaWorkspace ) ) continue
 
-                    const background = wallpaperManagementDisabled ? null : this._backgroundForWorkspace( workspaceIndex )
+                    const background = wallpaperManagementDisabled ? null : this._backgroundForWorkspace( gsWorkspace.metaWorkspace.index() )
                     if ( background )
                         this.backgrounds.override( bgManager, background )
                     else
@@ -515,7 +526,7 @@ export class WorkspaceViewManager {
 
                         btn.menu = new popupMenu.PopupMenu( btn, Clutter.ActorAlign.START, St.Side.TOP )
                         this.menus.push( btn.menu )
-                        btn.menu.bye = function () {
+                        btn.menu.bye = function bye () {
                             Main.uiGroup.remove_child( btn.menu.actor )
                             btn.menu.actor.hide()
                             btn.menu.destroy()
@@ -525,7 +536,7 @@ export class WorkspaceViewManager {
 
                         let menuItems = []
                         let defaultMenuItem
-                        Me.session.Worksets.forEach( function ( workset, ii ) {
+                        Me.session.Worksets.forEach( function f ( workset, ii ) {
                             // Don't show active worksets
                             let activeIndex = Me.session.getWorksetActiveIndex( workset )
                             if ( activeIndex > -1 ) return

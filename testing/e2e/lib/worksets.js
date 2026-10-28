@@ -7,6 +7,9 @@
  * - "Primary" on workspace 0, with the red wallpaper and the Console favourite
  * - "Work" on workspace 1, with the green wallpaper and the Text Editor favourite
  * The GNOME wallpaper setting starts as the blue wallpaper.
+ *
+ * Suites can add the "Play" environment (PLAY) at run time with addEnvironment(), on a workspace
+ * that GNOME does not have at start-up.
  */
 
 // External imports
@@ -22,6 +25,8 @@ import { waitFor } from "./shell.js"
 export const UUID = "worksets@blipk.xyz"
 export const PRIMARY = { name: "Primary", workspace: 0, wallpaper: "red", favourites: ["org.gnome.Console.desktop"] }
 export const WORK = { name: "Work", workspace: 1, wallpaper: "green", favourites: ["org.gnome.TextEditor.desktop"] }
+// Not in the fixtures. It has no favourites, thus a change to the favourites of another environment is easy to see.
+export const PLAY = { name: "Play", wallpaper: "yellow", favourites: [] }
 const WALLPAPER_STYLE = "ZOOM"
 const STATE_TIMEOUT_MS = 10000
 
@@ -63,6 +68,8 @@ export const session = () => instance()?.session
 export const options = () => session()?.activeSession.Options
 /** @returns {object|undefined} The WorkspaceViewManager */
 export const views = () => instance()?.workspaceViewManager
+/** @returns {object|undefined} The WorkspaceManager */
+export const workspaceManager = () => instance()?.workspaceManager
 /** @returns {Gio.Settings|undefined} The extension settings */
 export const settings = () => instance()?.settings
 
@@ -91,6 +98,92 @@ export const enable = async () => {
  * @returns {Promise<object>} The module
  */
 export const importModule = ( fileName ) => import( `${extension().dir.get_uri()}/${fileName}` )
+
+// Environments
+
+/**
+ * Adds an environment to the session, makes it the current environment of a workspace, and saves the session file.
+ * The extension does not update its workspaces: call workspaceManager()._workspaceUpdate() for that.
+ * @param {{name: string, wallpaper: string, favourites: Array<string>}} environment - The environment, for example PLAY
+ * @param {number} workspaceIndex - Index of the workspace
+ */
+export const addEnvironment = ( environment, workspaceIndex ) => {
+    const current = session()
+    // Change the session arrays and objects in place: saveSession() compares them with the saved session
+    current.Worksets.push( {
+        WorksetName         : environment.name,
+        WindowData          : null,
+        BackgroundImage     : wallpaperPath( environment.wallpaper ),
+        BackgroundImageDark : wallpaperPath( environment.wallpaper ),
+        BackgroundStyle     : WALLPAPER_STYLE,
+        BackgroundStyleDark : WALLPAPER_STYLE,
+        FavApps             : environment.favourites.map( ( name ) => ( { name, displayName: name, icon: "", exec: "" } ) ),
+    } )
+    current.workspaceMaps[`Workspace${workspaceIndex}`] = { defaultWorkset: "", currentWorkset: environment.name }
+    current.saveSession()
+}
+
+/**
+ * Removes an environment from the session and from all workspace maps, and saves the session file.
+ * @param {string} name - Name of the environment
+ */
+export const removeEnvironment = ( name ) => {
+    const current = session()
+    const index = current.Worksets.findIndex( ( workset ) => workset.WorksetName === name )
+    if ( index > -1 ) current.Worksets.splice( index, 1 )
+    for ( const workspaceMap of Object.values( current.workspaceMaps ) ) {
+        if ( workspaceMap.currentWorkset === name ) workspaceMap.currentWorkset = ""
+        if ( workspaceMap.defaultWorkset === name ) workspaceMap.defaultWorkset = ""
+    }
+    current.saveSession()
+}
+
+/**
+ * @param {string} name - Name of an environment
+ * @returns {Array<string>} The keys of the workspace maps that have the environment as the current environment
+ */
+export const workspaceMapsWithCurrent = ( name ) =>
+    Object.entries( session()?.workspaceMaps ?? {} ).filter( ( [, workspaceMap] ) => workspaceMap.currentWorkset === name ).map( ( [key] ) => key )
+
+/**
+ * @param {object} workspaceMaps - Workspace maps, from the extension session or from the session file
+ * @param {number} count - Number of workspace positions
+ * @param {string} [field="currentWorkset"] - "currentWorkset" or "defaultWorkset"
+ * @returns {string} The environments of the first positions, "-" for none, for example "Primary,-,Work"
+ */
+export const workspaceMapsText = ( workspaceMaps, count, field = "currentWorkset" ) =>
+    Array.from( { length: count }, ( _, index ) => workspaceMaps[`Workspace${index}`]?.[field] || "-" ).join( "," )
+
+/**
+ * Makes the environments of the fixtures (Primary on workspace 0, Work on workspace 1) the only current
+ * environments. Then the extension updates its workspaces and shows the environment of the active workspace,
+ * as after a workspace switch.
+ */
+export const resetCurrentWorksets = () => {
+    const current = session()
+    for ( const [key, workspaceMap] of Object.entries( current.workspaceMaps ) )
+        workspaceMap.currentWorkset = { [`Workspace${PRIMARY.workspace}`]: PRIMARY.name, [`Workspace${WORK.workspace}`]: WORK.name }[key] ?? ""
+    current.saveSession()
+    workspaceManager()._activeWorkspaceChanged()
+}
+
+// Session file
+
+/** @returns {string} Path of the session file of the extension */
+export const sessionFilePath = () => GLib.build_filenamev( [GLib.get_user_config_dir(), UUID, "session.json"] )
+
+/** @returns {object} The session that the session file contains */
+export const readSessionFile = () => JSON.parse( new TextDecoder().decode( GLib.file_get_contents( sessionFilePath() )[1] ) )
+
+/**
+ * Changes the session file, for example while the extension is disabled.
+ * @param {function(object): void} edit - Changes the session object in place
+ */
+export const editSessionFile = ( edit ) => {
+    const sessionObject = readSessionFile()
+    edit( sessionObject )
+    GLib.file_set_contents( sessionFilePath(), JSON.stringify( sessionObject, null, 1 ) )
+}
 
 // Wallpapers
 

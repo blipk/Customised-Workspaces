@@ -28,6 +28,11 @@ import workspaceSwitch from "./suites/workspaceSwitch.js"
 import favourites from "./suites/favourites.js"
 import allEnvironments from "./suites/allEnvironments.js"
 import panelMenu from "./suites/panelMenu.js"
+import workspaceCreation from "./suites/workspaceCreation.js"
+import workspaceKeepAlive from "./suites/workspaceKeepAlive.js"
+import workspaceOrder from "./suites/workspaceOrder.js"
+import screenLock from "./suites/screenLock.js"
+import fixedWorkspaces from "./suites/fixedWorkspaces.js"
 import disable from "./suites/disable.js"
 
 // The suites run in this order in one GNOME Shell session. "disable" must be last.
@@ -40,6 +45,11 @@ const SUITES = [
     favourites,
     allEnvironments,
     panelMenu,
+    workspaceCreation,
+    workspaceKeepAlive,
+    workspaceOrder,
+    screenLock,
+    fixedWorkspaces,
     disable,
 ]
 

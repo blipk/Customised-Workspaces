@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Git pre-commit hook: runs the end-to-end tests (testing/e2e) with the staged files, and stops the
+# commit when a test run fails or does not complete.
+#
+# The tests run on a copy of the staged files, thus unstaged changes do not change the result. The
+# results go to testing/e2e/out/ as usual. The hook runs the tests only when the commit changes the
+# extension or the tests (TESTED_PATHS), because only these files can change the result.
+#
+# Turn on with "pnpm install" (the "prepare" script) or "git config core.hooksPath .githooks".
+# Commit once without the tests with "git commit --no-verify".
+
+set -uo pipefail
+
+REPO_DIR="$(git rev-parse --show-toplevel)"
+OUTPUT_DIR="$REPO_DIR/testing/e2e/out"
+E2E_RUNNER="testing/e2e/run.sh"
+# The files that run.sh uses: the extension and the tests
+TESTED_PATHS=( "worksets@blipk.xyz" "testing/e2e" )
+
+# Git sets GIT_INDEX_FILE for "git commit -a" and "git commit <paths>", thus these commands use the content of the commit
+if [[ -z "$(git diff --cached --name-only -- "${TESTED_PATHS[@]}")" ]]; then
+    exit 0
+fi
+if ! git cat-file -e ":$E2E_RUNNER" 2> /dev/null; then
+    echo "pre-commit: the staged files have no $E2E_RUNNER, no tests to run"
+    exit 0
+fi
+
+STAGED_DIR="$(mktemp -d "${TMPDIR:-/tmp}/worksets-pre-commit.XXXXXX")"
+trap 'rm -rf "$STAGED_DIR"' EXIT
+git ls-files -z -- "${TESTED_PATHS[@]}" | git checkout-index -z --stdin --prefix="$STAGED_DIR/"
+
+echo "pre-commit: running the end-to-end tests with the staged files (approximately 2 minutes)"
+bash "$STAGED_DIR/$E2E_RUNNER" --output "$OUTPUT_DIR" < /dev/null
+status=$?
+
+if [[ "$status" -ne 0 ]]; then
+    echo >&2
+    echo "pre-commit: the end-to-end tests failed (exit code $status). The commit is stopped." >&2
+    echo "pre-commit: see $OUTPUT_DIR/results.txt. To commit without the tests, use \"git commit --no-verify\"." >&2
+    exit 1
+fi
+exit 0

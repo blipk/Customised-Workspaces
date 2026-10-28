@@ -26,6 +26,9 @@ const BUTTON_HOLD_MS = 60
 const CLICK_SETTLE_MS = 400
 const KEY_HOLD_MS = 30
 const KEY_SETTLE_MS = 80
+const DRAG_STEPS = 12
+const DRAG_STEP_MS = 40
+const DRAG_HOVER_MS = 500
 
 /** Waits for a number of milliseconds (GNOME Shell scripting helper). */
 export const sleep = Scripting.sleep
@@ -101,6 +104,18 @@ export const hideOverview = async () => {
 
 /** @returns {number} Index of the active workspace */
 export const activeWorkspaceIndex = () => global.workspace_manager.get_active_workspace_index()
+
+/** @returns {number} The number of workspaces */
+export const workspaceCount = () => global.workspace_manager.n_workspaces
+
+/**
+ * @param {number} index - Index of the workspace
+ * @returns {Meta.Workspace|null} The workspace, or null if it does not exist
+ */
+export const workspaceAt = ( index ) => global.workspace_manager.get_workspace_by_index( index )
+
+/** @returns {Array<Meta.Workspace>} All workspaces, in index order */
+export const allWorkspaces = () => Array.from( { length: workspaceCount() }, ( _, index ) => workspaceAt( index ) )
 
 /**
  * Switches to a workspace and waits until the switch animation is complete.
@@ -182,6 +197,59 @@ export const pressKeys = async ( ...keyvals ) => {
         virtualKeyboard.notify_keyval( eventTime(), keyval, Clutter.KeyState.RELEASED )
         await sleep( KEY_SETTLE_MS )
     }
+}
+
+/**
+ * Presses keys together with a virtual keyboard, for example Super+Shift+Page_Up: presses them in order and
+ * releases them in the reverse order.
+ * @param {...number} keyvals - Key values, modifiers first, for example Clutter.KEY_Super_L
+ */
+export const pressKeyCombination = async ( ...keyvals ) => {
+    ensureVirtualDevices()
+    for ( const keyval of keyvals ) {
+        virtualKeyboard.notify_keyval( eventTime(), keyval, Clutter.KeyState.PRESSED )
+        await sleep( KEY_HOLD_MS )
+    }
+    for ( const keyval of [...keyvals].reverse() ) {
+        virtualKeyboard.notify_keyval( eventTime(), keyval, Clutter.KeyState.RELEASED )
+        await sleep( KEY_HOLD_MS )
+    }
+    await sleep( KEY_SETTLE_MS )
+}
+
+/**
+ * @param {Clutter.Actor} actor - An actor
+ * @returns {{x: number, y: number}} The centre of the actor in stage coordinates
+ */
+export const actorCenter = ( actor ) => {
+    const [x, y] = actor.get_transformed_position()
+    const [width, height] = actor.get_transformed_size()
+    return { x: x + width / 2, y: y + height / 2 }
+}
+
+/**
+ * Drags with the primary button of the virtual pointer, in small steps as a user does, so that drag and drop starts
+ * and the drop target gets motion events.
+ * @param {{x: number, y: number}} from - Start position in stage coordinates
+ * @param {{x: number, y: number}} to - Drop position in stage coordinates
+ */
+export const drag = async ( from, to ) => {
+    ensureVirtualDevices()
+    virtualPointer.notify_absolute_motion( eventTime(), from.x, from.y )
+    await sleep( POINTER_MOVE_SETTLE_MS )
+    virtualPointer.notify_button( eventTime(), Clutter.BUTTON_PRIMARY, Clutter.ButtonState.PRESSED )
+    await sleep( BUTTON_HOLD_MS )
+    for ( let step = 1; step <= DRAG_STEPS; step++ ) {
+        const fraction = step / DRAG_STEPS
+        virtualPointer.notify_absolute_motion( eventTime(), from.x + ( to.x - from.x ) * fraction, from.y + ( to.y - from.y ) * fraction )
+        await sleep( DRAG_STEP_MS )
+    }
+    // The drop target can change its layout below the pointer (for example a drop placeholder), thus move once more
+    await sleep( DRAG_HOVER_MS )
+    virtualPointer.notify_absolute_motion( eventTime(), to.x, to.y )
+    await sleep( DRAG_HOVER_MS )
+    virtualPointer.notify_button( eventTime(), Clutter.BUTTON_PRIMARY, Clutter.ButtonState.RELEASED )
+    await sleep( CLICK_SETTLE_MS )
 }
 
 /** @returns {Array<Clutter.Actor>} The modal dialogs that are visible now */

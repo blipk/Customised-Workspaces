@@ -106,12 +106,19 @@ export function enumarateDirectoryChildren(
         tmpExtension.pop()
         let nameWithoutExtension = tmpExtension.join( "." )
 
+        const childrenFilePropertiesItem = {
+            parentDirectory : directory,
+            fullname        : name,
+            name            : nameWithoutExtension,
+            extension       : extension,
+            type            : type
+        }
         if ( type == Gio.FileType.REGULAR ) {
             if ( returnFiles )
-                childrenFilePropertiesArray.push( { parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type } )
+                childrenFilePropertiesArray.push( childrenFilePropertiesItem )
         } else if ( type == Gio.FileType.DIRECTORY ) {
             if ( returnDirectories )
-                childrenFilePropertiesArray.push( { parentDirectory: directory, fullname: name, name: nameWithoutExtension, extension: extension, type: type } )
+                childrenFilePropertiesArray.push( childrenFilePropertiesItem )
             if ( !searchSubDirectories ) continue
             let childDirectory = directoryFile.get_child( fileIterator.get_name() )
             if ( searchLevel != 0 ) {
@@ -145,13 +152,13 @@ export function saveToFile( object, filename, directory = null, raw = false, app
             file.append_to_async(
                 Gio.FileCreateFlags.NONE,
                 GLib.PRIORITY_DEFAULT, null,
-                function ( obj, res ) { aSyncSaveCallback( obj, res, contents, true ) }
+                function a ( obj, res ) { aSyncSaveCallback( obj, res, contents, true ) }
             )
         } else {
             file.replace_async(
                 null, false,
                 Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null,
-                function ( obj, res ) {
+                function a ( obj, res ) {
                     aSyncSaveCallback( obj, res, contents )
                 }
             )
@@ -172,7 +179,7 @@ export function saveToFile( object, filename, directory = null, raw = false, app
 
 export function aSyncSaveCallback( obj, res, contents, isAppend = false ) {
     let stream = isAppend ? obj.append_to_finish( res ) : obj.replace_finish( res )
-    stream.write_bytes_async( contents, GLib.PRIORITY_DEFAULT, null, function ( w_obj, w_res ) {
+    stream.write_bytes_async( contents, GLib.PRIORITY_DEFAULT, null, function wb ( w_obj, w_res ) {
         w_obj.write_bytes_finish( w_res ); stream.close( null )
     } )
 }
@@ -190,19 +197,25 @@ export function loadJSObjectFromFile( filename = "session.json", directory = nul
     if ( async === true ) {
         if ( typeof callback !== "function" ) { throw TypeError( "loadJSObjectFromFile callback must be a function" ) }
 
-        file.query_info_async( "*", Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, function ( src, res ) {
+        file.query_info_async(
+            "*",
+            Gio.FileQueryInfoFlags.NONE,
+            GLib.PRIORITY_DEFAULT,
+            null,
+            function ql ( src, res ) {
             // const file_info = src.query_info_finish( res )
-            file.load_contents_async( null, function ( obj, res ) {
-                let [
-                    success, contents
-                ] = obj.load_contents_finish( res )
-                if ( success ) {
-                    jsobject = JSON.parse( new TextDecoder().decode( contents ) )
-                    if ( jsobject === undefined ) { throw SyntaxError( "Error parseing file contents to JS Object. Syntax Error?" ) }
-                    callback( jsobject )
-                }
-            } )
-        } )
+                file.load_contents_async( null, function ql ( obj, res ) {
+                    let [
+                        success, contents
+                    ] = obj.load_contents_finish( res )
+                    if ( success ) {
+                        jsobject = JSON.parse( new TextDecoder().decode( contents ) )
+                        if ( jsobject === undefined ) { throw SyntaxError( "Error parseing file contents to JS Object. Syntax Error?" ) }
+                        callback( jsobject )
+                    }
+                } )
+            }
+        )
     } else {
         //let buffer = file.load_contents(null, null, null);
         let buffer = file.load_contents( null )

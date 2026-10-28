@@ -1,7 +1,8 @@
 {
 	"scripts": {
 		"lintfix": "eslint . --fix",
-		"test:e2e": "bash testing/e2e/run.sh"
+		"test:e2e": "bash testing/e2e/run.sh",
+		"prepare": "git config core.hooksPath .githooks"
 	},
 	"dependencies": {
 		"eslint": "^8.56.0"

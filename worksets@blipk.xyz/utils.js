@@ -103,14 +103,14 @@ export function forEachEntry( obj, callback, thisArg, recursive = false, recursi
     if ( obj === null ) throw new TypeError( "Not an object" )
     thisArg = thisArg || obj
 
-    Object.entries( obj ).forEach( function ( entryArray, entryIndex ) {
+    Object.entries( obj ).forEach( function f ( entryArray, entryIndex ) {
         let [ key, value ] = entryArray
         let entryObj = { [key]: obj[key] }
         let retIndex = entryIndex + recursiveIndex
         callback.call( thisArg, key, obj[key], retIndex, entryObj, entryArray, obj )
         if ( typeof obj[key] === "object" && obj[key] !== null && recursive === true ) {
             if ( Array.isArray( obj[key] ) === true ) {
-                obj[key].forEach( function ( prop, index ) {
+                obj[key].forEach( function f ( prop, index ) {
                     if ( Array.isArray( obj[key][index] ) === false && typeof obj[key][index] === "object" && obj[key][index] !== null ) {
                         recursiveIndex += Object.keys( obj ).length - 1
                         forEachEntry( obj[key][index], callback, thisArg, recursive, recursiveIndex )
@@ -193,7 +193,7 @@ export function spawnWithCallback( workingDirectory, argv, envp, flags, childSet
         }
     }
 
-    readStream( stdoutStream, function ( output ) {
+    readStream( stdoutStream, function rs ( output ) {
         if ( output === null ) {
             stdoutStream.close( null )
             stdoutDone = true
@@ -202,7 +202,7 @@ export function spawnWithCallback( workingDirectory, argv, envp, flags, childSet
             standardOutput += output
         }
     } )
-    readStream( stderrStream, function ( output ) {
+    readStream( stderrStream, function rs ( output ) {
         if ( output === null ) {
             stderrStream.close( null )
             stderrDone = true
@@ -214,7 +214,7 @@ export function spawnWithCallback( workingDirectory, argv, envp, flags, childSet
 }
 
 export function readStream( stream, callback ) {
-    stream.read_line_async( GLib.PRIORITY_LOW, null, function ( source, result ) {
+    stream.read_line_async( GLib.PRIORITY_LOW, null, function rl ( source, result ) {
         let [line] = source.read_line_finish( result )
 
         if ( line === null ) {
