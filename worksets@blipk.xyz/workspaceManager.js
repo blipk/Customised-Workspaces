@@ -102,17 +102,9 @@ export class WorkspaceManager {
 
 
             for ( let i = 0; i < min_workspaces - 1; i++ ) {
-                if ( !currentWorkspaces[i] ) {
-                    dev.log( `Could not find expected workspace at index ${i}` )
-                    return
-                }
-
                 // If we have less than the minimum workspaces create new ones
-                if ( n_global_workspaces < min_workspaces - 1 ) {
-                    if ( i >= n_global_workspaces ) {
-                        Me.gWorkspaceManager.append_new_workspace( false, global.get_current_time() )
-                    }
-                }
+                if ( !currentWorkspaces[i] )
+                    currentWorkspaces[i] = Me.gWorkspaceManager.append_new_workspace( false, global.get_current_time() )
 
                 // Make all workspaces persistent again
                 currentWorkspaces[i]._keepAliveId = true
